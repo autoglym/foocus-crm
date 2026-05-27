@@ -3673,18 +3673,19 @@
     }
 
     // ===== INIT =====
+    let isPasswordRecovery = false;
+
     document.addEventListener('DOMContentLoaded', async () => {
-      // Check for existing session
-      const { data: { session } } = await sb.auth.getSession();
-      
-      if (session) {
-        currentUser = session.user;
-        await initApp();
+      // Check if this is a password recovery link
+      const hash = window.location.hash;
+      if (hash && hash.includes('type=recovery')) {
+        isPasswordRecovery = true;
       }
-      
-      // Listen for auth changes
+
+      // Listen for auth changes FIRST
       sb.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
+        if (event === 'PASSWORD_RECOVERY' || isPasswordRecovery) {
+          isPasswordRecovery = true;
           // Show new password form
           document.getElementById('authContainer').style.display = 'flex';
           document.getElementById('appWrapper').classList.remove('active');
@@ -3692,16 +3693,25 @@
           document.getElementById('signupForm').style.display = 'none';
           document.getElementById('resetForm').style.display = 'none';
           document.getElementById('newPasswordForm').style.display = 'block';
-        } else if (event === 'SIGNED_IN' && session) {
+        } else if (event === 'SIGNED_IN' && session && !isPasswordRecovery) {
           currentUser = session.user;
           document.getElementById('newPasswordForm').style.display = 'none';
           await initApp();
         } else if (event === 'SIGNED_OUT') {
           currentUser = null;
+          isPasswordRecovery = false;
           document.getElementById('authContainer').style.display = 'flex';
           document.getElementById('appWrapper').classList.remove('active');
         }
       });
+
+      // Check for existing session
+      const { data: { session } } = await sb.auth.getSession();
+
+      if (session && !isPasswordRecovery) {
+        currentUser = session.user;
+        await initApp();
+      }
     });
 
     async function initApp() {
