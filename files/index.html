@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Focus CRM</title>
+  <title>Foocus CRM</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -2297,6 +2297,132 @@
     .stage-badge.negotiation { background: var(--target-bg); color: var(--target); }
     .stage-badge.near_closing { background: var(--client-bg); color: var(--client); }
     .stage-badge.client { background: var(--client-bg); color: var(--client); }
+
+    /* Granularity Toggle */
+    .granularity-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+    }
+    .granularity-btn {
+      padding: 6px 14px;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .granularity-btn:hover { color: var(--text-primary); }
+    .granularity-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Costs Table */
+    .costs-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .costs-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    .costs-table td {
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border);
+    }
+    .costs-table tr:hover td { background: var(--bg-hover); }
+    .costs-table .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+    .cost-type-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cost-type-badge.recurring { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .cost-type-badge.one_time { background: rgba(245,158,11,0.1); color: #f59e0b; }
+
+    .cost-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .cost-action-btn {
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .cost-action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .cost-action-btn.delete:hover { border-color: #ef4444; color: #ef4444; }
+
+    /* Income Table */
+    .income-type-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .income-type-badge.pending { background: rgba(245,158,11,0.1); color: #f59e0b; }
+    .income-type-badge.paid { background: rgba(16,185,129,0.1); color: #10b981; }
+    .income-type-badge.overdue { background: rgba(239,68,68,0.1); color: #ef4444; }
+
+    /* Tabs for costs/income */
+    .cashflow-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .cashflow-tab {
+      padding: 10px 20px;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .cashflow-tab:hover { color: var(--text-primary); }
+    .cashflow-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .cashflow-section { display: none; }
+    .cashflow-section.active { display: block; }
+
+    .empty-costs {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
@@ -2307,7 +2433,7 @@
         <div class="auth-logo-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
         </div>
-        <h1>Focus CRM</h1>
+        <h1>Foocus CRM</h1>
       </div>
       
       <!-- Login Form -->
@@ -2364,7 +2490,7 @@
       <div class="titlebar-logo">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
       </div>
-      <h1>Focus CRM</h1>
+      <h1>Foocus CRM</h1>
       <div class="titlebar-right">
         <div class="titlebar-status">
           <span class="status-dot" id="statusDot"></span>
@@ -2417,7 +2543,7 @@
           <div class="nav-divider"></div>
           <div class="nav-item" data-page="forecast">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-            Forecast
+            Cash Flow
           </div>
           <div class="nav-item" data-page="breakeven">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -2568,8 +2694,15 @@
         <div class="page hidden" id="page-forecast">
           <div class="page-header">
             <div>
-              <h2 class="page-title">Forecast</h2>
-              <p class="page-subtitle">Inntektsprognose, burn rate og cashflow - 12 maneder fremover</p>
+              <h2 class="page-title">Cash Flow</h2>
+              <p class="page-subtitle">Inntekter, kostnader og cashflow-prognose</p>
+            </div>
+            <div class="granularity-toggle" id="granularityToggle">
+              <button class="granularity-btn" data-gran="day">Dag</button>
+              <button class="granularity-btn" data-gran="week">Uke</button>
+              <button class="granularity-btn active" data-gran="month">Maned</button>
+              <button class="granularity-btn" data-gran="quarter">Kvartal</button>
+              <button class="granularity-btn" data-gran="year">Ar</button>
             </div>
           </div>
 
@@ -2583,27 +2716,58 @@
 
             <div class="forecast-inputs">
               <div class="forecast-card">
-                <h3>Burn rate og cash</h3>
-                <div class="form-group">
-                  <label class="form-label">Manedlig burn rate (NOK)</label>
-                  <input type="number" class="form-input" id="forecastBurn" placeholder="150000" style="font-family:'JetBrains Mono',monospace;" onchange="saveFinancials()">
-                </div>
+                <h3>Banksaldo</h3>
                 <div class="form-group">
                   <label class="form-label">Navaerende cash / banksaldo (NOK)</label>
                   <input type="number" class="form-input" id="forecastCash" placeholder="1000000" style="font-family:'JetBrains Mono',monospace;" onchange="saveFinancials()">
                 </div>
               </div>
-
               <div class="forecast-card">
-                <h3>Overstyr burn per maned</h3>
-                <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">La stå tomt for a bruke standard burn rate. Fyll inn for a overstyre enkeltmaneder.</p>
-                <div class="override-grid" id="burnOverrides"></div>
+                <h3>Hurtigvisning</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="cashflowQuickStats"></div>
               </div>
             </div>
 
+            <!-- Costs & Income Tabs -->
             <div class="forecast-card" style="margin-bottom:24px;">
-              <h3>Pipeline-detaljer</h3>
-              <div class="contracts-list" id="forecastPipelineList"></div>
+              <div class="cashflow-tabs">
+                <button class="cashflow-tab active" onclick="switchCashflowTab('costs')">Kostnader</button>
+                <button class="cashflow-tab" onclick="switchCashflowTab('income')">Innkommende inntekter</button>
+                <button class="cashflow-tab" onclick="switchCashflowTab('pipeline')">Pipeline</button>
+              </div>
+
+              <!-- Costs Section -->
+              <div class="cashflow-section active" id="cashflowCosts">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                  <p style="font-size:12px;color:var(--text-muted);">Faste og engangs-kostnader med forfallsdatoer</p>
+                  <button class="btn btn-primary" onclick="openCostModal()" style="padding:6px 14px;font-size:12px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    Legg til kostnad
+                  </button>
+                </div>
+                <div id="costsTableContainer">
+                  <div class="empty-costs">Ingen kostnader lagt til enna. Klikk "Legg til kostnad" for a starte.</div>
+                </div>
+              </div>
+
+              <!-- Income Section -->
+              <div class="cashflow-section" id="cashflowIncome">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                  <p style="font-size:12px;color:var(--text-muted);">Forventede innbetalinger og fakturaer</p>
+                  <button class="btn btn-primary" onclick="openIncomeModal()" style="padding:6px 14px;font-size:12px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    Legg til inntekt
+                  </button>
+                </div>
+                <div id="incomeTableContainer">
+                  <div class="empty-costs">Ingen inntekter lagt til enna.</div>
+                </div>
+              </div>
+
+              <!-- Pipeline Section -->
+              <div class="cashflow-section" id="cashflowPipeline">
+                <div class="contracts-list" id="forecastPipelineList"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -3187,6 +3351,122 @@
     </div>
   </div>
 
+  <!-- Cost Modal -->
+  <div class="modal-overlay" id="costModal">
+    <div class="modal" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="costModalTitle">Legg til kostnad</h3>
+        <button class="modal-close" onclick="closeModal('costModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="costEditId">
+        <div class="form-group">
+          <label class="form-label">Navn</label>
+          <input type="text" class="form-input" id="costName" placeholder="f.eks. Amazon Web Services, DigitalOcean">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Belop (NOK)</label>
+          <input type="number" class="form-input" id="costAmount" placeholder="5200" style="font-family:'JetBrains Mono',monospace;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-input" id="costType" onchange="toggleCostFields()">
+            <option value="recurring">Repeterende (fast kostnad)</option>
+            <option value="one_time">Engangskostnad</option>
+          </select>
+        </div>
+        <div id="costRecurringFields">
+          <div class="form-group">
+            <label class="form-label">Forfallsdag i maneden (1-31)</label>
+            <input type="number" class="form-input" id="costDayOfMonth" min="1" max="31" placeholder="25">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Startdato</label>
+              <input type="date" class="form-input" id="costStartDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sluttdato (valgfritt)</label>
+              <input type="date" class="form-input" id="costEndDate">
+            </div>
+          </div>
+        </div>
+        <div id="costOneTimeFields" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Dato</label>
+            <input type="date" class="form-input" id="costOneTimeDate">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kategori (valgfritt)</label>
+          <input type="text" class="form-input" id="costCategory" placeholder="f.eks. Infrastruktur, Kontor, Lon">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notat (valgfritt)</label>
+          <input type="text" class="form-input" id="costNotes" placeholder="">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('costModal')">Avbryt</button>
+        <button class="btn btn-primary" onclick="saveCost()">Lagre</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Income Modal -->
+  <div class="modal-overlay" id="incomeModal">
+    <div class="modal" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="incomeModalTitle">Legg til inntekt</h3>
+        <button class="modal-close" onclick="closeModal('incomeModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="incomeEditId">
+        <div class="form-group">
+          <label class="form-label">Beskrivelse</label>
+          <input type="text" class="form-input" id="incomeDescription" placeholder="f.eks. Faktura #1024 - Bedrift AS">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Belop (NOK)</label>
+          <input type="number" class="form-input" id="incomeAmount" placeholder="45000" style="font-family:'JetBrains Mono',monospace;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kunde (valgfritt)</label>
+          <select class="form-input" id="incomeClientId">
+            <option value="">Ingen kunde</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Forfallsdato</label>
+          <input type="date" class="form-input" id="incomeDueDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="incomeStatus">
+            <option value="pending">Venter</option>
+            <option value="paid">Betalt</option>
+            <option value="overdue">Forfalt</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-input" id="incomeType">
+            <option value="one_time">Engangsfaktura</option>
+            <option value="recurring">Repeterende</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('incomeModal')">Avbryt</button>
+        <button class="btn btn-primary" onclick="saveIncome()">Lagre</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Hidden file inputs -->
   <input type="file" id="logoInput" accept="image/*" style="display:none">
   <input type="file" id="docInput" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx" style="display:none">
@@ -3204,7 +3484,10 @@
     let documents = [];
     let contracts = [];
     let financials = { monthly_burn: 0, cash_balance: 0, month_overrides: {} };
+    let costs = [];
+    let incomeEntries = [];
     let forecastChart = null;
+    let forecastGranularity = 'month';
     let currentClientId = null;
     let currentFilter = 'all';
     let currentTaskFilter = 'all';
@@ -3435,6 +3718,18 @@
         const { data: finData } = await sb.from('financials').select('*').limit(1).single();
         if (finData) financials = finData;
       } catch(e) { /* financials table may not exist yet */ }
+
+      // Load costs
+      try {
+        const { data: costsData } = await sb.from('costs').select('*').order('name');
+        if (costsData) costs = costsData;
+      } catch(e) { costs = []; }
+
+      // Load income entries
+      try {
+        const { data: incData } = await sb.from('income_entries').select('*').order('due_date');
+        if (incData) incomeEntries = incData;
+      } catch(e) { incomeEntries = []; }
     }
 
     // ===== NAVIGATION =====
@@ -3464,7 +3759,7 @@
         case 'documents': renderAllDocuments(); break;
         case 'contracts': renderContracts(); break;
         case 'contract-wizard': break;
-        case 'forecast': renderForecast(); break;
+        case 'forecast': setupGranularityToggle(); renderForecast(); break;
         case 'breakeven': renderBreakEven(); break;
       }
     }
@@ -5192,7 +5487,7 @@
       window.open(url, '_blank');
     }
 
-    // ===== FORECAST =====
+    // ===== CASH FLOW MANAGEMENT =====
     const STAGE_LABELS = { lead: 'Lead', negotiation: 'In Negotiation', near_closing: 'Near Closing', client: 'Kunde' };
     const FREQ_DIVISORS = { monthly: 1, quarterly: 3, semi_annual: 6, annual: 12 };
 
@@ -5202,94 +5497,237 @@
       return dealVal / (FREQ_DIVISORS[freq] || 12);
     }
 
+    // --- Granularity toggle ---
+    function setupGranularityToggle() {
+      document.querySelectorAll('#granularityToggle .granularity-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.gran === forecastGranularity);
+        btn.onclick = () => {
+          forecastGranularity = btn.dataset.gran;
+          document.querySelectorAll('#granularityToggle .granularity-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderForecast();
+        };
+      });
+    }
+
+    // --- Cashflow tabs ---
+    function switchCashflowTab(tab) {
+      document.querySelectorAll('.cashflow-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.cashflow-section').forEach(s => s.classList.remove('active'));
+      document.querySelector(`.cashflow-tab[onclick*="${tab}"]`).classList.add('active');
+      document.getElementById(`cashflow${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+    }
+
+    // --- Generate time periods based on granularity ---
+    function generatePeriods(gran) {
+      const now = new Date();
+      const periods = [];
+
+      if (gran === 'day') {
+        for (let i = 0; i < 90; i++) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+          periods.push({
+            start: new Date(d), end: new Date(d),
+            label: d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }),
+            key: d.toISOString().slice(0, 10)
+          });
+        }
+      } else if (gran === 'week') {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay() + 1);
+        for (let i = 0; i < 26; i++) {
+          const ws = new Date(startOfWeek.getTime() + i * 7 * 86400000);
+          const we = new Date(ws.getTime() + 6 * 86400000);
+          periods.push({
+            start: ws, end: we,
+            label: `U${getWeekNumber(ws)} ${ws.toLocaleDateString('nb-NO', { month: 'short' })}`,
+            key: `W${ws.getFullYear()}-${getWeekNumber(ws)}`
+          });
+        }
+      } else if (gran === 'month') {
+        for (let i = 0; i < 12; i++) {
+          const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+          const end = new Date(now.getFullYear(), now.getMonth() + i + 1, 0);
+          periods.push({
+            start: d, end: end,
+            label: d.toLocaleDateString('nb-NO', { month: 'short', year: '2-digit' }),
+            key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+          });
+        }
+      } else if (gran === 'quarter') {
+        const currentQ = Math.floor(now.getMonth() / 3);
+        for (let i = 0; i < 8; i++) {
+          const q = (currentQ + i) % 4;
+          const y = now.getFullYear() + Math.floor((currentQ + i) / 4);
+          const start = new Date(y, q * 3, 1);
+          const end = new Date(y, q * 3 + 3, 0);
+          periods.push({
+            start, end,
+            label: `Q${q+1} ${y}`,
+            key: `Q${q+1}-${y}`
+          });
+        }
+      } else if (gran === 'year') {
+        for (let i = 0; i < 3; i++) {
+          const y = now.getFullYear() + i;
+          periods.push({
+            start: new Date(y, 0, 1), end: new Date(y, 11, 31),
+            label: `${y}`,
+            key: `Y${y}`
+          });
+        }
+      }
+      return periods;
+    }
+
+    function getWeekNumber(d) {
+      const date = new Date(d.getTime());
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+      const week1 = new Date(date.getFullYear(), 0, 4);
+      return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    }
+
+    // --- Calculate costs for a period ---
+    function getCostsForPeriod(periodStart, periodEnd) {
+      let total = 0;
+      costs.forEach(c => {
+        const amount = parseFloat(c.amount) || 0;
+        if (c.cost_type === 'one_time') {
+          const d = new Date(c.one_time_date);
+          if (d >= periodStart && d <= periodEnd) total += amount;
+        } else {
+          // Recurring: check each day in period for day_of_month match
+          const cStart = c.start_date ? new Date(c.start_date) : new Date('2020-01-01');
+          const cEnd = c.end_date ? new Date(c.end_date) : new Date('2099-12-31');
+          const dayOfMonth = parseInt(c.day_of_month) || 1;
+
+          // Iterate months that overlap with period
+          let checkDate = new Date(periodStart.getFullYear(), periodStart.getMonth(), 1);
+          while (checkDate <= periodEnd) {
+            const lastDay = new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 0).getDate();
+            const actualDay = Math.min(dayOfMonth, lastDay);
+            const payDate = new Date(checkDate.getFullYear(), checkDate.getMonth(), actualDay);
+
+            if (payDate >= periodStart && payDate <= periodEnd && payDate >= cStart && payDate <= cEnd) {
+              total += amount;
+            }
+            checkDate = new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 1);
+          }
+        }
+      });
+      return total;
+    }
+
+    // --- Calculate income for a period ---
+    function getIncomeForPeriod(periodStart, periodEnd) {
+      let total = 0;
+      incomeEntries.forEach(inc => {
+        const d = new Date(inc.due_date);
+        if (d >= periodStart && d <= periodEnd) {
+          total += parseFloat(inc.amount) || 0;
+        }
+      });
+      return total;
+    }
+
+    // --- Calculate pipeline revenue for a period ---
+    function getPipelineRevenueForPeriod(clientList, periodStart, periodEnd, weighted = true) {
+      const daysInPeriod = Math.max(1, Math.round((periodEnd - periodStart) / 86400000) + 1);
+      return clientList.reduce((sum, c) => {
+        const dailyRev = getMonthlyRevenue(c) / 30.44; // avg days per month
+        const prob = weighted ? ((c.probability ?? 50) / 100) : 1;
+        const billingStart = c.billing_start_date ? new Date(c.billing_start_date) : null;
+        const closeDate = c.estimated_close_date ? new Date(c.estimated_close_date) : null;
+        const effectiveStart = billingStart || closeDate;
+        if (effectiveStart && effectiveStart > periodEnd) return sum;
+        // Partial period: if billing starts mid-period
+        let activeDays = daysInPeriod;
+        if (effectiveStart && effectiveStart > periodStart) {
+          activeDays = Math.round((periodEnd - effectiveStart) / 86400000) + 1;
+        }
+        return sum + (dailyRev * activeDays * prob);
+      }, 0);
+    }
+
+    // --- Main render ---
     function renderForecast() {
-      // Populate burn/cash inputs
-      document.getElementById('forecastBurn').value = financials.monthly_burn || '';
       document.getElementById('forecastCash').value = financials.cash_balance || '';
 
-      // Generate 12 months
-      const months = [];
-      const now = new Date();
-      for (let i = 0; i < 12; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-        months.push({ date: d, key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, label: d.toLocaleDateString('nb-NO', { month: 'short', year: '2-digit' }) });
-      }
+      const periods = generatePeriods(forecastGranularity);
 
-      // Render burn overrides
-      const overridesDiv = document.getElementById('burnOverrides');
-      const overrides = financials.month_overrides || {};
-      overridesDiv.innerHTML = months.map(m => {
-        const val = overrides[m.key] ?? '';
-        const isModified = val !== '' && val !== null && val !== undefined;
-        return `<div class="override-item"><label>${m.label}</label><input type="number" data-override-month="${m.key}" value="${val}" placeholder="${formatCurrency(financials.monthly_burn || 0)}" class="${isModified ? 'modified' : ''}" onchange="updateBurnOverride(this)"></div>`;
-      }).join('');
-
-      // Calculate revenue per stage per month
       const existingClients = clients.filter(c => c.stage === 'client' || c.category === 'high_value_client');
       const nearClosing = clients.filter(c => c.stage === 'near_closing' && c.category === 'high_value_target');
       const inNegotiation = clients.filter(c => c.stage === 'negotiation' && c.category === 'high_value_target');
       const leads = clients.filter(c => c.stage === 'lead' && c.category === 'high_value_target');
 
-      function revenueForMonth(clientList, monthDate, weighted = true) {
-        return clientList.reduce((sum, c) => {
-          const monthly = getMonthlyRevenue(c);
-          const prob = weighted ? ((c.probability ?? 50) / 100) : 1;
+      const dataExisting = periods.map(p => getPipelineRevenueForPeriod(existingClients, p.start, p.end, false));
+      const dataNearClosing = periods.map(p => getPipelineRevenueForPeriod(nearClosing, p.start, p.end));
+      const dataNegotiation = periods.map(p => getPipelineRevenueForPeriod(inNegotiation, p.start, p.end));
+      const dataLeads = periods.map(p => getPipelineRevenueForPeriod(leads, p.start, p.end));
 
-          // Check if billing has started for this month
-          const billingStart = c.billing_start_date ? new Date(c.billing_start_date) : null;
-          const closeDate = c.estimated_close_date ? new Date(c.estimated_close_date) : null;
-          const effectiveStart = billingStart || closeDate;
+      // Costs from the costs table
+      const costData = periods.map(p => getCostsForPeriod(p.start, p.end));
 
-          if (effectiveStart && effectiveStart > monthDate) return sum;
-          return sum + (monthly * prob);
-        }, 0);
-      }
+      // Income entries
+      const incomeData = periods.map(p => getIncomeForPeriod(p.start, p.end));
 
-      const dataExisting = months.map(m => revenueForMonth(existingClients, m.date, false));
-      const dataNearClosing = months.map(m => revenueForMonth(nearClosing, m.date));
-      const dataNegotiation = months.map(m => revenueForMonth(inNegotiation, m.date));
-      const dataLeads = months.map(m => revenueForMonth(leads, m.date));
-
-      // Burn and cash
-      const burnData = months.map(m => {
-        const override = overrides[m.key];
-        return (override !== '' && override !== null && override !== undefined) ? parseFloat(override) : (financials.monthly_burn || 0);
-      });
-
+      // Cash flow projection
       const cashData = [];
       let runningCash = financials.cash_balance || 0;
-      for (let i = 0; i < 12; i++) {
-        const totalRevenue = dataExisting[i] + dataNearClosing[i] + dataNegotiation[i] + dataLeads[i];
-        runningCash = runningCash + totalRevenue - burnData[i];
+      for (let i = 0; i < periods.length; i++) {
+        const totalIn = dataExisting[i] + dataNearClosing[i] + dataNegotiation[i] + dataLeads[i] + incomeData[i];
+        const totalOut = costData[i];
+        runningCash = runningCash + totalIn - totalOut;
         cashData.push(runningCash);
       }
 
       // KPIs
-      const currentMRR = dataExisting[0];
-      const totalWeightedMRR = dataExisting[0] + dataNearClosing[0] + dataNegotiation[0] + dataLeads[0];
-      const monthlyBurn = burnData[0];
-      const runway = monthlyBurn > 0 ? Math.floor((financials.cash_balance || 0) / monthlyBurn) : 999;
+      const monthlyRevExisting = existingClients.reduce((s, c) => s + getMonthlyRevenue(c), 0);
+      const monthlyRevTotal = monthlyRevExisting + nearClosing.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + inNegotiation.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + leads.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0);
+      const monthlyCosts = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
+      const netMonthly = monthlyRevExisting - monthlyCosts;
+      const runway = monthlyCosts > 0 ? Math.floor((financials.cash_balance || 0) / monthlyCosts) : 999;
 
       document.getElementById('forecastKPIs').innerHTML = `
         <div class="forecast-kpi green">
           <div class="forecast-kpi-label">MRR (eksisterende)</div>
-          <div class="forecast-kpi-value">${formatCurrency(currentMRR)}</div>
+          <div class="forecast-kpi-value">${formatCurrency(monthlyRevExisting)}</div>
           <div class="forecast-kpi-sub">NOK / maned</div>
         </div>
         <div class="forecast-kpi blue">
           <div class="forecast-kpi-label">MRR (vektet total)</div>
-          <div class="forecast-kpi-value">${formatCurrency(totalWeightedMRR)}</div>
+          <div class="forecast-kpi-value">${formatCurrency(monthlyRevTotal)}</div>
           <div class="forecast-kpi-sub">inkl. pipeline</div>
         </div>
-        <div class="forecast-kpi amber">
-          <div class="forecast-kpi-label">Runway</div>
-          <div class="forecast-kpi-value">${runway > 99 ? '99+' : runway}</div>
-          <div class="forecast-kpi-sub">maneder (kun eksist.)</div>
-        </div>
         <div class="forecast-kpi red">
-          <div class="forecast-kpi-label">Manedlig burn</div>
-          <div class="forecast-kpi-value">${formatCurrency(monthlyBurn)}</div>
+          <div class="forecast-kpi-label">Faste kostnader</div>
+          <div class="forecast-kpi-value">${formatCurrency(monthlyCosts)}</div>
           <div class="forecast-kpi-sub">NOK / maned</div>
+        </div>
+        <div class="forecast-kpi ${netMonthly >= 0 ? 'green' : 'amber'}">
+          <div class="forecast-kpi-label">Netto cashflow</div>
+          <div class="forecast-kpi-value">${netMonthly >= 0 ? '+' : ''}${formatCurrency(netMonthly)}</div>
+          <div class="forecast-kpi-sub">NOK / maned</div>
+        </div>`;
+
+      // Quick stats
+      document.getElementById('cashflowQuickStats').innerHTML = `
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Runway</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${runway > 99 ? '99+' : runway} mnd</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Antall kostnader</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${costs.length}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Ventende inntekter</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${formatCurrency(incomeEntries.filter(i => i.status === 'pending').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0))}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Visning</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${{day:'Daglig',week:'Ukentlig',month:'Manedlig',quarter:'Kvartal',year:'Arlig'}[forecastGranularity]}</div>
         </div>`;
 
       // Legend
@@ -5298,12 +5736,12 @@
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#34d399;"></div> Near Closing</div>
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#f59e0b;"></div> In Negotiation</div>
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#c084fc;"></div> Leads</div>
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#ef4444;border-radius:50%;"></div> Burn rate</div>
+        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#22d3ee;"></div> Innbetalinger</div>
+        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#ef4444;"></div> Kostnader</div>
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#3b82f6;border-radius:50%;"></div> Cash</div>`;
 
       // Render chart
       const ctx = document.getElementById('forecastChart').getContext('2d');
-
       if (forecastChart) forecastChart.destroy();
 
       const isDark = (document.documentElement.getAttribute('data-theme') || 'dark') === 'dark';
@@ -5313,14 +5751,15 @@
       forecastChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: months.map(m => m.label),
+          labels: periods.map(p => p.label),
           datasets: [
-            { label: 'Eksisterende kunder', data: dataExisting, backgroundColor: '#10b981', stack: 'revenue', order: 4 },
-            { label: 'Near Closing', data: dataNearClosing, backgroundColor: '#34d399', stack: 'revenue', order: 3 },
-            { label: 'In Negotiation', data: dataNegotiation, backgroundColor: '#f59e0b', stack: 'revenue', order: 2 },
-            { label: 'Leads', data: dataLeads, backgroundColor: '#c084fc', stack: 'revenue', order: 1 },
-            { label: 'Burn rate', data: burnData, type: 'line', borderColor: '#ef4444', borderWidth: 2, borderDash: [6, 3], pointRadius: 3, pointBackgroundColor: '#ef4444', fill: false, yAxisID: 'y', order: 0 },
-            { label: 'Cash', data: cashData, type: 'line', borderColor: '#3b82f6', borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#3b82f6', fill: false, yAxisID: 'y2', order: 0 }
+            { label: 'Eksisterende kunder', data: dataExisting, backgroundColor: '#10b981', stack: 'revenue', order: 6 },
+            { label: 'Near Closing', data: dataNearClosing, backgroundColor: '#34d399', stack: 'revenue', order: 5 },
+            { label: 'In Negotiation', data: dataNegotiation, backgroundColor: '#f59e0b', stack: 'revenue', order: 4 },
+            { label: 'Leads', data: dataLeads, backgroundColor: '#c084fc', stack: 'revenue', order: 3 },
+            { label: 'Innbetalinger', data: incomeData, backgroundColor: '#22d3ee', stack: 'revenue', order: 2 },
+            { label: 'Kostnader', data: costData.map(v => -v), backgroundColor: 'rgba(239,68,68,0.7)', stack: 'costs', order: 1 },
+            { label: 'Cash', data: cashData, type: 'line', borderColor: '#3b82f6', borderWidth: 2.5, pointRadius: forecastGranularity === 'day' ? 0 : 4, pointBackgroundColor: '#3b82f6', fill: false, yAxisID: 'y2', order: 0 }
           ]
         },
         options: {
@@ -5331,16 +5770,28 @@
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: function(ctx) { return ctx.dataset.label + ': ' + formatCurrency(ctx.parsed.y) + ' NOK'; }
+                label: function(ctx) {
+                  const val = ctx.parsed.y;
+                  return ctx.dataset.label + ': ' + (val < 0 ? '-' : '') + formatCurrency(Math.abs(val)) + ' NOK';
+                }
               }
             }
           },
           scales: {
-            x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+            x: {
+              grid: { color: gridColor },
+              ticks: {
+                color: textColor,
+                font: { size: 11 },
+                maxRotation: forecastGranularity === 'day' ? 90 : 0,
+                autoSkip: true,
+                maxTicksLimit: forecastGranularity === 'day' ? 15 : undefined
+              }
+            },
             y: {
               stacked: true,
               position: 'left',
-              title: { display: true, text: 'Manedlig (NOK)', color: textColor, font: { size: 11 } },
+              title: { display: true, text: 'Inn/ut (NOK)', color: textColor, font: { size: 11 } },
               grid: { color: gridColor },
               ticks: { color: textColor, font: { size: 11 }, callback: v => formatCurrency(v) }
             },
@@ -5354,34 +5805,100 @@
         }
       });
 
-      // Pipeline details
+      renderCostsTable();
+      renderIncomeTable();
       renderForecastPipeline();
     }
 
+    // --- Costs table ---
+    function renderCostsTable() {
+      const container = document.getElementById('costsTableContainer');
+      if (costs.length === 0) {
+        container.innerHTML = '<div class="empty-costs">Ingen kostnader lagt til enna. Klikk "Legg til kostnad" for a starte.</div>';
+        return;
+      }
+      const totalMonthly = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
+      container.innerHTML = `
+        <table class="costs-table">
+          <thead><tr>
+            <th>Navn</th><th>Belop</th><th>Type</th><th>Forfallsdag</th><th>Periode</th><th>Kategori</th><th></th>
+          </tr></thead>
+          <tbody>${costs.map(c => {
+            const isRec = c.cost_type === 'recurring';
+            const dateStr = isRec
+              ? `${c.day_of_month}. hver maned`
+              : new Date(c.one_time_date).toLocaleDateString('nb-NO');
+            const periodStr = isRec
+              ? `${c.start_date ? new Date(c.start_date).toLocaleDateString('nb-NO', {month:'short',year:'2-digit'}) : 'Start'} - ${c.end_date ? new Date(c.end_date).toLocaleDateString('nb-NO', {month:'short',year:'2-digit'}) : 'Lopende'}`
+              : '-';
+            return `<tr>
+              <td><strong>${escapeHtml(c.name)}</strong>${c.notes ? `<br><span style="font-size:11px;color:var(--text-muted);">${escapeHtml(c.notes)}</span>` : ''}</td>
+              <td class="mono">${formatCurrency(c.amount)} NOK</td>
+              <td><span class="cost-type-badge ${c.cost_type}">${isRec ? 'Fast' : 'Engang'}</span></td>
+              <td>${dateStr}</td>
+              <td style="font-size:12px;">${periodStr}</td>
+              <td style="font-size:12px;color:var(--text-muted);">${escapeHtml(c.category || '')}</td>
+              <td><div class="cost-actions">
+                <button class="cost-action-btn" onclick="editCost('${c.id}')">Endre</button>
+                <button class="cost-action-btn delete" onclick="deleteCost('${c.id}')">Slett</button>
+              </div></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+        <div style="text-align:right;padding:12px 14px;font-size:13px;border-top:1px solid var(--border);">
+          <span style="color:var(--text-muted);">Sum faste kostnader/mnd:</span>
+          <strong style="font-family:'JetBrains Mono',monospace;margin-left:8px;">${formatCurrency(totalMonthly)} NOK</strong>
+        </div>`;
+    }
+
+    // --- Income table ---
+    function renderIncomeTable() {
+      const container = document.getElementById('incomeTableContainer');
+      if (incomeEntries.length === 0) {
+        container.innerHTML = '<div class="empty-costs">Ingen inntekter lagt til enna.</div>';
+        return;
+      }
+      const statusLabels = { pending: 'Venter', paid: 'Betalt', overdue: 'Forfalt' };
+      container.innerHTML = `
+        <table class="costs-table">
+          <thead><tr>
+            <th>Beskrivelse</th><th>Belop</th><th>Forfallsdato</th><th>Status</th><th>Type</th><th></th>
+          </tr></thead>
+          <tbody>${incomeEntries.map(inc => {
+            const client = clients.find(c => c.id === inc.client_id);
+            return `<tr>
+              <td><strong>${escapeHtml(inc.description)}</strong>${client ? `<br><span style="font-size:11px;color:var(--text-muted);">${escapeHtml(client.name)}</span>` : ''}</td>
+              <td class="mono">${formatCurrency(inc.amount)} NOK</td>
+              <td>${new Date(inc.due_date).toLocaleDateString('nb-NO')}</td>
+              <td><span class="income-type-badge ${inc.status}">${statusLabels[inc.status] || inc.status}</span></td>
+              <td style="font-size:12px;">${inc.income_type === 'recurring' ? 'Repeterende' : 'Engang'}</td>
+              <td><div class="cost-actions">
+                <button class="cost-action-btn" onclick="editIncome('${inc.id}')">Endre</button>
+                <button class="cost-action-btn delete" onclick="deleteIncome('${inc.id}')">Slett</button>
+              </div></td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>`;
+    }
+
+    // --- Pipeline list ---
     function renderForecastPipeline() {
       const list = document.getElementById('forecastPipelineList');
       const pipeline = clients
-        .map(c => ({
-          ...c,
-          monthlyRev: getMonthlyRevenue(c),
-          stageLabel: STAGE_LABELS[c.stage] || c.stage || 'Lead'
-        }))
+        .map(c => ({ ...c, monthlyRev: getMonthlyRevenue(c), stageLabel: STAGE_LABELS[c.stage] || c.stage || 'Lead' }))
         .sort((a, b) => {
           const stageOrder = { client: 0, near_closing: 1, negotiation: 2, lead: 3 };
           return (stageOrder[a.stage] ?? 3) - (stageOrder[b.stage] ?? 3);
         });
-
       if (pipeline.length === 0) {
         list.innerHTML = '<p style="color:var(--text-muted);padding:20px;text-align:center;">Ingen kunder eller prospekter enna.</p>';
         return;
       }
-
       list.innerHTML = pipeline.map(c => {
         const prob = c.probability ?? 50;
         const freq = c.billing_frequency || 'annual';
         const freqLabels = { monthly: 'mnd', quarterly: 'kvartal', semi_annual: 'halvar', annual: 'ar' };
         const closeStr = c.estimated_close_date ? new Date(c.estimated_close_date).toLocaleDateString('nb-NO', { month: 'short', year: '2-digit' }) : '';
-
         return `
           <div class="contract-item" onclick="openClientDetail('${c.id}')" style="padding:16px 20px;">
             <div style="width:8px;height:40px;border-radius:4px;background:${c.stage === 'client' ? 'var(--client)' : c.stage === 'near_closing' ? '#34d399' : c.stage === 'negotiation' ? 'var(--target)' : 'var(--important)'};flex-shrink:0;"></div>
@@ -5399,46 +5916,183 @@
       }).join('');
     }
 
+    // --- Cost CRUD ---
+    function toggleCostFields() {
+      const isRecurring = document.getElementById('costType').value === 'recurring';
+      document.getElementById('costRecurringFields').style.display = isRecurring ? 'block' : 'none';
+      document.getElementById('costOneTimeFields').style.display = isRecurring ? 'none' : 'block';
+    }
+
+    function openCostModal(id) {
+      document.getElementById('costEditId').value = '';
+      document.getElementById('costName').value = '';
+      document.getElementById('costAmount').value = '';
+      document.getElementById('costType').value = 'recurring';
+      document.getElementById('costDayOfMonth').value = '';
+      document.getElementById('costStartDate').value = '';
+      document.getElementById('costEndDate').value = '';
+      document.getElementById('costOneTimeDate').value = '';
+      document.getElementById('costCategory').value = '';
+      document.getElementById('costNotes').value = '';
+      document.getElementById('costModalTitle').textContent = 'Legg til kostnad';
+      toggleCostFields();
+      openModal('costModal');
+    }
+
+    function editCost(id) {
+      const c = costs.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('costEditId').value = c.id;
+      document.getElementById('costName').value = c.name || '';
+      document.getElementById('costAmount').value = c.amount || '';
+      document.getElementById('costType').value = c.cost_type || 'recurring';
+      document.getElementById('costDayOfMonth').value = c.day_of_month || '';
+      document.getElementById('costStartDate').value = c.start_date || '';
+      document.getElementById('costEndDate').value = c.end_date || '';
+      document.getElementById('costOneTimeDate').value = c.one_time_date || '';
+      document.getElementById('costCategory').value = c.category || '';
+      document.getElementById('costNotes').value = c.notes || '';
+      document.getElementById('costModalTitle').textContent = 'Endre kostnad';
+      toggleCostFields();
+      openModal('costModal');
+    }
+
+    async function saveCost() {
+      const id = document.getElementById('costEditId').value;
+      const costType = document.getElementById('costType').value;
+      const record = {
+        name: document.getElementById('costName').value,
+        amount: parseFloat(document.getElementById('costAmount').value) || 0,
+        cost_type: costType,
+        day_of_month: costType === 'recurring' ? (parseInt(document.getElementById('costDayOfMonth').value) || 1) : null,
+        one_time_date: costType === 'one_time' ? document.getElementById('costOneTimeDate').value || null : null,
+        start_date: costType === 'recurring' ? document.getElementById('costStartDate').value || null : null,
+        end_date: costType === 'recurring' ? document.getElementById('costEndDate').value || null : null,
+        category: document.getElementById('costCategory').value || null,
+        notes: document.getElementById('costNotes').value || null
+      };
+
+      if (!record.name || !record.amount) return alert('Fyll inn navn og belop');
+
+      try {
+        if (id) {
+          await sb.from('costs').update(record).eq('id', id);
+          const idx = costs.findIndex(c => c.id === id);
+          if (idx !== -1) costs[idx] = { ...costs[idx], ...record };
+        } else {
+          const { data } = await sb.from('costs').insert(record).select().single();
+          if (data) costs.push(data);
+        }
+      } catch(e) { console.error('Save cost error:', e); }
+
+      closeModal('costModal');
+      renderForecast();
+    }
+
+    async function deleteCost(id) {
+      if (!confirm('Slett denne kostnaden?')) return;
+      try {
+        await sb.from('costs').delete().eq('id', id);
+        costs = costs.filter(c => c.id !== id);
+      } catch(e) { console.error('Delete cost error:', e); }
+      renderForecast();
+    }
+
+    // --- Income CRUD ---
+    function openIncomeModal() {
+      document.getElementById('incomeEditId').value = '';
+      document.getElementById('incomeDescription').value = '';
+      document.getElementById('incomeAmount').value = '';
+      document.getElementById('incomeClientId').value = '';
+      document.getElementById('incomeDueDate').value = '';
+      document.getElementById('incomeStatus').value = 'pending';
+      document.getElementById('incomeType').value = 'one_time';
+      document.getElementById('incomeModalTitle').textContent = 'Legg til inntekt';
+
+      // Populate client dropdown
+      const sel = document.getElementById('incomeClientId');
+      sel.innerHTML = '<option value="">Ingen kunde</option>' + clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+
+      openModal('incomeModal');
+    }
+
+    function editIncome(id) {
+      const inc = incomeEntries.find(x => x.id === id);
+      if (!inc) return;
+      document.getElementById('incomeEditId').value = inc.id;
+      document.getElementById('incomeDescription').value = inc.description || '';
+      document.getElementById('incomeAmount').value = inc.amount || '';
+      document.getElementById('incomeDueDate').value = inc.due_date || '';
+      document.getElementById('incomeStatus').value = inc.status || 'pending';
+      document.getElementById('incomeType').value = inc.income_type || 'one_time';
+      document.getElementById('incomeModalTitle').textContent = 'Endre inntekt';
+
+      const sel = document.getElementById('incomeClientId');
+      sel.innerHTML = '<option value="">Ingen kunde</option>' + clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+      sel.value = inc.client_id || '';
+
+      openModal('incomeModal');
+    }
+
+    async function saveIncome() {
+      const id = document.getElementById('incomeEditId').value;
+      const record = {
+        description: document.getElementById('incomeDescription').value,
+        amount: parseFloat(document.getElementById('incomeAmount').value) || 0,
+        client_id: document.getElementById('incomeClientId').value || null,
+        due_date: document.getElementById('incomeDueDate').value || null,
+        status: document.getElementById('incomeStatus').value,
+        income_type: document.getElementById('incomeType').value
+      };
+
+      if (!record.description || !record.amount || !record.due_date) return alert('Fyll inn beskrivelse, belop og forfallsdato');
+
+      try {
+        if (id) {
+          await sb.from('income_entries').update(record).eq('id', id);
+          const idx = incomeEntries.findIndex(i => i.id === id);
+          if (idx !== -1) incomeEntries[idx] = { ...incomeEntries[idx], ...record };
+        } else {
+          const { data } = await sb.from('income_entries').insert(record).select().single();
+          if (data) incomeEntries.push(data);
+        }
+      } catch(e) { console.error('Save income error:', e); }
+
+      closeModal('incomeModal');
+      renderForecast();
+    }
+
+    async function deleteIncome(id) {
+      if (!confirm('Slett denne inntekten?')) return;
+      try {
+        await sb.from('income_entries').delete().eq('id', id);
+        incomeEntries = incomeEntries.filter(i => i.id !== id);
+      } catch(e) { console.error('Delete income error:', e); }
+      renderForecast();
+    }
+
+    // --- Save financials ---
     async function saveFinancials() {
-      financials.monthly_burn = parseFloat(document.getElementById('forecastBurn').value) || 0;
       financials.cash_balance = parseFloat(document.getElementById('forecastCash').value) || 0;
 
       try {
         if (financials.id) {
           await sb.from('financials').update({
-            monthly_burn: financials.monthly_burn,
-            cash_balance: financials.cash_balance,
-            month_overrides: financials.month_overrides
+            cash_balance: financials.cash_balance
           }).eq('id', financials.id);
         } else {
           const { data } = await sb.from('financials').insert({
-            monthly_burn: financials.monthly_burn,
+            monthly_burn: 0,
             cash_balance: financials.cash_balance,
-            month_overrides: financials.month_overrides || {}
+            month_overrides: {}
           }).select().single();
           if (data) financials = data;
         }
       } catch(e) {
         console.error('Save financials error:', e);
-        // Fallback to localStorage
         localStorage.setItem('focusCrmFinancials', JSON.stringify(financials));
       }
-
       renderForecast();
-    }
-
-    function updateBurnOverride(input) {
-      const month = input.dataset.overrideMonth;
-      const val = input.value;
-      if (!financials.month_overrides) financials.month_overrides = {};
-      if (val === '' || val === null) {
-        delete financials.month_overrides[month];
-        input.classList.remove('modified');
-      } else {
-        financials.month_overrides[month] = parseFloat(val);
-        input.classList.add('modified');
-      }
-      saveFinancials();
     }
 
     function renderBreakEven() {
