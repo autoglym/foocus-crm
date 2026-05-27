@@ -2481,6 +2481,19 @@
           Already have an account? <a onclick="showLogin()">Sign in</a>
         </p>
       </div>
+
+      <!-- New Password Form (after reset link) -->
+      <div id="newPasswordForm" style="display: none;">
+        <h2 class="auth-title">Nytt passord</h2>
+        <p class="auth-subtitle">Velg et nytt passord for kontoen din</p>
+        <div class="auth-error" id="newPasswordError"></div>
+        <div class="auth-error" id="newPasswordSuccess" style="background:var(--client-bg);color:var(--client);"></div>
+        <form class="auth-form" onsubmit="handleSetNewPassword(event)">
+          <input type="password" class="auth-input" id="newPassword" placeholder="Nytt passord (min 6 tegn)" required minlength="6">
+          <input type="password" class="auth-input" id="newPasswordConfirm" placeholder="Bekreft nytt passord" required minlength="6">
+          <button type="submit" class="auth-btn" id="newPasswordBtn">Oppdater passord</button>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -3546,6 +3559,41 @@
       }
     }
 
+    async function handleSetNewPassword(e) {
+      e.preventDefault();
+      const btn = document.getElementById('newPasswordBtn');
+      const errorEl = document.getElementById('newPasswordError');
+      const successEl = document.getElementById('newPasswordSuccess');
+      const pw = document.getElementById('newPassword').value;
+      const pw2 = document.getElementById('newPasswordConfirm').value;
+
+      errorEl.classList.remove('show');
+      successEl.classList.remove('show');
+
+      if (pw !== pw2) {
+        errorEl.textContent = 'Passordene matcher ikke.';
+        errorEl.classList.add('show');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Oppdaterer...';
+
+      try {
+        const { error } = await sb.auth.updateUser({ password: pw });
+        if (error) throw error;
+        successEl.textContent = 'Passord oppdatert! Logger inn...';
+        successEl.classList.add('show');
+        setTimeout(() => { window.location.href = window.location.origin; }, 1500);
+      } catch (error) {
+        errorEl.textContent = error.message || 'Kunne ikke oppdatere passord.';
+        errorEl.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Oppdater passord';
+      }
+    }
+
     async function handleLogin(e) {
       e.preventDefault();
       const btn = document.getElementById('loginBtn');
@@ -3636,8 +3684,17 @@
       
       // Listen for auth changes
       sb.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
+        if (event === 'PASSWORD_RECOVERY') {
+          // Show new password form
+          document.getElementById('authContainer').style.display = 'flex';
+          document.getElementById('appWrapper').classList.remove('active');
+          document.getElementById('loginForm').style.display = 'none';
+          document.getElementById('signupForm').style.display = 'none';
+          document.getElementById('resetForm').style.display = 'none';
+          document.getElementById('newPasswordForm').style.display = 'block';
+        } else if (event === 'SIGNED_IN' && session) {
           currentUser = session.user;
+          document.getElementById('newPasswordForm').style.display = 'none';
           await initApp();
         } else if (event === 'SIGNED_OUT') {
           currentUser = null;
