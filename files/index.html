@@ -3420,6 +3420,13 @@
           <label class="form-label">Notat (valgfritt)</label>
           <input type="text" class="form-input" id="costNotes" placeholder="">
         </div>
+        <div id="costOverridesSection" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Overstyr belop per maned (valgfritt)</label>
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">La sta tomt for a bruke standardbelop. Fyll inn for a overstyre enkeltmaneder.</p>
+            <div class="override-grid" id="costMonthOverrides"></div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('costModal')">Avbryt</button>
@@ -5659,17 +5666,17 @@
     function getCostsForPeriod(periodStart, periodEnd) {
       let total = 0;
       costs.forEach(c => {
-        const amount = parseFloat(c.amount) || 0;
+        const baseAmount = parseFloat(c.amount) || 0;
         if (c.cost_type === 'one_time') {
           const d = new Date(c.one_time_date);
-          if (d >= periodStart && d <= periodEnd) total += amount;
+          if (d >= periodStart && d <= periodEnd) total += baseAmount;
         } else {
-          // Recurring: check each day in period for day_of_month match
+          // Recurring: check each month in period
           const cStart = c.start_date ? new Date(c.start_date) : new Date('2020-01-01');
           const cEnd = c.end_date ? new Date(c.end_date) : new Date('2099-12-31');
           const dayOfMonth = parseInt(c.day_of_month) || 1;
+          const overrides = c.month_overrides || {};
 
-          // Iterate months that overlap with period
           let checkDate = new Date(periodStart.getFullYear(), periodStart.getMonth(), 1);
           while (checkDate <= periodEnd) {
             const lastDay = new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 0).getDate();
@@ -5677,6 +5684,9 @@
             const payDate = new Date(checkDate.getFullYear(), checkDate.getMonth(), actualDay);
 
             if (payDate >= periodStart && payDate <= periodEnd && payDate >= cStart && payDate <= cEnd) {
+              // Check for monthly override
+              const monthKey = `${checkDate.getFullYear()}-${String(checkDate.getMonth()+1).padStart(2,'0')}`;
+              const amount = (overrides[monthKey] !== undefined && overrides[monthKey] !== null) ? parseFloat(overrides[monthKey]) : baseAmount;
               total += amount;
             }
             checkDate = new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 1);
@@ -5988,6 +5998,35 @@
       const isRecurring = document.getElementById('costType').value === 'recurring';
       document.getElementById('costRecurringFields').style.display = isRecurring ? 'block' : 'none';
       document.getElementById('costOneTimeFields').style.display = isRecurring ? 'none' : 'block';
+      document.getElementById('costOverridesSection').style.display = isRecurring ? 'block' : 'none';
+      if (isRecurring) renderCostMonthOverrides();
+    }
+
+    function renderCostMonthOverrides(overrides) {
+      const grid = document.getElementById('costMonthOverrides');
+      const now = new Date();
+      const amount = parseFloat(document.getElementById('costAmount').value) || 0;
+      const ov = overrides || {};
+      let html = '';
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        const label = d.toLocaleDateString('nb-NO', { month: 'short', year: '2-digit' });
+        const val = ov[key] ?? '';
+        const isModified = val !== '' && val !== null && val !== undefined;
+        html += `<div class="override-item"><label>${label}</label><input type="number" data-cost-override="${key}" value="${val}" placeholder="${formatCurrency(amount)}" class="${isModified ? 'modified' : ''}" onchange="this.classList.toggle('modified', this.value !== '')"></div>`;
+      }
+      grid.innerHTML = html;
+    }
+
+    function getCostOverridesFromForm() {
+      const overrides = {};
+      document.querySelectorAll('[data-cost-override]').forEach(input => {
+        if (input.value !== '' && input.value !== null) {
+          overrides[input.dataset.costOverride] = parseFloat(input.value);
+        }
+      });
+      return Object.keys(overrides).length > 0 ? overrides : null;
     }
 
     function openCostModal(id) {
@@ -6003,6 +6042,7 @@
       document.getElementById('costNotes').value = '';
       document.getElementById('costModalTitle').textContent = 'Legg til kostnad';
       toggleCostFields();
+      renderCostMonthOverrides({});
       openModal('costModal');
     }
 
@@ -6021,6 +6061,7 @@
       document.getElementById('costNotes').value = c.notes || '';
       document.getElementById('costModalTitle').textContent = 'Endre kostnad';
       toggleCostFields();
+      renderCostMonthOverrides(c.month_overrides || {});
       openModal('costModal');
     }
 
@@ -6036,7 +6077,8 @@
         start_date: costType === 'recurring' ? document.getElementById('costStartDate').value || null : null,
         end_date: costType === 'recurring' ? document.getElementById('costEndDate').value || null : null,
         category: document.getElementById('costCategory').value || null,
-        notes: document.getElementById('costNotes').value || null
+        notes: document.getElementById('costNotes').value || null,
+        month_overrides: costType === 'recurring' ? getCostOverridesFromForm() : null
       };
 
       if (!record.name || !record.amount) return alert('Fyll inn navn og belop');
