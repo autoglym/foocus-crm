@@ -2097,15 +2097,15 @@
 
     .pricing-row {
       display: grid;
-      grid-template-columns: 1fr 80px 100px 80px 110px 40px;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 36px;
       gap: 8px;
       align-items: center;
       margin-bottom: 8px;
     }
-    .pricing-row .form-input { margin: 0; }
+    .pricing-row .form-input { margin: 0; min-width: 0; }
     .pricing-header {
       display: grid;
-      grid-template-columns: 1fr 80px 100px 80px 110px 40px;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr 36px;
       gap: 8px;
       margin-bottom: 6px;
     }
@@ -2814,16 +2814,16 @@
             </div>
             <button class="btn btn-primary" onclick="openContractWizard()">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-              Ny avtale
+              New Contract
             </button>
           </div>
           <div class="filter-tabs">
-            <button class="filter-tab active" data-contract-filter="all">Alle</button>
-            <button class="filter-tab" data-contract-filter="draft">Utkast</button>
-            <button class="filter-tab" data-contract-filter="sent">Sendt</button>
-            <button class="filter-tab" data-contract-filter="signed">Signert</button>
-            <button class="filter-tab" data-contract-filter="active">Aktiv</button>
-            <button class="filter-tab" data-contract-filter="expired">Utlopt</button>
+            <button class="filter-tab active" data-contract-filter="all">All</button>
+            <button class="filter-tab" data-contract-filter="draft">Draft</button>
+            <button class="filter-tab" data-contract-filter="sent">Sent</button>
+            <button class="filter-tab" data-contract-filter="signed">Signed</button>
+            <button class="filter-tab" data-contract-filter="active">Active</button>
+            <button class="filter-tab" data-contract-filter="expired">Expired</button>
           </div>
           <div class="contracts-list" id="contractsList"></div>
         </div>
@@ -2832,58 +2832,58 @@
         <div class="page hidden" id="page-contract-wizard">
           <div class="back-button" onclick="navigateTo('contracts')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            Tilbake til avtaler
+            Back to contracts
           </div>
           <div class="page-header">
             <div>
-              <h2 class="page-title" id="wizardTitle">Ny avtale</h2>
-              <p class="page-subtitle" id="wizardSubtitle">Fyll ut informasjonen for a generere en signeringsklar avtale</p>
+              <h2 class="page-title" id="wizardTitle">New Contract</h2>
+              <p class="page-subtitle" id="wizardSubtitle">Fill in the information to generate a contract ready for signing</p>
             </div>
           </div>
 
           <div class="wizard-container">
             <div class="wizard-steps" id="wizardSteps">
-              <button class="wizard-step active" data-wizard-step="0"><span class="wizard-step-num">1</span> Mal og kunde</button>
-              <button class="wizard-step" data-wizard-step="1"><span class="wizard-step-num">2</span> Innhold</button>
-              <button class="wizard-step" data-wizard-step="2"><span class="wizard-step-num">3</span> Leveranser</button>
-              <button class="wizard-step" data-wizard-step="3"><span class="wizard-step-num">4</span> Pris</button>
+              <button class="wizard-step active" data-wizard-step="0"><span class="wizard-step-num">1</span> Template & Client</button>
+              <button class="wizard-step" data-wizard-step="1"><span class="wizard-step-num">2</span> Content</button>
+              <button class="wizard-step" data-wizard-step="2"><span class="wizard-step-num">3</span> Deliverables</button>
+              <button class="wizard-step" data-wizard-step="3"><span class="wizard-step-num">4</span> Price</button>
               <button class="wizard-step" data-wizard-step="4"><span class="wizard-step-num">5</span> Period</button>
-              <button class="wizard-step" data-wizard-step="5"><span class="wizard-step-num">6</span> Forhandsvisning</button>
+              <button class="wizard-step" data-wizard-step="5"><span class="wizard-step-num">6</span> Preview</button>
             </div>
 
             <!-- Step 1: Template & Client -->
             <div class="wizard-panel active" id="wizardPanel0">
               <div class="wizard-section">
-                <h3>Velg avtaletype</h3>
+                <h3>Select Agreement Type</h3>
                 <div class="checkbox-grid">
                   <label class="checkbox-item selected" onclick="selectTemplate('service', this)">
                     <input type="radio" name="contractTemplate" value="service" checked style="display:none">
                     <div>
-                      <div style="font-weight:600;">Tjenesteavtale</div>
-                      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Ongoing malinger, rapportering og support</div>
+                      <div style="font-weight:600;">Service Agreement</div>
+                      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Ongoing measurements, reporting and support</div>
                     </div>
                   </label>
                   <label class="checkbox-item" onclick="selectTemplate('project', this)">
                     <input type="radio" name="contractTemplate" value="project" style="display:none">
                     <div>
-                      <div style="font-weight:600;">Prosjektavtale</div>
-                      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Prosjektbasert leveranse med definert scope</div>
+                      <div style="font-weight:600;">Project Agreement</div>
+                      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Project-based delivery with defined scope</div>
                     </div>
                   </label>
                 </div>
               </div>
 
               <div class="wizard-section">
-                <h3>Avtaletittel</h3>
-                <input type="text" class="form-input" id="contractTitle" placeholder="F.eks. Sponsormalinger og kommersiell radgivning" value="Sponsormalinger og kommersiell radgivning">
+                <h3>Agreement Title</h3>
+                <input type="text" class="form-input" id="contractTitle" placeholder="F.eks. Sponsorship Measurements and Commercial Advisory" value="Sponsorship Measurements and Commercial Advisory">
               </div>
 
               <div class="wizard-section">
-                <h3>Kunde / motpart</h3>
+                <h3>Client / Counterpart</h3>
                 <div class="form-group">
-                  <label class="form-label">Velg fra CRM eller fyll inn manuelt</label>
+                  <label class="form-label">Select from CRM or fill in manually</label>
                   <select class="form-input form-select" id="contractClientSelect" onchange="fillClientFromCRM()">
-                    <option value="">-- Fyll inn manuelt --</option>
+                    <option value="">-- Fill in manually --</option>
                   </select>
                 </div>
                 <div class="form-row">
@@ -2918,7 +2918,7 @@
 
               <div class="wizard-footer">
                 <div></div>
-                <button class="btn btn-primary" onclick="wizardNext()">Neste</button>
+                <button class="btn btn-primary" onclick="wizardNext()">Next</button>
               </div>
             </div>
 
@@ -2931,16 +2931,16 @@
               </div>
 
               <div class="wizard-section" id="wizardPartnersSection">
-                <h3>Partnere / logoer som skal males</h3>
+                <h3>Partners / Logos to Monitor</h3>
                 <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Add partners included in the agreement. Press Enter to add.</p>
                 <div class="tag-input-container" id="partnersTagContainer">
-                  <input type="text" class="tag-input" id="partnerInput" placeholder="Skriv partnernavn og trykk Enter..." onkeydown="handlePartnerTag(event)">
+                  <input type="text" class="tag-input" id="partnerInput" placeholder="Type partner name and press Enter..." onkeydown="handlePartnerTag(event)">
                 </div>
-                <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Inntil 10 partnere er inkludert i lisensavgiften.</p>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Up to 10 partners are included in the license fee.</p>
               </div>
 
               <div class="wizard-section" id="wizardChannelsSection">
-                <h3>Kanaler som males</h3>
+                <h3>Channels to Monitor</h3>
                 <div class="checkbox-grid">
                   <label class="checkbox-item selected"><input type="checkbox" value="tv" checked onchange="toggleCheckboxItem(this)"> TV (kampsendinger, fotballstudio, nyheter)</label>
                   <label class="checkbox-item selected"><input type="checkbox" value="press" checked onchange="toggleCheckboxItem(this)"> Presse (nett og print, bak betalingsmur)</label>
@@ -2954,7 +2954,7 @@
               </div>
 
               <div class="wizard-section" id="wizardMeasurementsSection">
-                <h3>Hva som males</h3>
+                <h3>What to Measure</h3>
                 <div class="checkbox-grid">
                   <label class="checkbox-item selected"><input type="checkbox" value="ave" checked onchange="toggleCheckboxItem(this)"> Eksponeringsverdi (AVE)</label>
                   <label class="checkbox-item selected"><input type="checkbox" value="engagement" checked onchange="toggleCheckboxItem(this)"> Engasjementsverdi</label>
@@ -2970,15 +2970,15 @@
               </div>
 
               <div class="wizard-footer">
-                <button class="btn btn-secondary" onclick="wizardPrev()">Tilbake</button>
-                <button class="btn btn-primary" onclick="wizardNext()">Neste</button>
+                <button class="btn btn-secondary" onclick="wizardPrev()">Back</button>
+                <button class="btn btn-primary" onclick="wizardNext()">Next</button>
               </div>
             </div>
 
             <!-- Step 3: Deliverables -->
             <div class="wizard-panel" id="wizardPanel2">
               <div class="wizard-section">
-                <h3>Leveranser inkludert</h3>
+                <h3>Deliverables inkludert</h3>
                 <div class="checkbox-grid">
                   <label class="checkbox-item selected"><input type="checkbox" value="dashboard" checked onchange="toggleCheckboxItem(this)"> Dashboard med ubegrenset antall brukere</label>
                   <label class="checkbox-item selected"><input type="checkbox" value="reporting" checked onchange="toggleCheckboxItem(this)"> Automatisert rapportering per partner og samlet</label>
@@ -3018,8 +3018,8 @@
               </div>
 
               <div class="wizard-footer">
-                <button class="btn btn-secondary" onclick="wizardPrev()">Tilbake</button>
-                <button class="btn btn-primary" onclick="wizardNext()">Neste</button>
+                <button class="btn btn-secondary" onclick="wizardPrev()">Back</button>
+                <button class="btn btn-primary" onclick="wizardNext()">Next</button>
               </div>
             </div>
 
@@ -3064,16 +3064,16 @@
               </div>
 
               <div class="wizard-section">
-                <h3>Faktureringsvilkar</h3>
+                <h3>Invoicing Terms</h3>
                 <div class="form-row">
                   <div class="form-group">
-                    <label class="form-label">Due Dayer</label>
+                    <label class="form-label">Payment Terms (days)</label>
                     <input type="number" class="form-input" id="contractPaymentDays" value="10" min="1">
                   </div>
                   <div class="form-group">
-                    <label class="form-label">Arlig prisjustering</label>
+                    <label class="form-label">Annual Price Adjustment</label>
                     <select class="form-input form-select" id="contractPriceAdjustment">
-                      <option value="7-15">7-15 % eller iht. prisliste</option>
+                      <option value="7-15">7-15% or per price list</option>
                       <option value="kpi">Iht. konsumprisindeksen (KPI)</option>
                       <option value="fixed">No adjustment</option>
                     </select>
@@ -3082,8 +3082,8 @@
               </div>
 
               <div class="wizard-footer">
-                <button class="btn btn-secondary" onclick="wizardPrev()">Tilbake</button>
-                <button class="btn btn-primary" onclick="wizardNext()">Neste</button>
+                <button class="btn btn-secondary" onclick="wizardPrev()">Back</button>
+                <button class="btn btn-primary" onclick="wizardNext()">Next</button>
               </div>
             </div>
 
@@ -3136,7 +3136,7 @@
               </div>
 
               <div class="wizard-footer">
-                <button class="btn btn-secondary" onclick="wizardPrev()">Tilbake</button>
+                <button class="btn btn-secondary" onclick="wizardPrev()">Back</button>
                 <button class="btn btn-primary" onclick="wizardNext()">Forhandsvis avtale</button>
               </div>
             </div>
@@ -3145,7 +3145,7 @@
             <div class="wizard-panel" id="wizardPanel5">
               <div class="preview-contract" id="contractPreview"></div>
               <div class="wizard-footer">
-                <button class="btn btn-secondary" onclick="wizardPrev()">Tilbake og rediger</button>
+                <button class="btn btn-secondary" onclick="wizardPrev()">Back og rediger</button>
                 <div style="display:flex;gap:12px;">
                   <button class="btn btn-secondary" onclick="saveContractDraft()">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -4690,7 +4690,7 @@
     };
 
     const STATUS_LABELS = {
-      draft: 'Utkast', sent: 'Sendt', signed: 'Signert', active: 'Aktiv', expired: 'Utlopt'
+      draft: 'Draft', sent: 'Sent', signed: 'Signed', active: 'Active', expired: 'Expired'
     };
 
     const CHANNEL_LABELS = {
@@ -4731,13 +4731,13 @@
       }
 
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><h3>None avtaler</h3><p>Opprett din forste avtale for a komme i gang.</p><button class="btn btn-primary" onclick="openContractWizard()">Ny avtale</button></div>`;
+        list.innerHTML = `<div class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><h3>No contracts</h3><p>Create your first contract to get started.</p><button class="btn btn-primary" onclick="openContractWizard()">New Contract</button></div>`;
         return;
       }
 
       list.innerHTML = filtered.map(c => {
         const data = c.contract_data || {};
-        const templateLabel = c.template_type === 'service' ? 'Tjenesteavtale' : 'Prosjektavtale';
+        const templateLabel = c.template_type === 'service' ? 'Service Agreement' : 'Project Agreement';
         const dateStr = c.created_at ? new Date(c.created_at).toLocaleDateString('nb-NO') : '';
         const totalAmount = (data.pricing || []).reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
 
@@ -4757,7 +4757,7 @@
             </div>
             <div class="contract-item-actions">
               <span class="contract-status ${c.status}">${STATUS_LABELS[c.status] || c.status}</span>
-              <button class="task-action" onclick="editContract('${c.id}', event)" title="Rediger"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
+              <button class="task-action" onclick="editContract('${c.id}', event)" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
               <button class="task-action delete" onclick="confirmDeleteContract('${c.id}', event)" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg></button>
             </div>
           </div>`;
@@ -4781,14 +4781,14 @@
           <span class="section-title">Contracts (${clientContracts.length})</span>
           <button class="btn btn-secondary" onclick="openContractWizard('${client.id}')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-            Ny avtale
+            New Contract
           </button>
         </div>
         <div class="contracts-list">
           ${clientContracts.length === 0 ? '<p style="color:var(--text-muted);padding:20px;">No contracts yet.</p>' :
             clientContracts.map(c => {
               const data = c.contract_data || {};
-              const templateLabel = c.template_type === 'service' ? 'Tjenesteavtale' : 'Prosjektavtale';
+              const templateLabel = c.template_type === 'service' ? 'Service Agreement' : 'Project Agreement';
               const totalAmount = (data.pricing || []).reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
               return `
                 <div class="contract-item" onclick="viewContract('${c.id}')">
@@ -4863,7 +4863,7 @@
 
       // Populate client dropdown
       const select = document.getElementById('contractClientSelect');
-      select.innerHTML = '<option value="">-- Fyll inn manuelt --</option>' +
+      select.innerHTML = '<option value="">-- Fill in manually --</option>' +
         clients.map(c => `<option value="${c.id}" ${c.id === clientId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
 
       if (existingContract) {
@@ -4912,12 +4912,12 @@
       // Reset pricing
       document.getElementById('pricingRows').innerHTML = `
         <div class="pricing-row">
-          <input type="text" class="form-input" value="Arlig lisensavgift - plattform, malinger, rapportering og support" data-pricing-desc>
+          <input type="text" class="form-input" value="Platform license - monitoring, reporting and support" data-pricing-desc>
           <input type="number" class="form-input" value="75000" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
           <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
         </div>
         <div class="pricing-row">
-          <input type="text" class="form-input" value="One-times oppsettavgift - logotrening, presseovervaking, verifisering" data-pricing-desc>
+          <input type="text" class="form-input" value="One-time setup - logo training, press monitoring, verification" data-pricing-desc>
           <input type="number" class="form-input" value="15000" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
           <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
         </div>`;
@@ -5164,19 +5164,19 @@
 
         if (d.partners.length > 0) {
           html += `<p><strong>Partnere inkludert i avtalen:</strong></p><ul>${d.partners.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>
-          <p style="font-size:12px;color:#666;">Ytterligere partnere kan legges til etter avtale. Inntil 10 partnere er inkludert i lisensavgiften.</p>`;
+          <p style="font-size:12px;color:#666;">Ytterligere partnere kan legges til etter avtale. Up to 10 partners are included in the license fee.</p>`;
         }
 
         if (d.channels.length > 0) {
-          html += `<p><strong>Kanaler som males:</strong></p><ul>${d.channels.map(c => `<li>${CHANNEL_LABELS[c] || c}</li>`).join('')}</ul>`;
+          html += `<p><strong>Channels to Monitor:</strong></p><ul>${d.channels.map(c => `<li>${CHANNEL_LABELS[c] || c}</li>`).join('')}</ul>`;
         }
 
         if (d.measurements.length > 0) {
-          html += `<p><strong>Hva som males:</strong></p><ul>${d.measurements.map(m => `<li>${MEASUREMENT_LABELS[m] || m}</li>`).join('')}</ul>`;
+          html += `<p><strong>What to Measure:</strong></p><ul>${d.measurements.map(m => `<li>${MEASUREMENT_LABELS[m] || m}</li>`).join('')}</ul>`;
         }
 
         if (d.deliverables.length > 0) {
-          html += `<p><strong>Leveranser inkludert i lisensen:</strong></p><ul>${d.deliverables.map(dl => `<li>${DELIVERABLE_LABELS[dl] || dl}</li>`).join('')}</ul>`;
+          html += `<p><strong>Deliverables inkludert i lisensen:</strong></p><ul>${d.deliverables.map(dl => `<li>${DELIVERABLE_LABELS[dl] || dl}</li>`).join('')}</ul>`;
         }
 
         if (d.setup_items.length > 0) {
@@ -5201,12 +5201,12 @@
       } else {
         html += `<h3>Prosjektbeskrivelse</h3><p>${escapeHtml(d.project_scope || 'Ikke angitt')}</p>`;
         if (d.deliverables.length > 0) {
-          html += `<p><strong>Leveranser:</strong></p><ul>${d.deliverables.map(dl => `<li>${DELIVERABLE_LABELS[dl] || dl}</li>`).join('')}</ul>`;
+          html += `<p><strong>Deliverables:</strong></p><ul>${d.deliverables.map(dl => `<li>${DELIVERABLE_LABELS[dl] || dl}</li>`).join('')}</ul>`;
         }
       }
 
       html += `
-        <h2>3. Pris og fakturering</h2>
+        <h2>3. Price og fakturering</h2>
         <table>
           <tr><th>Description</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Unit price</th><th style="text-align:right;">Months</th><th style="text-align:right;">Total (excl. VAT)</th></tr>
           ${d.pricing.map(p => `<tr><td>${escapeHtml(p.description)}</td><td style="text-align:right;font-family:monospace;">${p.qty || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.unit_price || p.amount)} NOK</td><td style="text-align:right;font-family:monospace;">${p.months || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.amount)} NOK</td></tr>`).join('')}
@@ -5215,7 +5215,7 @@
         <ul>
           <li>${isService ? 'Lisensavgiften faktureres ved oppstart og fornyes arlig ved avtalefornyelse' : 'Faktureres iht. avtalt betalingsplan'}</li>
           <li>Forfall ${d.payment_days} dager fra fakturadato</li>
-          <li>Prisene kan justeres arlig med ${adjustmentText}</li>
+          <li>Priceene kan justeres arlig med ${adjustmentText}</li>
         </ul>
 
         <h2>4. Avtaleperiode og oppsigelse</h2>
@@ -5451,23 +5451,23 @@
           addBoldLabel('Partnere inkludert i avtalen:');
           d.partners.forEach(p => addBullet(p));
           y += 2;
-          addSmallText('Ytterligere partnere kan legges til etter avtale. Inntil 10 partnere er inkludert i lisensavgiften.');
+          addSmallText('Ytterligere partnere kan legges til etter avtale. Up to 10 partners are included in the license fee.');
         }
 
         if (d.channels.length > 0) {
-          addBoldLabel('Kanaler som males:');
+          addBoldLabel('Channels to Monitor:');
           d.channels.forEach(c => addBullet(CHANNEL_LABELS[c] || c));
           y += 2;
         }
 
         if (d.measurements.length > 0) {
-          addBoldLabel('Hva som males:');
+          addBoldLabel('What to Measure:');
           d.measurements.forEach(m => addBullet(MEASUREMENT_LABELS[m] || m));
           y += 2;
         }
 
         if (d.deliverables.length > 0) {
-          addBoldLabel('Leveranser inkludert i lisensen:');
+          addBoldLabel('Deliverables inkludert i lisensen:');
           d.deliverables.forEach(dl => addBullet(DELIVERABLE_LABELS[dl] || dl));
           y += 2;
         }
@@ -5499,14 +5499,14 @@
         addSubtitle('Prosjektbeskrivelse');
         addParagraph(d.project_scope || 'Ikke angitt');
         if (d.deliverables.length > 0) {
-          addBoldLabel('Leveranser:');
+          addBoldLabel('Deliverables:');
           d.deliverables.forEach(dl => addBullet(DELIVERABLE_LABELS[dl] || dl));
           y += 2;
         }
       }
 
       // 3. Pricing
-      addTitle('3. Pris og fakturering');
+      addTitle('3. Price og fakturering');
       checkPageBreak(10 + d.pricing.length * 8 + 8);
       const tableTop = y;
       const descW = contentW - 50;
@@ -5554,7 +5554,7 @@
       const adjustText = d.price_adjustment === '7-15' ? '7-15 % eller iht. Foocus\' gjeldende prisliste' : d.price_adjustment === 'kpi' ? 'iht. konsumprisindeksen (KPI)' : 'ingen justering';
       addBullet(isService ? 'Lisensavgiften faktureres ved oppstart og fornyes arlig ved avtalefornyelse' : 'Faktureres iht. avtalt betalingsplan');
       addBullet('Forfall ' + d.payment_days + ' dager fra fakturadato');
-      addBullet('Prisene kan justeres arlig med ' + adjustText);
+      addBullet('Priceene kan justeres arlig med ' + adjustText);
       y += 4;
 
       // 4. Period
