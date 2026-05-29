@@ -2443,9 +2443,86 @@
       color: var(--text-muted);
       font-size: 13px;
     }
+
+    /* E-Signing Page */
+    .signing-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    .signing-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .signing-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .signing-header p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    .signing-contract {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .signing-form {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+    }
+    .signing-form h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .signing-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 16px 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .signing-checkbox input { margin-top: 2px; }
+    .signing-success {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--client);
+      border-radius: var(--radius);
+    }
+    .signing-success svg {
+      width: 64px;
+      height: 64px;
+      color: var(--client);
+      margin-bottom: 16px;
+    }
+    .signing-success h2 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: var(--client);
+    }
   </style>
 </head>
 <body>
+  <!-- Signing Page (public, no auth needed) -->
+  <div id="signingPage" style="display:none;">
+    <div class="signing-container">
+      <div class="signing-header">
+        <h1>Foocus CRM</h1>
+        <p>Contract Signing</p>
+      </div>
+      <div id="signingContent"></div>
+    </div>
+  </div>
+
   <!-- Auth Container -->
   <div class="auth-container" id="authContainer">
     <div class="auth-box">
@@ -3145,15 +3222,19 @@
             <div class="wizard-panel" id="wizardPanel5">
               <div class="preview-contract" id="contractPreview"></div>
               <div class="wizard-footer">
-                <button class="btn btn-secondary" onclick="wizardPrev()">Back og rediger</button>
-                <div style="display:flex;gap:12px;">
+                <button class="btn btn-secondary" onclick="wizardPrev()">Back & Edit</button>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
                   <button class="btn btn-secondary" onclick="saveContractDraft()">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                    Save utkast
+                    Save Draft
                   </button>
                   <button class="btn btn-primary" onclick="generateContractPDF()">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                    Generer PDF
+                    Generate PDF
+                  </button>
+                  <button class="btn btn-primary" onclick="sendForSigning()" style="background:#10b981;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>
+                    Send for Signing
                   </button>
                 </div>
               </div>
@@ -3719,10 +3800,172 @@
       await sb.auth.signOut();
     }
 
+    // ===== E-SIGNING =====
+    async function sendForSigning() {
+      // Save contract first
+      const data = gatherContractData();
+      const clientId = document.getElementById('contractClientSelect').value || null;
+      const templateType = getSelectedTemplate();
+
+      const contractRecord = {
+        client_id: clientId,
+        template_type: templateType,
+        status: 'sent',
+        contract_data: data
+      };
+
+      try {
+        let contractId = editingContractId;
+        if (editingContractId) {
+          await sb.from('contracts').update(contractRecord).eq('id', editingContractId);
+          const idx = contracts.findIndex(c => c.id === editingContractId);
+          if (idx !== -1) contracts[idx] = { ...contracts[idx], ...contractRecord };
+        } else {
+          const { data: newContract, error } = await sb.from('contracts').insert(contractRecord).select().single();
+          if (error) throw error;
+          contracts.unshift(newContract);
+          contractId = newContract.id;
+          editingContractId = contractId;
+        }
+
+        const signingUrl = `${window.location.origin}?sign=${contractId}`;
+        const clientEmail = data.client_contact_email || data.billing_email || '';
+
+        // Show the signing link
+        const copyResult = await navigator.clipboard.writeText(signingUrl).then(() => true).catch(() => false);
+
+        alert(
+          `Contract saved and ready for signing!\n\n` +
+          `Signing link:\n${signingUrl}\n\n` +
+          `${copyResult ? '(Link copied to clipboard)\n\n' : ''}` +
+          `Send this link to ${data.client_name || 'the client'}${clientEmail ? ' at ' + clientEmail : ''}.`
+        );
+      } catch (error) {
+        console.error('Send for signing error:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    async function checkSigningMode() {
+      const params = new URLSearchParams(window.location.search);
+      const contractId = params.get('sign');
+      if (!contractId) return false;
+
+      // Show signing page, hide auth
+      document.getElementById('signingPage').style.display = 'block';
+      document.getElementById('authContainer').style.display = 'none';
+
+      try {
+        const { data: contract, error } = await sb.from('contracts').select('*').eq('id', contractId).single();
+        if (error || !contract) throw new Error('Contract not found');
+
+        if (contract.status === 'signed') {
+          document.getElementById('signingContent').innerHTML = `
+            <div class="signing-success">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <h2>Already Signed</h2>
+              <p style="color:var(--text-secondary);">This contract was signed on ${contract.contract_data?.signed_at ? new Date(contract.contract_data.signed_at).toLocaleDateString('en-GB') : 'N/A'} by ${escapeHtml(contract.contract_data?.signed_by || 'N/A')}.</p>
+            </div>`;
+          return true;
+        }
+
+        const d = contract.contract_data || {};
+        const totalAmount = (d.pricing || []).reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+
+        // Render contract preview and signing form
+        document.getElementById('signingContent').innerHTML = `
+          <div class="signing-contract">
+            <h2 style="margin-bottom:16px;">${escapeHtml(d.title || 'Contract')}</h2>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+              <tr><td style="padding:8px;border:1px solid var(--border);"><strong>Client</strong></td><td style="padding:8px;border:1px solid var(--border);">${escapeHtml(d.client_name || '')}</td></tr>
+              <tr><td style="padding:8px;border:1px solid var(--border);"><strong>Org. nr.</strong></td><td style="padding:8px;border:1px solid var(--border);">${escapeHtml(d.client_org_nr || '')}</td></tr>
+              <tr><td style="padding:8px;border:1px solid var(--border);"><strong>Contact</strong></td><td style="padding:8px;border:1px solid var(--border);">${escapeHtml(d.client_contact_name || '')}</td></tr>
+            </table>
+            ${d.intro_text ? `<div style="margin-bottom:16px;"><h3>Background</h3>${d.intro_text.split('\\n').filter(l => l.trim()).map(p => '<p style="margin:8px 0;font-size:13px;color:var(--text-secondary);">' + escapeHtml(p) + '</p>').join('')}</div>` : ''}
+            <h3 style="margin:16px 0 8px;">Pricing</h3>
+            <table style="width:100%;border-collapse:collapse;">
+              <tr style="background:var(--bg-tertiary);"><th style="padding:8px;text-align:left;border:1px solid var(--border);">Description</th><th style="padding:8px;text-align:right;border:1px solid var(--border);">Amount</th></tr>
+              ${(d.pricing || []).map(p => `<tr><td style="padding:8px;border:1px solid var(--border);">${escapeHtml(p.description)}</td><td style="padding:8px;text-align:right;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;">${formatCurrency(p.amount)} NOK</td></tr>`).join('')}
+              <tr style="font-weight:bold;"><td style="padding:8px;border:1px solid var(--border);">Total (excl. VAT)</td><td style="padding:8px;text-align:right;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;">${formatCurrency(totalAmount)} NOK</td></tr>
+            </table>
+            ${d.period_months ? `<p style="margin-top:12px;font-size:13px;color:var(--text-secondary);">Period: ${d.period_months} months from ${d.start_date || 'signing date'}</p>` : ''}
+          </div>
+
+          <div class="signing-form" id="signingForm">
+            <h3>Sign this Contract</h3>
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-input" id="signerName" placeholder="Enter your full name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Title / Position</label>
+              <input type="text" class="form-input" id="signerTitle" placeholder="e.g. CEO, Marketing Director">
+            </div>
+            <label class="signing-checkbox">
+              <input type="checkbox" id="signerAgree">
+              I have read and agree to the terms of this contract on behalf of ${escapeHtml(d.client_name || 'my organization')}.
+            </label>
+            <button class="btn btn-primary" onclick="submitSignature('${contractId}')" style="width:100%;padding:14px;font-size:15px;background:#10b981;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="m5 12 5 5L20 7"/></svg>
+              Sign Contract
+            </button>
+          </div>`;
+      } catch (error) {
+        document.getElementById('signingContent').innerHTML = `
+          <div style="text-align:center;padding:60px 20px;">
+            <h2 style="color:var(--text-primary);">Contract Not Found</h2>
+            <p style="color:var(--text-muted);">This signing link may have expired or is invalid.</p>
+          </div>`;
+      }
+      return true;
+    }
+
+    async function submitSignature(contractId) {
+      const name = document.getElementById('signerName').value.trim();
+      const title = document.getElementById('signerTitle').value.trim();
+      const agreed = document.getElementById('signerAgree').checked;
+
+      if (!name) return alert('Please enter your full name.');
+      if (!agreed) return alert('Please confirm that you agree to the terms.');
+
+      try {
+        const { data: contract } = await sb.from('contracts').select('*').eq('id', contractId).single();
+        if (!contract) throw new Error('Contract not found');
+
+        const updatedData = {
+          ...contract.contract_data,
+          signed_by: name,
+          signed_title: title,
+          signed_at: new Date().toISOString(),
+          signed_ip: 'browser'
+        };
+
+        await sb.from('contracts').update({
+          status: 'signed',
+          contract_data: updatedData
+        }).eq('id', contractId);
+
+        document.getElementById('signingContent').innerHTML = `
+          <div class="signing-success">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <h2>Contract Signed!</h2>
+            <p style="color:var(--text-secondary);margin-bottom:8px;">Signed by <strong>${escapeHtml(name)}</strong>${title ? ', ' + escapeHtml(title) : ''}</p>
+            <p style="color:var(--text-muted);font-size:12px;">${new Date().toLocaleString('en-GB')}</p>
+            <p style="color:var(--text-secondary);margin-top:16px;">A confirmation will be sent to both parties. You can close this page.</p>
+          </div>`;
+      } catch (error) {
+        alert('Error signing contract: ' + error.message);
+      }
+    }
+
     // ===== INIT =====
     let isPasswordRecovery = false;
 
     document.addEventListener('DOMContentLoaded', async () => {
+      // Check if this is a signing page
+      const isSigning = await checkSigningMode();
+      if (isSigning) return;
+
       // Check if this is a password recovery link
       const hash = window.location.hash;
       if (hash && hash.includes('type=recovery')) {
