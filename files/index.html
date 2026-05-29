@@ -2924,6 +2924,12 @@
 
             <!-- Step 2: Content (partners, channels, measurements) -->
             <div class="wizard-panel" id="wizardPanel1">
+              <div class="wizard-section">
+                <h3>Introduction / Background</h3>
+                <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">This text appears at the beginning of the contract, before the deliverables section. Use it for background, purpose, and context.</p>
+                <textarea class="form-input" id="contractIntroText" rows="8" placeholder="e.g. Background and purpose of this agreement..." style="resize:vertical;min-height:120px;font-size:13px;line-height:1.6;"></textarea>
+              </div>
+
               <div class="wizard-section" id="wizardPartnersSection">
                 <h3>Partnere / logoer som skal males</h3>
                 <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Add partners included in the agreement. Press Enter to add.</p>
@@ -4868,7 +4874,8 @@
     }
 
     function resetWizardForm() {
-      document.getElementById('contractTitle').value = 'Sponsormalinger og kommersiell radgivning';
+      document.getElementById('contractTitle').value = '';
+      document.getElementById('contractIntroText').value = '';
       document.getElementById('contractClientName').value = '';
       document.getElementById('contractClientOrgNr').value = '';
       document.getElementById('contractClientAddress').value = '';
@@ -4917,6 +4924,7 @@
       const d = contract.contract_data || {};
       selectTemplate(contract.template_type, document.querySelector(`.checkbox-item[onclick*="${contract.template_type}"]`));
       document.getElementById('contractTitle').value = d.title || '';
+      document.getElementById('contractIntroText').value = d.intro_text || '';
       document.getElementById('contractClientName').value = d.client_name || '';
       document.getElementById('contractClientOrgNr').value = d.client_org_nr || '';
       document.getElementById('contractClientAddress').value = d.client_address || '';
@@ -5093,6 +5101,7 @@
       })).filter(p => p.description);
 
       return {
+        intro_text: document.getElementById('contractIntroText').value,
         title: document.getElementById('contractTitle').value,
         client_name: document.getElementById('contractClientName').value,
         client_org_nr: document.getElementById('contractClientOrgNr').value,
@@ -5140,7 +5149,9 @@
           </tr>
         </table>
 
-        <h2>2. Avtalens innhold og leveranser</h2>`;
+        ${d.intro_text ? `<h2>1. Background and Purpose</h2>${d.intro_text.split('\n').filter(l => l.trim()).map(p => `<p>${escapeHtml(p)}</p>`).join('')}` : ''}
+
+        <h2>${d.intro_text ? '2' : '1'}. Scope and Deliverables</h2>`;
 
       if (isService) {
         html += `
@@ -5405,8 +5416,28 @@
       rLines.forEach((l, i) => doc.text(l, marginL + colW + 4, y + 12 + i * 5));
       y += 46;
 
-      // 2. Content
-      addTitle('2. Avtalens innhold og leveranser');
+      // Intro text
+      let sectionNum = 1;
+      if (d.intro_text) {
+        addTitle(sectionNum + '. Background and Purpose');
+        sectionNum++;
+        d.intro_text.split('\n').filter(l => l.trim()).forEach(para => {
+          if (y > pageH - 30) { doc.addPage(); y = 25; }
+          const lines = doc.splitTextToSize(para, contentW - 8);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(...textColor);
+          lines.forEach(l => {
+            if (y > pageH - 20) { doc.addPage(); y = 25; }
+            doc.text(l, marginL + 4, y);
+            y += 4.5;
+          });
+          y += 3;
+        });
+      }
+
+      // Content section
+      addTitle(sectionNum + '. Scope and Deliverables');
 
       if (isService) {
         addSubtitle('Del 1: Foocus-plattformen - Sponsormalinger');
