@@ -3815,39 +3815,39 @@
 
     // ===== DATA LOADING =====
     async function loadAllData() {
-      const [clientsRes, tasksRes, docsRes, contractsRes] = await Promise.all([
-        sb.from('clients').select('*').order('updated_at', { ascending: false }),
-        sb.from('tasks').select('*').order('due_date', { ascending: true }),
-        sb.from('documents').select('*').order('created_at', { ascending: false }),
-        sb.from('contracts').select('*').order('created_at', { ascending: false })
-      ]);
+      try {
+        const [clientsRes, tasksRes, docsRes, contractsRes] = await Promise.all([
+          sb.from('clients').select('*').order('updated_at', { ascending: false }),
+          sb.from('tasks').select('*').order('due_date', { ascending: true }),
+          sb.from('documents').select('*').order('created_at', { ascending: false }),
+          sb.from('contracts').select('*').order('created_at', { ascending: false })
+        ]);
 
-      if (clientsRes.error) throw clientsRes.error;
-      if (tasksRes.error) throw tasksRes.error;
-      if (docsRes.error) throw docsRes.error;
-
-      clients = clientsRes.data || [];
-      tasks = tasksRes.data || [];
-      documents = docsRes.data || [];
-      contracts = contractsRes.error ? [] : (contractsRes.data || []);
+        clients = clientsRes.data || [];
+        tasks = tasksRes.data || [];
+        documents = docsRes.data || [];
+        contracts = contractsRes.data || [];
+      } catch(e) {
+        console.error('Load core data error:', e);
+      }
 
       // Load financials
       try {
-        const { data: finData } = await sb.from('financials').select('*').limit(1).single();
+        const { data: finData } = await sb.from('financials').select('*').limit(1).maybeSingle();
         if (finData) financials = finData;
-      } catch(e) { /* financials table may not exist yet */ }
+      } catch(e) { console.error('Load financials error:', e); }
 
       // Load costs
       try {
         const { data: costsData } = await sb.from('costs').select('*').order('name');
         if (costsData) costs = costsData;
-      } catch(e) { costs = []; }
+      } catch(e) { costs = []; console.error('Load costs error:', e); }
 
       // Load income entries
       try {
         const { data: incData } = await sb.from('income_entries').select('*').order('due_date');
         if (incData) incomeEntries = incData;
-      } catch(e) { incomeEntries = []; }
+      } catch(e) { incomeEntries = []; console.error('Load income error:', e); }
     }
 
     // ===== NAVIGATION =====
