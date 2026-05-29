@@ -2097,12 +2097,32 @@
 
     .pricing-row {
       display: grid;
-      grid-template-columns: 1fr 160px 40px;
-      gap: 12px;
+      grid-template-columns: 1fr 80px 100px 80px 110px 40px;
+      gap: 8px;
       align-items: center;
       margin-bottom: 8px;
     }
     .pricing-row .form-input { margin: 0; }
+    .pricing-header {
+      display: grid;
+      grid-template-columns: 1fr 80px 100px 80px 110px 40px;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .pricing-header span {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .pricing-row .line-total {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: right;
+      padding-right: 4px;
+    }
     .pricing-total {
       display: flex;
       justify-content: space-between;
@@ -3000,16 +3020,30 @@
             <!-- Step 4: Pricing -->
             <div class="wizard-panel" id="wizardPanel3">
               <div class="wizard-section">
-                <h3>Prislinjer</h3>
+                <h3>Pricing</h3>
+                <div class="pricing-header">
+                  <span>Description</span>
+                  <span>Qty</span>
+                  <span>Unit price</span>
+                  <span>Months</span>
+                  <span style="text-align:right;">Line total</span>
+                  <span></span>
+                </div>
                 <div id="pricingRows">
                   <div class="pricing-row">
-                    <input type="text" class="form-input" value="Arlig lisensavgift - plattform, malinger, rapportering og support" data-pricing-desc>
-                    <input type="number" class="form-input" value="75000" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
+                    <input type="text" class="form-input" value="Platform license - monitoring, reporting and support" data-pricing-desc>
+                    <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
+                    <input type="number" class="form-input" value="6250" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
+                    <input type="number" class="form-input" value="12" min="1" data-pricing-months onchange="updatePricingTotal()">
+                    <div class="line-total" data-pricing-linetotal>75 000</div>
                     <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
                   </div>
                   <div class="pricing-row">
-                    <input type="text" class="form-input" value="One-times oppsettavgift - logotrening, presseovervaking, verifisering" data-pricing-desc>
-                    <input type="number" class="form-input" value="15000" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
+                    <input type="text" class="form-input" value="One-time setup - logo training, press monitoring, verification" data-pricing-desc>
+                    <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
+                    <input type="number" class="form-input" value="15000" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
+                    <input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()">
+                    <div class="line-total" data-pricing-linetotal>15 000</div>
                     <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
                   </div>
                 </div>
@@ -3018,7 +3052,7 @@
                   Add price line
                 </button>
                 <div class="pricing-total">
-                  <span>Totalt forste ar (eks. MVA og reisekostnader)</span>
+                  <span>Total (excl. VAT and travel expenses)</span>
                   <span class="pricing-total-value" id="pricingTotal">90 000 NOK</span>
                 </div>
               </div>
@@ -4915,7 +4949,10 @@
         document.getElementById('pricingRows').innerHTML = d.pricing.map(p => `
           <div class="pricing-row">
             <input type="text" class="form-input" value="${escapeHtml(p.description)}" data-pricing-desc>
-            <input type="number" class="form-input" value="${p.amount}" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
+            <input type="number" class="form-input" value="${p.qty || 1}" min="1" data-pricing-qty onchange="updatePricingTotal()">
+            <input type="number" class="form-input" value="${p.unit_price || p.amount || 0}" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
+            <input type="number" class="form-input" value="${p.months || 1}" min="1" data-pricing-months onchange="updatePricingTotal()">
+            <div class="line-total" data-pricing-linetotal>${formatCurrency(p.amount || 0)}</div>
             <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
           </div>`).join('');
         updatePricingTotal();
@@ -5016,7 +5053,10 @@
       row.className = 'pricing-row';
       row.innerHTML = `
         <input type="text" class="form-input" placeholder="Description" data-pricing-desc>
-        <input type="number" class="form-input" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
+        <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
+        <input type="number" class="form-input" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
+        <input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()">
+        <div class="line-total" data-pricing-linetotal>0</div>
         <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>`;
       container.appendChild(row);
     }
@@ -5027,8 +5067,17 @@
     }
 
     function updatePricingTotal() {
-      const total = [...document.querySelectorAll('[data-pricing-amount]')].reduce((s, el) => s + (parseFloat(el.value) || 0), 0);
-      document.getElementById('pricingTotal').textContent = formatCurrency(total) + ' NOK';
+      let grandTotal = 0;
+      document.querySelectorAll('.pricing-row').forEach(row => {
+        const qty = parseFloat(row.querySelector('[data-pricing-qty]')?.value) || 1;
+        const unit = parseFloat(row.querySelector('[data-pricing-unit]')?.value) || 0;
+        const months = parseFloat(row.querySelector('[data-pricing-months]')?.value) || 1;
+        const lineTotal = qty * unit * months;
+        const lineTotalEl = row.querySelector('[data-pricing-linetotal]');
+        if (lineTotalEl) lineTotalEl.textContent = formatCurrency(lineTotal);
+        grandTotal += lineTotal;
+      });
+      document.getElementById('pricingTotal').textContent = formatCurrency(grandTotal) + ' NOK';
     }
 
     // Gather all wizard data
@@ -5037,7 +5086,10 @@
 
       const pricing = [...document.querySelectorAll('.pricing-row')].map(row => ({
         description: row.querySelector('[data-pricing-desc]').value,
-        amount: parseFloat(row.querySelector('[data-pricing-amount]').value) || 0
+        qty: parseFloat(row.querySelector('[data-pricing-qty]')?.value) || 1,
+        unit_price: parseFloat(row.querySelector('[data-pricing-unit]')?.value) || 0,
+        months: parseFloat(row.querySelector('[data-pricing-months]')?.value) || 1,
+        amount: (parseFloat(row.querySelector('[data-pricing-qty]')?.value) || 1) * (parseFloat(row.querySelector('[data-pricing-unit]')?.value) || 0) * (parseFloat(row.querySelector('[data-pricing-months]')?.value) || 1)
       })).filter(p => p.description);
 
       return {
@@ -5141,9 +5193,9 @@
       html += `
         <h2>3. Pris og fakturering</h2>
         <table>
-          <tr><th>Description</th><th style="text-align:right;">Amount (eks. MVA)</th></tr>
-          ${d.pricing.map(p => `<tr><td>${escapeHtml(p.description)}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.amount)} NOK</td></tr>`).join('')}
-          <tr style="font-weight:bold;"><td>TOTALT${isService ? ' FORSTE AR' : ''} (eks. reisekostnader)</td><td style="text-align:right;font-family:monospace;">${formatCurrency(totalAmount)} NOK</td></tr>
+          <tr><th>Description</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Unit price</th><th style="text-align:right;">Months</th><th style="text-align:right;">Total (excl. VAT)</th></tr>
+          ${d.pricing.map(p => `<tr><td>${escapeHtml(p.description)}</td><td style="text-align:right;font-family:monospace;">${p.qty || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.unit_price || p.amount)} NOK</td><td style="text-align:right;font-family:monospace;">${p.months || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.amount)} NOK</td></tr>`).join('')}
+          <tr style="font-weight:bold;"><td colspan="4">TOTAL${isService ? ' FIRST YEAR' : ''} (excl. travel expenses)</td><td style="text-align:right;font-family:monospace;">${formatCurrency(totalAmount)} NOK</td></tr>
         </table>
         <ul>
           <li>${isService ? 'Lisensavgiften faktureres ved oppstart og fornyes arlig ved avtalefornyelse' : 'Faktureres iht. avtalt betalingsplan'}</li>
@@ -5428,11 +5480,19 @@
       doc.rect(marginL, tableTop, contentW, 7, 'F');
       doc.setDrawColor(200, 200, 200);
       doc.rect(marginL, tableTop, contentW, 7, 'S');
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...textColor);
-      doc.text('Description', marginL + 4, tableTop + 5);
-      doc.text('Amount (eks. MVA)', pageW - marginR - 4, tableTop + 5, { align: 'right' });
+      const colDesc = marginL + 4;
+      const colQty = marginL + contentW * 0.55;
+      const colUnit = marginL + contentW * 0.65;
+      const colMon = marginL + contentW * 0.78;
+      const colTotal = pageW - marginR - 4;
+      doc.text('Description', colDesc, tableTop + 5);
+      doc.text('Qty', colQty, tableTop + 5);
+      doc.text('Unit price', colUnit, tableTop + 5);
+      doc.text('Months', colMon, tableTop + 5);
+      doc.text('Total (excl. VAT)', colTotal, tableTop + 5, { align: 'right' });
       y = tableTop + 7;
 
       const totalAmount = d.pricing.reduce((s, p) => s + p.amount, 0);
@@ -5440,17 +5500,20 @@
         doc.setDrawColor(200, 200, 200);
         doc.rect(marginL, y, contentW, 7, 'S');
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.text(p.description, marginL + 4, y + 5);
-        doc.text(formatCurrency(p.amount) + ' NOK', pageW - marginR - 4, y + 5, { align: 'right' });
+        doc.setFontSize(8);
+        doc.text(p.description, colDesc, y + 5);
+        doc.text(String(p.qty || 1), colQty, y + 5);
+        doc.text(formatCurrency(p.unit_price || p.amount) + ' NOK', colUnit, y + 5);
+        doc.text(String(p.months || 1), colMon, y + 5);
+        doc.text(formatCurrency(p.amount) + ' NOK', colTotal, y + 5, { align: 'right' });
         y += 7;
       });
 
       doc.setFillColor(240, 240, 240);
       doc.rect(marginL, y, contentW, 7, 'FD');
       doc.setFont('helvetica', 'bold');
-      doc.text('TOTALT' + (isService ? ' FORSTE AR' : '') + ' (eks. reisekostnader)', marginL + 4, y + 5);
-      doc.text(formatCurrency(totalAmount) + ' NOK', pageW - marginR - 4, y + 5, { align: 'right' });
+      doc.text('TOTAL' + (isService ? ' FIRST YEAR' : '') + ' (excl. travel)', colDesc, y + 5);
+      doc.text(formatCurrency(totalAmount) + ' NOK', colTotal, y + 5, { align: 'right' });
       y += 12;
 
       const adjustText = d.price_adjustment === '7-15' ? '7-15 % eller iht. Foocus\' gjeldende prisliste' : d.price_adjustment === 'kpi' ? 'iht. konsumprisindeksen (KPI)' : 'ingen justering';
