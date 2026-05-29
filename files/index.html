@@ -3761,16 +3761,19 @@
       }
     });
 
+    let appInitialized = false;
     async function initApp() {
+      if (appInitialized) return;
+      appInitialized = true;
       try {
         document.getElementById('authContainer').style.display = 'none';
         document.getElementById('appWrapper').classList.add('active');
         document.getElementById('userEmail').textContent = currentUser.email;
-        
+
         updateStatus('loading', 'Loading...');
         await loadAllData();
         updateStatus('connected', 'Connected');
-        
+
         setupNavigation();
         setupFilterTabs();
         setupDetailTabs();
@@ -3779,6 +3782,7 @@
       } catch (error) {
         console.error('Init error:', error);
         updateStatus('disconnected', 'Error');
+        appInitialized = false;
       }
     }
 
