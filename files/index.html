@@ -2830,7 +2830,7 @@
 
         <!-- Contract Wizard -->
         <div class="page hidden" id="page-contract-wizard">
-          <div class="back-button" onclick="navigateTo('contracts')">
+          <div class="back-button" onclick="exitWizardWithDraft()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             Back to contracts
           </div>
@@ -4849,6 +4849,30 @@
     }
 
     // ===== CONTRACT WIZARD =====
+    async function exitWizardWithDraft() {
+      // Check if there's any content worth saving
+      const data = gatherContractData();
+      const hasContent = data.title || data.client_name || data.intro_text || (data.pricing && data.pricing.length > 0 && data.pricing.some(p => p.amount > 0));
+
+      if (hasContent && !editingContractId) {
+        const save = confirm('Save as draft before leaving?');
+        if (save) {
+          try {
+            const clientId = document.getElementById('contractClientSelect').value || null;
+            const record = {
+              client_id: clientId,
+              template_type: document.querySelector('.template-option.selected')?.dataset?.template || 'service',
+              status: 'draft',
+              contract_data: data
+            };
+            const { data: saved } = await sb.from('contracts').insert(record).select().single();
+            if (saved) contracts.push(saved);
+          } catch(e) { console.error('Save draft error:', e); }
+        }
+      }
+      navigateTo('contracts');
+    }
+
     function openContractWizard(clientId = null, existingContract = null) {
       currentWizardStep = 0;
       wizardPartners = [];
