@@ -3802,10 +3802,14 @@
 
     // ===== E-SIGNING =====
     async function sendForSigning() {
-      // Save contract first
       const data = gatherContractData();
       const clientId = document.getElementById('contractClientSelect').value || null;
       const templateType = getSelectedTemplate();
+
+      // Add Foocus signature automatically
+      data.sender_signed_by = FOOCUS_INFO.contact;
+      data.sender_signed_org = FOOCUS_INFO.name;
+      data.sender_signed_at = new Date().toISOString();
 
       const contractRecord = {
         client_id: clientId,
@@ -3831,11 +3835,10 @@
         const signingUrl = `${window.location.origin}?sign=${contractId}`;
         const clientEmail = data.client_contact_email || data.billing_email || '';
 
-        // Show the signing link
         const copyResult = await navigator.clipboard.writeText(signingUrl).then(() => true).catch(() => false);
 
         alert(
-          `Contract saved and ready for signing!\n\n` +
+          `Contract signed by ${FOOCUS_INFO.contact} and ready for client signature!\n\n` +
           `Signing link:\n${signingUrl}\n\n` +
           `${copyResult ? '(Link copied to clipboard)\n\n' : ''}` +
           `Send this link to ${data.client_name || 'the client'}${clientEmail ? ' at ' + clientEmail : ''}.`
@@ -3860,11 +3863,23 @@
         if (error || !contract) throw new Error('Contract not found');
 
         if (contract.status === 'signed') {
+          const cd = contract.contract_data || {};
           document.getElementById('signingContent').innerHTML = `
             <div class="signing-success">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              <h2>Already Signed</h2>
-              <p style="color:var(--text-secondary);">This contract was signed on ${contract.contract_data?.signed_at ? new Date(contract.contract_data.signed_at).toLocaleDateString('en-GB') : 'N/A'} by ${escapeHtml(contract.contract_data?.signed_by || 'N/A')}.</p>
+              <h2>Contract Fully Signed</h2>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px;text-align:left;">
+                <div style="padding:16px;border:1px solid var(--client);border-radius:8px;">
+                  <p style="font-size:11px;color:var(--client);font-weight:600;text-transform:uppercase;margin-bottom:8px;">Supplier</p>
+                  <p style="font-weight:600;">${escapeHtml(cd.sender_signed_by || 'N/A')}</p>
+                  <p style="font-size:12px;color:var(--text-muted);">${cd.sender_signed_at ? new Date(cd.sender_signed_at).toLocaleDateString('en-GB') : ''}</p>
+                </div>
+                <div style="padding:16px;border:1px solid var(--client);border-radius:8px;">
+                  <p style="font-size:11px;color:var(--client);font-weight:600;text-transform:uppercase;margin-bottom:8px;">Client</p>
+                  <p style="font-weight:600;">${escapeHtml(cd.signed_by || 'N/A')}${cd.signed_title ? ', ' + escapeHtml(cd.signed_title) : ''}</p>
+                  <p style="font-size:12px;color:var(--text-muted);">${cd.signed_at ? new Date(cd.signed_at).toLocaleDateString('en-GB') : ''}</p>
+                </div>
+              </div>
             </div>`;
           return true;
         }
@@ -3891,19 +3906,40 @@
             ${d.period_months ? `<p style="margin-top:12px;font-size:13px;color:var(--text-secondary);">Period: ${d.period_months} months from ${d.start_date || 'signing date'}</p>` : ''}
           </div>
 
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+            <div style="background:var(--bg-card);border:1px solid var(--client);border-radius:var(--radius);padding:24px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="width:20px;height:20px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <h3 style="margin:0;color:var(--client);">Signed by Supplier</h3>
+              </div>
+              <p style="font-size:14px;font-weight:600;margin-bottom:4px;">${escapeHtml(d.sender_signed_by || 'Glenn Myklebust, CEO')}</p>
+              <p style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">${escapeHtml(d.sender_signed_org || 'Foocus AS')}</p>
+              <p style="font-size:12px;color:var(--text-muted);">${d.sender_signed_at ? new Date(d.sender_signed_at).toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'}) : ''}</p>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="width:20px;height:20px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                <h3 style="margin:0;">Awaiting Your Signature</h3>
+              </div>
+              <p style="font-size:13px;color:var(--text-muted);">Please review the contract above and sign below.</p>
+            </div>
+          </div>
+
           <div class="signing-form" id="signingForm">
             <h3>Sign this Contract</h3>
-            <div class="form-group">
-              <label class="form-label">Full Name</label>
-              <input type="text" class="form-input" id="signerName" placeholder="Enter your full name">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Title / Position</label>
-              <input type="text" class="form-input" id="signerTitle" placeholder="e.g. CEO, Marketing Director">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" id="signerName" placeholder="Enter your full name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Title / Position</label>
+                <input type="text" class="form-input" id="signerTitle" placeholder="e.g. CEO, Marketing Director">
+              </div>
             </div>
             <label class="signing-checkbox">
               <input type="checkbox" id="signerAgree">
-              I have read and agree to the terms of this contract on behalf of ${escapeHtml(d.client_name || 'my organization')}.
+              I have read and agree to the terms of this contract on behalf of <strong>${escapeHtml(d.client_name || 'my organization')}</strong>.
             </label>
             <button class="btn btn-primary" onclick="submitSignature('${contractId}')" style="width:100%;padding:14px;font-size:15px;background:#10b981;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="m5 12 5 5L20 7"/></svg>
