@@ -2484,14 +2484,14 @@
 
       <!-- New Password Form (after reset link) -->
       <div id="newPasswordForm" style="display: none;">
-        <h2 class="auth-title">Nytt passord</h2>
-        <p class="auth-subtitle">Velg et nytt passord for kontoen din</p>
+        <h2 class="auth-title">New Password</h2>
+        <p class="auth-subtitle">Choose a new password for your account</p>
         <div class="auth-error" id="newPasswordError"></div>
         <div class="auth-error" id="newPasswordSuccess" style="background:var(--client-bg);color:var(--client);"></div>
         <form class="auth-form" onsubmit="handleSetNewPassword(event)">
-          <input type="password" class="auth-input" id="newPassword" placeholder="Nytt passord (min 6 tegn)" required minlength="6">
-          <input type="password" class="auth-input" id="newPasswordConfirm" placeholder="Bekreft nytt passord" required minlength="6">
-          <button type="submit" class="auth-btn" id="newPasswordBtn">Oppdater passord</button>
+          <input type="password" class="auth-input" id="newPassword" placeholder="New Password (min 6 tegn)" required minlength="6">
+          <input type="password" class="auth-input" id="newPasswordConfirm" placeholder="Confirm new password" required minlength="6">
+          <button type="submit" class="auth-btn" id="newPasswordBtn">Update Password</button>
         </form>
       </div>
     </div>
@@ -2551,7 +2551,7 @@
           </div>
           <div class="nav-item" data-page="contracts">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg>
-            Avtaler
+            Contracts
           </div>
           <div class="nav-divider"></div>
           <div class="nav-item" data-page="forecast">
@@ -2708,7 +2708,7 @@
           <div class="page-header">
             <div>
               <h2 class="page-title">Cash Flow</h2>
-              <p class="page-subtitle">Inntekter, kostnader og cashflow-prognose</p>
+              <p class="page-subtitle">Revenue, expenses and cash flow forecast</p>
             </div>
             <div class="granularity-toggle" id="granularityToggle">
               <button class="granularity-btn" data-gran="day">Dag</button>
@@ -2729,14 +2729,14 @@
 
             <div class="forecast-inputs">
               <div class="forecast-card">
-                <h3>Banksaldo</h3>
+                <h3>Bank Balance</h3>
                 <div class="form-group">
-                  <label class="form-label">Navaerende cash / banksaldo (NOK)</label>
+                  <label class="form-label">Current cash / bank balance (NOK)</label>
                   <input type="number" class="form-input" id="forecastCash" placeholder="1000000" style="font-family:'JetBrains Mono',monospace;" onchange="saveFinancials()">
                 </div>
               </div>
               <div class="forecast-card">
-                <h3>Hurtigvisning</h3>
+                <h3>Quick Stats</h3>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="cashflowQuickStats"></div>
               </div>
             </div>
@@ -2744,36 +2744,36 @@
             <!-- Costs & Income Tabs -->
             <div class="forecast-card" style="margin-bottom:24px;">
               <div class="cashflow-tabs">
-                <button class="cashflow-tab active" onclick="switchCashflowTab('costs')">Kostnader</button>
-                <button class="cashflow-tab" onclick="switchCashflowTab('income')">Innkommende inntekter</button>
+                <button class="cashflow-tab active" onclick="switchCashflowTab('costs')">Expenses</button>
+                <button class="cashflow-tab" onclick="switchCashflowTab('income')">Incoming Revenue</button>
                 <button class="cashflow-tab" onclick="switchCashflowTab('pipeline')">Pipeline</button>
               </div>
 
               <!-- Costs Section -->
               <div class="cashflow-section active" id="cashflowCosts">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                  <p style="font-size:12px;color:var(--text-muted);">Faste og engangs-kostnader med forfallsdatoer</p>
+                  <p style="font-size:12px;color:var(--text-muted);">Recurring and one-time expenses with due dates</p>
                   <button class="btn btn-primary" onclick="openCostModal()" style="padding:6px 14px;font-size:12px;">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                    Legg til kostnad
+                    Add Expense
                   </button>
                 </div>
                 <div id="costsTableContainer">
-                  <div class="empty-costs">Ingen kostnader lagt til enna. Klikk "Legg til kostnad" for a starte.</div>
+                  <div class="empty-costs">No expenses added yet. Click "Add Expense" to get started.</div>
                 </div>
               </div>
 
               <!-- Income Section -->
               <div class="cashflow-section" id="cashflowIncome">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                  <p style="font-size:12px;color:var(--text-muted);">Forventede innbetalinger og fakturaer</p>
+                  <p style="font-size:12px;color:var(--text-muted);">Expected payments and invoices</p>
                   <button class="btn btn-primary" onclick="openIncomeModal()" style="padding:6px 14px;font-size:12px;">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                    Legg til inntekt
+                    Add Income
                   </button>
                 </div>
                 <div id="incomeTableContainer">
-                  <div class="empty-costs">Ingen inntekter lagt til enna.</div>
+                  <div class="empty-costs">No income entries added yet.</div>
                 </div>
               </div>
 
@@ -2789,8 +2789,8 @@
         <div class="page hidden" id="page-contracts">
           <div class="page-header">
             <div>
-              <h2 class="page-title">Avtaler</h2>
-              <p class="page-subtitle">Kontrakter og avtaler med kunder og prospekter</p>
+              <h2 class="page-title">Contracts</h2>
+              <p class="page-subtitle">Contracts and agreements with clients and prospects</p>
             </div>
             <button class="btn btn-primary" onclick="openContractWizard()">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
@@ -2827,7 +2827,7 @@
               <button class="wizard-step" data-wizard-step="1"><span class="wizard-step-num">2</span> Innhold</button>
               <button class="wizard-step" data-wizard-step="2"><span class="wizard-step-num">3</span> Leveranser</button>
               <button class="wizard-step" data-wizard-step="3"><span class="wizard-step-num">4</span> Pris</button>
-              <button class="wizard-step" data-wizard-step="4"><span class="wizard-step-num">5</span> Periode</button>
+              <button class="wizard-step" data-wizard-step="4"><span class="wizard-step-num">5</span> Period</button>
               <button class="wizard-step" data-wizard-step="5"><span class="wizard-step-num">6</span> Forhandsvisning</button>
             </div>
 
@@ -2840,7 +2840,7 @@
                     <input type="radio" name="contractTemplate" value="service" checked style="display:none">
                     <div>
                       <div style="font-weight:600;">Tjenesteavtale</div>
-                      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Lopende malinger, rapportering og support</div>
+                      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Ongoing malinger, rapportering og support</div>
                     </div>
                   </label>
                   <label class="checkbox-item" onclick="selectTemplate('project', this)">
@@ -2906,7 +2906,7 @@
             <div class="wizard-panel" id="wizardPanel1">
               <div class="wizard-section" id="wizardPartnersSection">
                 <h3>Partnere / logoer som skal males</h3>
-                <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Legg til partnere som er inkludert i avtalen. Trykk Enter for a legge til.</p>
+                <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Add partners included in the agreement. Press Enter to add.</p>
                 <div class="tag-input-container" id="partnersTagContainer">
                   <input type="text" class="tag-input" id="partnerInput" placeholder="Skriv partnernavn og trykk Enter..." onkeydown="handlePartnerTag(event)">
                 </div>
@@ -2956,7 +2956,7 @@
                 <div class="checkbox-grid">
                   <label class="checkbox-item selected"><input type="checkbox" value="dashboard" checked onchange="toggleCheckboxItem(this)"> Dashboard med ubegrenset antall brukere</label>
                   <label class="checkbox-item selected"><input type="checkbox" value="reporting" checked onchange="toggleCheckboxItem(this)"> Automatisert rapportering per partner og samlet</label>
-                  <label class="checkbox-item selected"><input type="checkbox" value="support" checked onchange="toggleCheckboxItem(this)"> Lopende support</label>
+                  <label class="checkbox-item selected"><input type="checkbox" value="support" checked onchange="toggleCheckboxItem(this)"> Ongoing support</label>
                   <label class="checkbox-item selected"><input type="checkbox" value="onboarding" checked onchange="toggleCheckboxItem(this)"> Onboarding og opplaring</label>
                   <label class="checkbox-item selected"><input type="checkbox" value="analysis" checked onchange="toggleCheckboxItem(this)"> Arsanalyse med gjennomgang og anbefalinger</label>
                 </div>
@@ -2972,7 +2972,7 @@
                   <div class="form-group">
                     <label class="form-label">Inkludert strategidag(er)</label>
                     <select class="form-input form-select" id="contractStrategyDays">
-                      <option value="0">Ingen</option>
+                      <option value="0">None</option>
                       <option value="1" selected>1 strategidag</option>
                       <option value="2">2 strategidager</option>
                       <option value="3">3 strategidager</option>
@@ -3004,18 +3004,18 @@
                 <div id="pricingRows">
                   <div class="pricing-row">
                     <input type="text" class="form-input" value="Arlig lisensavgift - plattform, malinger, rapportering og support" data-pricing-desc>
-                    <input type="number" class="form-input" value="75000" placeholder="Belop" data-pricing-amount onchange="updatePricingTotal()">
+                    <input type="number" class="form-input" value="75000" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
                     <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
                   </div>
                   <div class="pricing-row">
-                    <input type="text" class="form-input" value="Engangs oppsettavgift - logotrening, presseovervaking, verifisering" data-pricing-desc>
-                    <input type="number" class="form-input" value="15000" placeholder="Belop" data-pricing-amount onchange="updatePricingTotal()">
+                    <input type="text" class="form-input" value="One-times oppsettavgift - logotrening, presseovervaking, verifisering" data-pricing-desc>
+                    <input type="number" class="form-input" value="15000" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
                     <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
                   </div>
                 </div>
                 <button class="btn btn-secondary" onclick="addPricingRow()" style="margin-top:12px;">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                  Legg til prislinje
+                  Add price line
                 </button>
                 <div class="pricing-total">
                   <span>Totalt forste ar (eks. MVA og reisekostnader)</span>
@@ -3027,7 +3027,7 @@
                 <h3>Faktureringsvilkar</h3>
                 <div class="form-row">
                   <div class="form-group">
-                    <label class="form-label">Forfallsdager</label>
+                    <label class="form-label">Due Dayer</label>
                     <input type="number" class="form-input" id="contractPaymentDays" value="10" min="1">
                   </div>
                   <div class="form-group">
@@ -3035,7 +3035,7 @@
                     <select class="form-input form-select" id="contractPriceAdjustment">
                       <option value="7-15">7-15 % eller iht. prisliste</option>
                       <option value="kpi">Iht. konsumprisindeksen (KPI)</option>
-                      <option value="fixed">Ingen justering</option>
+                      <option value="fixed">No adjustment</option>
                     </select>
                   </div>
                 </div>
@@ -3053,16 +3053,16 @@
                 <h3>Avtaleperiode</h3>
                 <div class="form-row">
                   <div class="form-group">
-                    <label class="form-label">Startdato</label>
+                    <label class="form-label">Start date</label>
                     <input type="date" class="form-input" id="contractStartDate">
                   </div>
                   <div class="form-group">
                     <label class="form-label">Varighet</label>
                     <select class="form-input form-select" id="contractDuration">
-                      <option value="6">6 maneder</option>
-                      <option value="12" selected>12 maneder</option>
-                      <option value="24">24 maneder</option>
-                      <option value="36">36 maneder</option>
+                      <option value="6">6 months</option>
+                      <option value="12" selected>12 months</option>
+                      <option value="24">24 months</option>
+                      <option value="36">36 months</option>
                     </select>
                   </div>
                 </div>
@@ -3109,7 +3109,7 @@
                 <div style="display:flex;gap:12px;">
                   <button class="btn btn-secondary" onclick="saveContractDraft()">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                    Lagre utkast
+                    Save utkast
                   </button>
                   <button class="btn btn-primary" onclick="generateContractPDF()">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
@@ -3199,7 +3199,7 @@
           <div class="detail-header" id="detailHeader"></div>
           <div class="tabs">
             <button class="tab active" data-tab="tasks">Tasks</button>
-            <button class="tab" data-tab="contracts">Avtaler</button>
+            <button class="tab" data-tab="contracts">Contracts</button>
             <button class="tab" data-tab="documents">Documents</button>
             <button class="tab" data-tab="notes">Notes</button>
           </div>
@@ -3256,7 +3256,7 @@
             <div class="form-group">
               <label class="form-label">Billing-frekvens</label>
               <select class="form-input form-select" id="clientBillingFreq">
-                <option value="monthly">Manedlig</option>
+                <option value="monthly">Monthly</option>
                 <option value="quarterly">Kvartalsvis</option>
                 <option value="semi_annual">Halvarlig</option>
                 <option value="annual" selected>Arlig</option>
@@ -3368,7 +3368,7 @@
   <div class="modal-overlay" id="costModal">
     <div class="modal" style="max-width: 520px;">
       <div class="modal-header">
-        <h3 class="modal-title" id="costModalTitle">Legg til kostnad</h3>
+        <h3 class="modal-title" id="costModalTitle">Add Expense</h3>
         <button class="modal-close" onclick="closeModal('costModal')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
@@ -3376,32 +3376,32 @@
       <div class="modal-body">
         <input type="hidden" id="costEditId">
         <div class="form-group">
-          <label class="form-label">Navn</label>
-          <input type="text" class="form-input" id="costName" placeholder="f.eks. Amazon Web Services, DigitalOcean">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-input" id="costName" placeholder="e.g. Amazon Web Services, DigitalOcean">
         </div>
         <div class="form-group">
-          <label class="form-label">Belop (NOK)</label>
+          <label class="form-label">Amount (NOK)</label>
           <input type="number" class="form-input" id="costAmount" placeholder="5200" style="font-family:'JetBrains Mono',monospace;">
         </div>
         <div class="form-group">
           <label class="form-label">Type</label>
           <select class="form-input" id="costType" onchange="toggleCostFields()">
-            <option value="recurring">Repeterende (fast kostnad)</option>
-            <option value="one_time">Engangskostnad</option>
+            <option value="recurring">Recurring (fixed expense)</option>
+            <option value="one_time">One-time expense</option>
           </select>
         </div>
         <div id="costRecurringFields">
           <div class="form-group">
-            <label class="form-label">Forfallsdag i maneden (1-31)</label>
+            <label class="form-label">Due day of month (1-31)</label>
             <input type="number" class="form-input" id="costDayOfMonth" min="1" max="31" placeholder="25">
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div class="form-group">
-              <label class="form-label">Startdato</label>
+              <label class="form-label">Start date</label>
               <input type="date" class="form-input" id="costStartDate">
             </div>
             <div class="form-group">
-              <label class="form-label">Sluttdato (valgfritt)</label>
+              <label class="form-label">End date (optional)</label>
               <input type="date" class="form-input" id="costEndDate">
             </div>
           </div>
@@ -3413,24 +3413,24 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Kategori (valgfritt)</label>
-          <input type="text" class="form-input" id="costCategory" placeholder="f.eks. Infrastruktur, Kontor, Lon">
+          <label class="form-label">Category (optional)</label>
+          <input type="text" class="form-input" id="costCategory" placeholder="e.g. Infrastructure, Office, Salary">
         </div>
         <div class="form-group">
-          <label class="form-label">Notat (valgfritt)</label>
+          <label class="form-label">Note (optional)</label>
           <input type="text" class="form-input" id="costNotes" placeholder="">
         </div>
         <div id="costOverridesSection" style="display:none;">
           <div class="form-group">
-            <label class="form-label">Overstyr belop per maned (valgfritt)</label>
-            <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">La sta tomt for a bruke standardbelop. Fyll inn for a overstyre enkeltmaneder.</p>
+            <label class="form-label">Override amount per month (optional)</label>
+            <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Leave empty to use default amount. Fill in to override specific months.</p>
             <div class="override-grid" id="costMonthOverrides"></div>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('costModal')">Avbryt</button>
-        <button class="btn btn-primary" onclick="saveCost()">Lagre</button>
+        <button class="btn btn-secondary" onclick="closeModal('costModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveCost()">Save</button>
       </div>
     </div>
   </div>
@@ -3439,7 +3439,7 @@
   <div class="modal-overlay" id="incomeModal">
     <div class="modal" style="max-width: 520px;">
       <div class="modal-header">
-        <h3 class="modal-title" id="incomeModalTitle">Legg til inntekt</h3>
+        <h3 class="modal-title" id="incomeModalTitle">Add Income</h3>
         <button class="modal-close" onclick="closeModal('incomeModal')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
@@ -3447,42 +3447,42 @@
       <div class="modal-body">
         <input type="hidden" id="incomeEditId">
         <div class="form-group">
-          <label class="form-label">Beskrivelse</label>
-          <input type="text" class="form-input" id="incomeDescription" placeholder="f.eks. Faktura #1024 - Bedrift AS">
+          <label class="form-label">Description</label>
+          <input type="text" class="form-input" id="incomeDescription" placeholder="e.g. Invoice #1024 - Company AS">
         </div>
         <div class="form-group">
-          <label class="form-label">Belop (NOK)</label>
+          <label class="form-label">Amount (NOK)</label>
           <input type="number" class="form-input" id="incomeAmount" placeholder="45000" style="font-family:'JetBrains Mono',monospace;">
         </div>
         <div class="form-group">
-          <label class="form-label">Kunde (valgfritt)</label>
+          <label class="form-label">Client (optional)</label>
           <select class="form-input" id="incomeClientId">
-            <option value="">Ingen kunde</option>
+            <option value="">No client</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Forfallsdato</label>
+          <label class="form-label">Due date</label>
           <input type="date" class="form-input" id="incomeDueDate">
         </div>
         <div class="form-group">
           <label class="form-label">Status</label>
           <select class="form-input" id="incomeStatus">
-            <option value="pending">Venter</option>
-            <option value="paid">Betalt</option>
-            <option value="overdue">Forfalt</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="overdue">Overdue</option>
           </select>
         </div>
         <div class="form-group">
           <label class="form-label">Type</label>
           <select class="form-input" id="incomeType">
-            <option value="one_time">Engangsfaktura</option>
-            <option value="recurring">Repeterende</option>
+            <option value="one_time">One-time invoice</option>
+            <option value="recurring">Recurring</option>
           </select>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal('incomeModal')">Avbryt</button>
-        <button class="btn btn-primary" onclick="saveIncome()">Lagre</button>
+        <button class="btn btn-secondary" onclick="closeModal('incomeModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveIncome()">Save</button>
       </div>
     </div>
   </div>
@@ -3578,26 +3578,26 @@
       successEl.classList.remove('show');
 
       if (pw !== pw2) {
-        errorEl.textContent = 'Passordene matcher ikke.';
+        errorEl.textContent = 'Passwords do not match.';
         errorEl.classList.add('show');
         return;
       }
 
       btn.disabled = true;
-      btn.textContent = 'Oppdaterer...';
+      btn.textContent = 'Updating...';
 
       try {
         const { error } = await sb.auth.updateUser({ password: pw });
         if (error) throw error;
-        successEl.textContent = 'Passord oppdatert! Logger inn...';
+        successEl.textContent = 'Password updated! Signing in...';
         successEl.classList.add('show');
         setTimeout(() => { window.location.href = window.location.origin; }, 1500);
       } catch (error) {
-        errorEl.textContent = error.message || 'Kunne ikke oppdatere passord.';
+        errorEl.textContent = error.message || 'Could not update password.';
         errorEl.classList.add('show');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Oppdater passord';
+        btn.textContent = 'Update Password';
       }
     }
 
@@ -4664,7 +4664,7 @@
     const DELIVERABLE_LABELS = {
       dashboard: 'Eget dashboard med ubegrenset antall brukere',
       reporting: 'Automatisert rapportering per partner og samlet',
-      support: 'Lopende support', onboarding: 'Onboarding og opplaring',
+      support: 'Ongoing support', onboarding: 'Onboarding og opplaring',
       analysis: 'Arsanalyse med gjennomgang og anbefalinger fra Foocus-analytiker'
     };
 
@@ -4687,7 +4687,7 @@
       }
 
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><h3>Ingen avtaler</h3><p>Opprett din forste avtale for a komme i gang.</p><button class="btn btn-primary" onclick="openContractWizard()">Ny avtale</button></div>`;
+        list.innerHTML = `<div class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><h3>None avtaler</h3><p>Opprett din forste avtale for a komme i gang.</p><button class="btn btn-primary" onclick="openContractWizard()">Ny avtale</button></div>`;
         return;
       }
 
@@ -4714,7 +4714,7 @@
             <div class="contract-item-actions">
               <span class="contract-status ${c.status}">${STATUS_LABELS[c.status] || c.status}</span>
               <button class="task-action" onclick="editContract('${c.id}', event)" title="Rediger"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
-              <button class="task-action delete" onclick="confirmDeleteContract('${c.id}', event)" title="Slett"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg></button>
+              <button class="task-action delete" onclick="confirmDeleteContract('${c.id}', event)" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg></button>
             </div>
           </div>`;
       }).join('');
@@ -4734,14 +4734,14 @@
       const clientContracts = contracts.filter(c => c.client_id === client.id);
       document.getElementById('tab-contracts').innerHTML = `
         <div class="section-header">
-          <span class="section-title">Avtaler (${clientContracts.length})</span>
+          <span class="section-title">Contracts (${clientContracts.length})</span>
           <button class="btn btn-secondary" onclick="openContractWizard('${client.id}')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
             Ny avtale
           </button>
         </div>
         <div class="contracts-list">
-          ${clientContracts.length === 0 ? '<p style="color:var(--text-muted);padding:20px;">Ingen avtaler enna.</p>' :
+          ${clientContracts.length === 0 ? '<p style="color:var(--text-muted);padding:20px;">No contracts yet.</p>' :
             clientContracts.map(c => {
               const data = c.contract_data || {};
               const templateLabel = c.template_type === 'service' ? 'Tjenesteavtale' : 'Prosjektavtale';
@@ -4780,7 +4780,7 @@
 
     function confirmDeleteContract(contractId, event) {
       if (event) event.stopPropagation();
-      document.getElementById('deleteMessage').textContent = 'Slette denne avtalen?';
+      document.getElementById('deleteMessage').textContent = 'Deletee denne avtalen?';
       document.getElementById('confirmDeleteBtn').onclick = () => deleteContract(contractId);
       openModal('deleteModal');
     }
@@ -4868,12 +4868,12 @@
       document.getElementById('pricingRows').innerHTML = `
         <div class="pricing-row">
           <input type="text" class="form-input" value="Arlig lisensavgift - plattform, malinger, rapportering og support" data-pricing-desc>
-          <input type="number" class="form-input" value="75000" placeholder="Belop" data-pricing-amount onchange="updatePricingTotal()">
+          <input type="number" class="form-input" value="75000" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
           <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
         </div>
         <div class="pricing-row">
-          <input type="text" class="form-input" value="Engangs oppsettavgift - logotrening, presseovervaking, verifisering" data-pricing-desc>
-          <input type="number" class="form-input" value="15000" placeholder="Belop" data-pricing-amount onchange="updatePricingTotal()">
+          <input type="text" class="form-input" value="One-times oppsettavgift - logotrening, presseovervaking, verifisering" data-pricing-desc>
+          <input type="number" class="form-input" value="15000" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
           <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
         </div>`;
       updatePricingTotal();
@@ -4915,7 +4915,7 @@
         document.getElementById('pricingRows').innerHTML = d.pricing.map(p => `
           <div class="pricing-row">
             <input type="text" class="form-input" value="${escapeHtml(p.description)}" data-pricing-desc>
-            <input type="number" class="form-input" value="${p.amount}" placeholder="Belop" data-pricing-amount onchange="updatePricingTotal()">
+            <input type="number" class="form-input" value="${p.amount}" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
             <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
           </div>`).join('');
         updatePricingTotal();
@@ -5015,8 +5015,8 @@
       const row = document.createElement('div');
       row.className = 'pricing-row';
       row.innerHTML = `
-        <input type="text" class="form-input" placeholder="Beskrivelse" data-pricing-desc>
-        <input type="number" class="form-input" placeholder="Belop" data-pricing-amount onchange="updatePricingTotal()">
+        <input type="text" class="form-input" placeholder="Description" data-pricing-desc>
+        <input type="number" class="form-input" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
         <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>`;
       container.appendChild(row);
     }
@@ -5120,7 +5120,7 @@
         <p>Lisensavgiften inkluderer lopende support knyttet til bruk av Foocus-plattformen${d.strategy_days > 0 ? `, samt ${d.strategy_days} strategidag${d.strategy_days > 1 ? 'er' : ''} i lopet av forste avtalear` : ''}.</p>
         <p><strong>Support inkludert i lisensen:</strong></p>
         <ul>
-          <li>Lopende e-post- og telefonsupport pa hverdager</li>
+          <li>Ongoing e-post- og telefonsupport pa hverdager</li>
           <li>Veiledning i bruk av dashboard og rapportfunksjoner</li>
           <li>Opplaring av nye brukere</li>
           <li>Inntil ${d.support_hours_per_quarter} timer per kvartal med support og radgivning</li>
@@ -5141,7 +5141,7 @@
       html += `
         <h2>3. Pris og fakturering</h2>
         <table>
-          <tr><th>Beskrivelse</th><th style="text-align:right;">Belop (eks. MVA)</th></tr>
+          <tr><th>Description</th><th style="text-align:right;">Amount (eks. MVA)</th></tr>
           ${d.pricing.map(p => `<tr><td>${escapeHtml(p.description)}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.amount)} NOK</td></tr>`).join('')}
           <tr style="font-weight:bold;"><td>TOTALT${isService ? ' FORSTE AR' : ''} (eks. reisekostnader)</td><td style="text-align:right;font-family:monospace;">${formatCurrency(totalAmount)} NOK</td></tr>
         </table>
@@ -5153,8 +5153,8 @@
 
         <h2>4. Avtaleperiode og oppsigelse</h2>
         <ul>
-          <li>Avtaleperioden er ${d.period_months} maneder fra ${d.start_date ? new Date(d.start_date).toLocaleDateString('nb-NO') : 'signaturdato'}</li>
-          ${d.auto_renewal ? `<li>Avtalen fornyes automatisk med ny ${d.period_months}-manedersperiode med mindre den sies opp skriftlig senest ${d.notice_days} dager for utlop</li>` : `<li>Avtalen utloper ved periodens slutt uten automatisk fornyelse</li>`}
+          <li>Avtaleperioden er ${d.period_months} months fra ${d.start_date ? new Date(d.start_date).toLocaleDateString('nb-NO') : 'signaturdato'}</li>
+          ${d.auto_renewal ? `<li>Avtalen fornyes automatisk med ny ${d.period_months}-monthssperiode med mindre den sies opp skriftlig senest ${d.notice_days} dager for utlop</li>` : `<li>Avtalen utloper ved periodens slutt uten automatisk fornyelse</li>`}
           <li>Oppsigelse sendes til kontaktpersonene oppfort i punkt 1</li>
         </ul>
 
@@ -5397,7 +5397,7 @@
         addParagraph('Lisensavgiften inkluderer lopende support knyttet til bruk av Foocus-plattformen' + (d.strategy_days > 0 ? ', samt ' + d.strategy_days + ' strategidag' + (d.strategy_days > 1 ? 'er' : '') + ' i lopet av forste avtalear.' : '.'));
 
         addBoldLabel('Support inkludert i lisensen:');
-        addBullet('Lopende e-post- og telefonsupport pa hverdager');
+        addBullet('Ongoing e-post- og telefonsupport pa hverdager');
         addBullet('Veiledning i bruk av dashboard og rapportfunksjoner');
         addBullet('Opplaring av nye brukere');
         addBullet('Inntil ' + d.support_hours_per_quarter + ' timer per kvartal med support og radgivning');
@@ -5431,8 +5431,8 @@
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...textColor);
-      doc.text('Beskrivelse', marginL + 4, tableTop + 5);
-      doc.text('Belop (eks. MVA)', pageW - marginR - 4, tableTop + 5, { align: 'right' });
+      doc.text('Description', marginL + 4, tableTop + 5);
+      doc.text('Amount (eks. MVA)', pageW - marginR - 4, tableTop + 5, { align: 'right' });
       y = tableTop + 7;
 
       const totalAmount = d.pricing.reduce((s, p) => s + p.amount, 0);
@@ -5461,9 +5461,9 @@
 
       // 4. Period
       addTitle('4. Avtaleperiode og oppsigelse');
-      addBullet('Avtaleperioden er ' + d.period_months + ' maneder fra ' + (d.start_date ? new Date(d.start_date).toLocaleDateString('nb-NO') : 'signaturdato'));
+      addBullet('Avtaleperioden er ' + d.period_months + ' months fra ' + (d.start_date ? new Date(d.start_date).toLocaleDateString('nb-NO') : 'signaturdato'));
       if (d.auto_renewal) {
-        addBullet('Avtalen fornyes automatisk med ny ' + d.period_months + '-manedersperiode med mindre den sies opp skriftlig senest ' + d.notice_days + ' dager for utlop');
+        addBullet('Avtalen fornyes automatisk med ny ' + d.period_months + '-monthssperiode med mindre den sies opp skriftlig senest ' + d.notice_days + ' dager for utlop');
       } else {
         addBullet('Avtalen utloper ved periodens slutt uten automatisk fornyelse');
       }
@@ -5768,24 +5768,24 @@
 
       document.getElementById('forecastKPIs').innerHTML = `
         <div class="forecast-kpi green">
-          <div class="forecast-kpi-label">MRR (eksisterende)</div>
+          <div class="forecast-kpi-label">MRR (existing)</div>
           <div class="forecast-kpi-value">${formatCurrency(monthlyRevExisting)}</div>
-          <div class="forecast-kpi-sub">NOK / maned</div>
+          <div class="forecast-kpi-sub">NOK / month</div>
         </div>
         <div class="forecast-kpi blue">
-          <div class="forecast-kpi-label">MRR (vektet total)</div>
+          <div class="forecast-kpi-label">MRR (weighted total)</div>
           <div class="forecast-kpi-value">${formatCurrency(monthlyRevTotal)}</div>
-          <div class="forecast-kpi-sub">inkl. pipeline</div>
+          <div class="forecast-kpi-sub">incl. pipeline</div>
         </div>
         <div class="forecast-kpi red">
-          <div class="forecast-kpi-label">Faste kostnader</div>
+          <div class="forecast-kpi-label">Fixed Expenses</div>
           <div class="forecast-kpi-value">${formatCurrency(monthlyCosts)}</div>
-          <div class="forecast-kpi-sub">NOK / maned</div>
+          <div class="forecast-kpi-sub">NOK / month</div>
         </div>
         <div class="forecast-kpi ${netMonthly >= 0 ? 'green' : 'amber'}">
-          <div class="forecast-kpi-label">Netto cashflow</div>
+          <div class="forecast-kpi-label">Net Cash Flow</div>
           <div class="forecast-kpi-value">${netMonthly >= 0 ? '+' : ''}${formatCurrency(netMonthly)}</div>
-          <div class="forecast-kpi-sub">NOK / maned</div>
+          <div class="forecast-kpi-sub">NOK / month</div>
         </div>`;
 
       // Quick stats
@@ -5795,26 +5795,26 @@
           <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${runway > 99 ? '99+' : runway} mnd</div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Antall kostnader</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Total Expenses</div>
           <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${costs.length}</div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Ventende inntekter</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Pending Income</div>
           <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${formatCurrency(incomeEntries.filter(i => i.status === 'pending').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0))}</div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Visning</div>
-          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${{day:'Daglig',week:'Ukentlig',month:'Manedlig',quarter:'Kvartal',year:'Arlig'}[forecastGranularity]}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">View</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${{day:'Daily',week:'Weekly',month:'Monthly',quarter:'Kvartal',year:'Arlig'}[forecastGranularity]}</div>
         </div>`;
 
       // Legend
       document.getElementById('forecastLegend').innerHTML = `
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#10b981;"></div> Eksisterende kunder</div>
+        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#10b981;"></div> Existing Clients</div>
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#34d399;"></div> Near Closing</div>
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#f59e0b;"></div> In Negotiation</div>
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#c084fc;"></div> Leads</div>
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#22d3ee;"></div> Innbetalinger</div>
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#ef4444;"></div> Kostnader</div>
+        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#22d3ee;"></div> Payments</div>
+        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#ef4444;"></div> Expenses</div>
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#3b82f6;border-radius:50%;"></div> Cash</div>`;
 
       // Render chart
@@ -5830,12 +5830,12 @@
         data: {
           labels: periods.map(p => p.label),
           datasets: [
-            { label: 'Eksisterende kunder', data: dataExisting, backgroundColor: '#10b981', stack: 'revenue', order: 6 },
+            { label: 'Existing Clients', data: dataExisting, backgroundColor: '#10b981', stack: 'revenue', order: 6 },
             { label: 'Near Closing', data: dataNearClosing, backgroundColor: '#34d399', stack: 'revenue', order: 5 },
             { label: 'In Negotiation', data: dataNegotiation, backgroundColor: '#f59e0b', stack: 'revenue', order: 4 },
             { label: 'Leads', data: dataLeads, backgroundColor: '#c084fc', stack: 'revenue', order: 3 },
-            { label: 'Innbetalinger', data: incomeData, backgroundColor: '#22d3ee', stack: 'revenue', order: 2 },
-            { label: 'Kostnader', data: costData.map(v => -v), backgroundColor: 'rgba(239,68,68,0.7)', stack: 'costs', order: 1 },
+            { label: 'Payments', data: incomeData, backgroundColor: '#22d3ee', stack: 'revenue', order: 2 },
+            { label: 'Expenses', data: costData.map(v => -v), backgroundColor: 'rgba(239,68,68,0.7)', stack: 'costs', order: 1 },
             { label: 'Cash', data: cashData, type: 'line', borderColor: '#3b82f6', borderWidth: 2.5, pointRadius: forecastGranularity === 'day' ? 0 : 4, pointBackgroundColor: '#3b82f6', fill: false, yAxisID: 'y2', order: 0 }
           ]
         },
@@ -5891,39 +5891,39 @@
     function renderCostsTable() {
       const container = document.getElementById('costsTableContainer');
       if (costs.length === 0) {
-        container.innerHTML = '<div class="empty-costs">Ingen kostnader lagt til enna. Klikk "Legg til kostnad" for a starte.</div>';
+        container.innerHTML = '<div class="empty-costs">No expenses added yet. Click "Add Expense" to get started.</div>';
         return;
       }
       const totalMonthly = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
       container.innerHTML = `
         <table class="costs-table">
           <thead><tr>
-            <th>Navn</th><th>Belop</th><th>Type</th><th>Forfallsdag</th><th>Periode</th><th>Kategori</th><th></th>
+            <th>Name</th><th>Amount</th><th>Type</th><th>Due Day</th><th>Period</th><th>Category</th><th></th>
           </tr></thead>
           <tbody>${costs.map(c => {
             const isRec = c.cost_type === 'recurring';
             const dateStr = isRec
-              ? `${c.day_of_month}. hver maned`
+              ? `${c.day_of_month}. every month`
               : new Date(c.one_time_date).toLocaleDateString('nb-NO');
             const periodStr = isRec
-              ? `${c.start_date ? new Date(c.start_date).toLocaleDateString('nb-NO', {month:'short',year:'2-digit'}) : 'Start'} - ${c.end_date ? new Date(c.end_date).toLocaleDateString('nb-NO', {month:'short',year:'2-digit'}) : 'Lopende'}`
+              ? `${c.start_date ? new Date(c.start_date).toLocaleDateString('nb-NO', {month:'short',year:'2-digit'}) : 'Start'} - ${c.end_date ? new Date(c.end_date).toLocaleDateString('nb-NO', {month:'short',year:'2-digit'}) : 'Ongoing'}`
               : '-';
             return `<tr>
               <td><strong>${escapeHtml(c.name)}</strong>${c.notes ? `<br><span style="font-size:11px;color:var(--text-muted);">${escapeHtml(c.notes)}</span>` : ''}</td>
               <td class="mono">${formatCurrency(c.amount)} NOK</td>
-              <td><span class="cost-type-badge ${c.cost_type}">${isRec ? 'Fast' : 'Engang'}</span></td>
+              <td><span class="cost-type-badge ${c.cost_type}">${isRec ? 'Fast' : 'One-time'}</span></td>
               <td>${dateStr}</td>
               <td style="font-size:12px;">${periodStr}</td>
               <td style="font-size:12px;color:var(--text-muted);">${escapeHtml(c.category || '')}</td>
               <td><div class="cost-actions">
-                <button class="cost-action-btn" onclick="editCost('${c.id}')">Endre</button>
-                <button class="cost-action-btn delete" onclick="deleteCost('${c.id}')">Slett</button>
+                <button class="cost-action-btn" onclick="editCost('${c.id}')">Edit</button>
+                <button class="cost-action-btn delete" onclick="deleteCost('${c.id}')">Delete</button>
               </div></td>
             </tr>`;
           }).join('')}</tbody>
         </table>
         <div style="text-align:right;padding:12px 14px;font-size:13px;border-top:1px solid var(--border);">
-          <span style="color:var(--text-muted);">Sum faste kostnader/mnd:</span>
+          <span style="color:var(--text-muted);">Total fixed expenses/month:</span>
           <strong style="font-family:'JetBrains Mono',monospace;margin-left:8px;">${formatCurrency(totalMonthly)} NOK</strong>
         </div>`;
     }
@@ -5932,14 +5932,14 @@
     function renderIncomeTable() {
       const container = document.getElementById('incomeTableContainer');
       if (incomeEntries.length === 0) {
-        container.innerHTML = '<div class="empty-costs">Ingen inntekter lagt til enna.</div>';
+        container.innerHTML = '<div class="empty-costs">No income entries added yet.</div>';
         return;
       }
-      const statusLabels = { pending: 'Venter', paid: 'Betalt', overdue: 'Forfalt' };
+      const statusLabels = { pending: 'Pending', paid: 'Paid', overdue: 'Overdue' };
       container.innerHTML = `
         <table class="costs-table">
           <thead><tr>
-            <th>Beskrivelse</th><th>Belop</th><th>Forfallsdato</th><th>Status</th><th>Type</th><th></th>
+            <th>Description</th><th>Amount</th><th>Due date</th><th>Status</th><th>Type</th><th></th>
           </tr></thead>
           <tbody>${incomeEntries.map(inc => {
             const client = clients.find(c => c.id === inc.client_id);
@@ -5948,10 +5948,10 @@
               <td class="mono">${formatCurrency(inc.amount)} NOK</td>
               <td>${new Date(inc.due_date).toLocaleDateString('nb-NO')}</td>
               <td><span class="income-type-badge ${inc.status}">${statusLabels[inc.status] || inc.status}</span></td>
-              <td style="font-size:12px;">${inc.income_type === 'recurring' ? 'Repeterende' : 'Engang'}</td>
+              <td style="font-size:12px;">${inc.income_type === 'recurring' ? 'Recurring' : 'One-time'}</td>
               <td><div class="cost-actions">
-                <button class="cost-action-btn" onclick="editIncome('${inc.id}')">Endre</button>
-                <button class="cost-action-btn delete" onclick="deleteIncome('${inc.id}')">Slett</button>
+                <button class="cost-action-btn" onclick="editIncome('${inc.id}')">Edit</button>
+                <button class="cost-action-btn delete" onclick="deleteIncome('${inc.id}')">Delete</button>
               </div></td>
             </tr>`;
           }).join('')}</tbody>
@@ -5968,7 +5968,7 @@
           return (stageOrder[a.stage] ?? 3) - (stageOrder[b.stage] ?? 3);
         });
       if (pipeline.length === 0) {
-        list.innerHTML = '<p style="color:var(--text-muted);padding:20px;text-align:center;">Ingen kunder eller prospekter enna.</p>';
+        list.innerHTML = '<p style="color:var(--text-muted);padding:20px;text-align:center;">No clients or prospects yet.</p>';
         return;
       }
       list.innerHTML = pipeline.map(c => {
@@ -5983,7 +5983,7 @@
               <div class="contract-item-title">${escapeHtml(c.name)}</div>
               <div class="contract-item-meta">
                 <span class="stage-badge ${c.stage || 'lead'}">${c.stageLabel}</span>
-                <span>${prob}% sannsynlighet</span>
+                <span>${prob}% probability</span>
                 <span style="font-family:'JetBrains Mono',monospace;">${formatCurrency(c.deal_value)} NOK/${freqLabels[freq]}</span>
                 <span style="font-family:'JetBrains Mono',monospace;">${formatCurrency(c.monthlyRev)}/mnd</span>
                 ${closeStr ? `<span>Close: ${closeStr}</span>` : ''}
@@ -6040,7 +6040,7 @@
       document.getElementById('costOneTimeDate').value = '';
       document.getElementById('costCategory').value = '';
       document.getElementById('costNotes').value = '';
-      document.getElementById('costModalTitle').textContent = 'Legg til kostnad';
+      document.getElementById('costModalTitle').textContent = 'Add Expense';
       toggleCostFields();
       renderCostMonthOverrides({});
       openModal('costModal');
@@ -6059,7 +6059,7 @@
       document.getElementById('costOneTimeDate').value = c.one_time_date || '';
       document.getElementById('costCategory').value = c.category || '';
       document.getElementById('costNotes').value = c.notes || '';
-      document.getElementById('costModalTitle').textContent = 'Endre kostnad';
+      document.getElementById('costModalTitle').textContent = 'Edit Expense';
       toggleCostFields();
       renderCostMonthOverrides(c.month_overrides || {});
       openModal('costModal');
@@ -6081,7 +6081,7 @@
         month_overrides: costType === 'recurring' ? getCostOverridesFromForm() : null
       };
 
-      if (!record.name || !record.amount) return alert('Fyll inn navn og belop');
+      if (!record.name || !record.amount) return alert('Please enter name and amount');
 
       try {
         if (id) {
@@ -6099,7 +6099,7 @@
     }
 
     async function deleteCost(id) {
-      if (!confirm('Slett denne kostnaden?')) return;
+      if (!confirm('Delete this expense?')) return;
       try {
         await sb.from('costs').delete().eq('id', id);
         costs = costs.filter(c => c.id !== id);
@@ -6116,11 +6116,11 @@
       document.getElementById('incomeDueDate').value = '';
       document.getElementById('incomeStatus').value = 'pending';
       document.getElementById('incomeType').value = 'one_time';
-      document.getElementById('incomeModalTitle').textContent = 'Legg til inntekt';
+      document.getElementById('incomeModalTitle').textContent = 'Add Income';
 
       // Populate client dropdown
       const sel = document.getElementById('incomeClientId');
-      sel.innerHTML = '<option value="">Ingen kunde</option>' + clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+      sel.innerHTML = '<option value="">No client</option>' + clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
 
       openModal('incomeModal');
     }
@@ -6134,10 +6134,10 @@
       document.getElementById('incomeDueDate').value = inc.due_date || '';
       document.getElementById('incomeStatus').value = inc.status || 'pending';
       document.getElementById('incomeType').value = inc.income_type || 'one_time';
-      document.getElementById('incomeModalTitle').textContent = 'Endre inntekt';
+      document.getElementById('incomeModalTitle').textContent = 'Edit Income';
 
       const sel = document.getElementById('incomeClientId');
-      sel.innerHTML = '<option value="">Ingen kunde</option>' + clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+      sel.innerHTML = '<option value="">No client</option>' + clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
       sel.value = inc.client_id || '';
 
       openModal('incomeModal');
@@ -6154,7 +6154,7 @@
         income_type: document.getElementById('incomeType').value
       };
 
-      if (!record.description || !record.amount || !record.due_date) return alert('Fyll inn beskrivelse, belop og forfallsdato');
+      if (!record.description || !record.amount || !record.due_date) return alert('Please enter description, amount and due date');
 
       try {
         if (id) {
@@ -6172,7 +6172,7 @@
     }
 
     async function deleteIncome(id) {
-      if (!confirm('Slett denne inntekten?')) return;
+      if (!confirm('Delete this income entry?')) return;
       try {
         await sb.from('income_entries').delete().eq('id', id);
         incomeEntries = incomeEntries.filter(i => i.id !== id);
