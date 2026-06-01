@@ -2931,6 +2931,13 @@
             <!-- Step 1: Template & Client -->
             <div class="wizard-panel active" id="wizardPanel0">
               <div class="wizard-section">
+                <h3>Contract Language</h3>
+                <div style="display:flex;gap:8px;margin-bottom:20px;">
+                  <button class="granularity-btn active" id="langNo" onclick="setContractLang('no')">Norsk</button>
+                  <button class="granularity-btn" id="langEn" onclick="setContractLang('en')">English</button>
+                </div>
+              </div>
+              <div class="wizard-section">
                 <h3>Select Agreement Type</h3>
                 <div class="checkbox-grid">
                   <label class="checkbox-item selected" onclick="selectTemplate('service', this)">
@@ -4968,35 +4975,204 @@
       contact: 'Glenn Myklebust, CEO'
     };
 
+    let contractLang = 'no';
+
+    function setContractLang(lang) {
+      contractLang = lang;
+      document.getElementById('langNo').classList.toggle('active', lang === 'no');
+      document.getElementById('langEn').classList.toggle('active', lang === 'en');
+    }
+
+    function t(key) { return CONTRACT_TEXTS[contractLang]?.[key] || CONTRACT_TEXTS['en'][key] || key; }
+
+    const CONTRACT_TEXTS = {
+      no: {
+        agreement: 'SAMARBEIDSAVTALE',
+        parties: 'Avtalens parter',
+        supplier: 'LEVERANDOR',
+        client: 'KUNDE',
+        contact: 'Kontakt',
+        background: 'Bakgrunn og formal',
+        scope: 'Avtalens innhold og leveranser',
+        platform_title: 'Del 1: Foocus-plattformen',
+        platform_desc: 'Foocus leverer lopende maling, dokumentasjon og rapportering av partnerverdi som skapes gjennom {client}s kommersielle aktiviteter i lopet av avtaleperioden.',
+        partners_included: 'Partnere inkludert i avtalen:',
+        partners_note: 'Ytterligere partnere kan legges til etter avtale. Inntil 10 partnere er inkludert i lisensavgiften.',
+        channels: 'Kanaler som males:',
+        measurements: 'Hva som males:',
+        deliverables: 'Leveranser inkludert i lisensen:',
+        setup_title: 'Oppsett og oppstart:',
+        setup_desc: 'Foocus gjennomforer oppsett innen 1-2 uker fra avtaleinngaelse og inkluderer:',
+        setup_note: 'Merk: Sosiale medier kan males opp til 90 dager tilbake i tid fra oppstartsdato.',
+        support_title: 'Del 2: Support og strategiradgivning',
+        support_desc: 'Lisensavgiften inkluderer lopende support knyttet til bruk av Foocus-plattformen',
+        support_strategy: ', samt {days} strategidag(er) i lopet av forste avtalear.',
+        support_email: 'Lopende e-post- og telefonsupport pa hverdager',
+        support_dashboard: 'Veiledning i bruk av dashboard og rapportfunksjoner',
+        support_training: 'Opplaring av nye brukere',
+        support_hours: 'Inntil {hours} timer per kvartal med support og radgivning',
+        support_included: 'Support inkludert i lisensen:',
+        strategy_title: 'Strategiutvikling',
+        strategy_desc: 'Foocus gjennomforer {days} strategidag(er) hos {client} for a koble plattformdata med kommersielle mal.',
+        strategy_note: 'Reise- og overnattingskostnader faktureres til selvkost. Tidspunkt avtales i fellesskap.',
+        project_desc_title: 'Prosjektbeskrivelse',
+        not_specified: 'Ikke angitt',
+        pricing: 'Pris og fakturering',
+        description: 'Beskrivelse',
+        qty: 'Antall',
+        unit_price: 'Enhetspris',
+        months: 'Maneder',
+        total_excl: 'Total (eks. MVA)',
+        total_first_year: 'TOTALT FORSTE AR (eks. reisekostnader)',
+        total_label: 'TOTALT (eks. reisekostnader)',
+        invoice_signing: 'Forste faktura utstedes ved signering av denne avtalen',
+        invoice_advance: 'Pafolgende lisensavgifter faktureres forskuddsvis ved start av hver avtaleperiode',
+        invoice_advance_project: 'Pafolgende betalinger faktureres forskuddsvis iht. avtalt betalingsplan',
+        payment_due: 'Forfall {days} dager fra fakturadato',
+        excl_vat: 'Alle priser er eksklusive MVA (25%)',
+        price_adjust: 'Prisene kan justeres arlig med {method}',
+        adjust_7_15: '7-15 % eller iht. Foocus\' gjeldende prisliste',
+        adjust_kpi: 'konsumprisindeksen (KPI)',
+        adjust_none: 'ingen justering',
+        period: 'Avtaleperiode og oppsigelse',
+        period_text: 'Avtaleperioden er {months} maneder fra {date}',
+        signing_date: 'signaturdato',
+        auto_renewal: 'Avtalen fornyes automatisk med ny {months}-manedersperiode med mindre den sies opp skriftlig senest {days} dager for utlop',
+        no_renewal: 'Avtalen utloper ved periodens slutt uten automatisk fornyelse',
+        termination: 'Oppsigelse sendes til kontaktpersonene oppfort i punkt 1',
+        confidentiality: 'Konfidensialitet',
+        confidentiality_text: 'Begge parter forplikter seg til a behandle all informasjon om den annen parts forretningshemmeligheter, kunder, priser og strategier konfidensielt. Konfidensialitetsplikten gjelder i avtaleperioden og i 2 ar etter avtalens opphor.',
+        ip: 'Immaterielle rettigheter',
+        ip_text: 'Foocus beholder alle rettigheter til plattformen, metodikk, algoritmer og rapporteringsformater. Rapporter og data levert til {client} kan brukes fritt av {client} i egen virksomhet og overfor egne partnere.',
+        liability: 'Ansvarsbegrensning',
+        liability_text: 'Foocus er ikke ansvarlig for indirekte tap, tapt fortjeneste eller konsekvenstap. Foocus sitt samlede ansvar under denne avtalen er begrenset til avtalt arlig lisensavgift.',
+        governing: 'Verneting og lovvalg',
+        governing_text: 'Avtalen er underlagt norsk rett. Eventuelle tvister skal forst forsokes lost i minnelighet. Dersom dette ikke lykkes, er Oslo tingrett verneting.',
+        signatures: 'Underskrifter',
+        signatures_text: 'Ved underskrift bekrefter begge parter at de har lest, forstatt og aksepterer alle vilkar i denne avtalen.',
+        billing_address: 'Faktureringsadresse',
+        confidential: 'KONFIDENSIELT',
+        page_of: 'Side {page} av {total}',
+        date_label: 'Dato',
+        period_label: 'Periode',
+      },
+      en: {
+        agreement: 'AGREEMENT',
+        parties: 'Parties',
+        supplier: 'SUPPLIER',
+        client: 'CLIENT',
+        contact: 'Contact',
+        background: 'Background & Purpose',
+        scope: 'Scope & Deliverables',
+        platform_title: 'The Foocus Platform',
+        platform_desc: 'Foocus provides ongoing measurement, documentation and reporting of partner value generated through {client}\'s commercial activities during the contract period.',
+        partners_included: 'Partners included:',
+        partners_note: 'Additional partners may be added by agreement. Up to 10 partners are included in the license fee.',
+        channels: 'Channels monitored:',
+        measurements: 'Measurements:',
+        deliverables: 'Deliverables included:',
+        setup_title: 'Setup & onboarding:',
+        setup_desc: 'Foocus completes setup within 1-2 weeks from contract signing, including:',
+        setup_note: 'Note: Social media can be measured up to 90 days back from start date.',
+        support_title: 'Support & Advisory',
+        support_desc: 'The license includes ongoing support for the Foocus platform',
+        support_strategy: ', as well as {days} strategy day(s) during the first contract year.',
+        support_email: 'Ongoing email and phone support on business days',
+        support_dashboard: 'Guidance on dashboard and reporting features',
+        support_training: 'Training of new users',
+        support_hours: 'Up to {hours} hours per quarter of support and advisory',
+        support_included: 'Support included:',
+        strategy_title: 'Strategy development',
+        strategy_desc: 'Foocus conducts {days} strategy day(s) at {client} to connect platform data with commercial objectives.',
+        strategy_note: 'Travel and accommodation costs are invoiced at cost. Timing agreed mutually.',
+        project_desc_title: 'Project Description',
+        not_specified: 'Not specified',
+        pricing: 'Pricing & Invoicing',
+        description: 'Description',
+        qty: 'Qty',
+        unit_price: 'Unit price',
+        months: 'Months',
+        total_excl: 'Total (excl. VAT)',
+        total_first_year: 'TOTAL FIRST YEAR (excl. travel expenses)',
+        total_label: 'TOTAL (excl. travel expenses)',
+        invoice_signing: 'First invoice issued upon signing of this agreement',
+        invoice_advance: 'Subsequent license fees invoiced in advance at the start of each contract period',
+        invoice_advance_project: 'Subsequent payments invoiced in advance per agreed payment plan',
+        payment_due: 'Payment due {days} days from invoice date',
+        excl_vat: 'All prices are exclusive of VAT (25%)',
+        price_adjust: 'Prices may be adjusted annually: {method}',
+        adjust_7_15: '7-15% or per Foocus price list',
+        adjust_kpi: 'per consumer price index (CPI)',
+        adjust_none: 'no adjustment',
+        period: 'Contract Period',
+        period_text: 'Contract period: {months} months from {date}',
+        signing_date: 'signing date',
+        auto_renewal: 'Automatically renewed for {months} months unless terminated in writing at least {days} days before expiry',
+        no_renewal: 'Expires at the end of the period without automatic renewal',
+        termination: 'Termination notices sent to the contacts listed in section 1',
+        confidentiality: 'Confidentiality',
+        confidentiality_text: 'Both parties commit to treating all information regarding the other party\'s trade secrets, clients, pricing and strategies as confidential. This obligation applies during the contract period and for 2 years after termination.',
+        ip: 'Intellectual Property',
+        ip_text: 'Foocus retains all rights to the platform, methodology, algorithms and reporting formats. Reports and data delivered to {client} may be used freely by {client} in their own operations and towards their own partners.',
+        liability: 'Limitation of Liability',
+        liability_text: 'Foocus is not liable for indirect losses, lost profits or consequential damages. Foocus\'s total liability under this agreement is limited to the agreed annual license fee.',
+        governing: 'Governing Law',
+        governing_text: 'This agreement is governed by Norwegian law. Disputes shall first be attempted resolved amicably. Failing this, Oslo District Court shall be the legal venue.',
+        signatures: 'Signatures',
+        signatures_text: 'By signing, both parties confirm that they have read, understood and accept all terms in this agreement.',
+        billing_address: 'Invoicing address',
+        confidential: 'CONFIDENTIAL',
+        page_of: 'Page {page} of {total}',
+        date_label: 'Date',
+        period_label: 'Period',
+      }
+    };
+
     const STATUS_LABELS = {
       draft: 'Draft', sent: 'Sent', signed: 'Signed', active: 'Active', expired: 'Expired'
     };
 
-    const CHANNEL_LABELS = {
-      tv: 'TV (kampsendinger, fotballstudio og nyhetssendinger)',
-      press: 'Presse (nettavis og printavis, inkl. innhold bak betalingsmur)',
-      facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok',
-      youtube: 'YouTube', linkedin: 'LinkedIn', x: 'X (Twitter)'
+    const CHANNEL_LABELS_I18N = {
+      no: {
+        tv: 'TV (kampsendinger, fotballstudio og nyhetssendinger)',
+        press: 'Presse (nettavis og printavis, inkl. innhold bak betalingsmur)',
+        facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok',
+        youtube: 'YouTube', linkedin: 'LinkedIn', x: 'X (Twitter)'
+      },
+      en: {
+        tv: 'TV (live broadcasts, studio shows and news)',
+        press: 'Press (online and print, incl. behind paywall)',
+        facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok',
+        youtube: 'YouTube', linkedin: 'LinkedIn', x: 'X (Twitter)'
+      }
     };
 
-    const MEASUREMENT_LABELS = {
-      ave: 'Eksponeringsverdi (AVE)', engagement: 'Engasjementsverdi',
-      media_mention: 'Medieomtale og narhet til sponsor', total_value: 'Samlet verdi pa tvers av kanaler'
+    const MEASUREMENT_LABELS_I18N = {
+      no: { ave: 'Eksponeringsverdi (AVE)', engagement: 'Engasjementsverdi', media_mention: 'Medieomtale og narhet til sponsor', total_value: 'Samlet verdi pa tvers av kanaler' },
+      en: { ave: 'Exposure Value (AVE)', engagement: 'Engagement Value', media_mention: 'Media mention and sponsor proximity', total_value: 'Total value across channels' }
     };
 
-    const DELIVERABLE_LABELS = {
-      dashboard: 'Eget dashboard med ubegrenset antall brukere',
-      reporting: 'Automatisert rapportering per partner og samlet',
-      support: 'Ongoing support', onboarding: 'Onboarding og opplaring',
-      analysis: 'Arsanalyse med gjennomgang og anbefalinger fra Foocus-analytiker'
+    const DELIVERABLE_LABELS_I18N = {
+      no: { dashboard: 'Eget dashboard med ubegrenset antall brukere', reporting: 'Automatisert rapportering per partner og samlet', support: 'Lopende support', onboarding: 'Onboarding og opplaring', analysis: 'Arsanalyse med gjennomgang og anbefalinger fra Foocus-analytiker' },
+      en: { dashboard: 'Dedicated dashboard with unlimited users', reporting: 'Automated reporting per partner and aggregated', support: 'Ongoing support', onboarding: 'Onboarding and training', analysis: 'Annual analysis with review and recommendations from Foocus analyst' }
     };
 
-    const SETUP_LABELS = {
-      social_connect: 'Kobling av sosiale mediekanaler',
-      logo_training: 'Trening av systemet pa partnerlogoer',
-      press_monitoring: 'Oppsett av presseovervaking',
-      data_qa: 'Kvalitetssikring av datagrunnlag'
+    const SETUP_LABELS_I18N = {
+      no: { social_connect: 'Kobling av sosiale mediekanaler', logo_training: 'Trening av systemet pa partnerlogoer', press_monitoring: 'Oppsett av presseovervaking', data_qa: 'Kvalitetssikring av datagrunnlag' },
+      en: { social_connect: 'Social media channel integration', logo_training: 'System training on partner logos', press_monitoring: 'Press monitoring setup', data_qa: 'Data quality assurance' }
     };
+
+    // Convenience getters that use current lang
+    function getCL(key) { return CHANNEL_LABELS_I18N[contractLang]?.[key] || CHANNEL_LABELS_I18N['en'][key] || key; }
+    function getML(key) { return MEASUREMENT_LABELS_I18N[contractLang]?.[key] || MEASUREMENT_LABELS_I18N['en'][key] || key; }
+    function getDL(key) { return DELIVERABLE_LABELS_I18N[contractLang]?.[key] || DELIVERABLE_LABELS_I18N['en'][key] || key; }
+    function getSL(key) { return SETUP_LABELS_I18N[contractLang]?.[key] || SETUP_LABELS_I18N['en'][key] || key; }
+
+    // Keep old references for backward compat
+    const CHANNEL_LABELS = CHANNEL_LABELS_I18N['no'];
+    const MEASUREMENT_LABELS = MEASUREMENT_LABELS_I18N['no'];
+    const DELIVERABLE_LABELS = DELIVERABLE_LABELS_I18N['no'];
+    const SETUP_LABELS = SETUP_LABELS_I18N['no'];
 
     function renderContracts() {
       const list = document.getElementById('contractsList');
@@ -5708,7 +5884,7 @@
       doc.setFontSize(28);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...brand);
-      doc.text('AGREEMENT', mL, y);
+      doc.text(t('agreement'), mL, y);
       y += 10;
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
@@ -5730,8 +5906,8 @@
       doc.setFontSize(7);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...accent);
-      doc.text('SUPPLIER', mL, y);
-      doc.text('CLIENT', mL + halfW + 10, y);
+      doc.text(t('supplier'), mL, y);
+      doc.text(t('client'), mL + halfW + 10, y);
       y += 6;
 
       doc.setFontSize(9);
@@ -5756,8 +5932,8 @@
       y += 6;
       doc.setFontSize(8);
       doc.setTextColor(...muted);
-      doc.text('Date: ' + (d.start_date ? new Date(d.start_date).toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'}) : new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})), mL, y);
-      doc.text('Period: ' + d.period_months + ' months', pageW - mR, y, { align: 'right' });
+      doc.text(t('date_label') + ': ' + (d.start_date ? new Date(d.start_date).toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'}) : new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})), mL, y);
+      doc.text(t('period_label') + ': ' + d.period_months + ' months', pageW - mR, y, { align: 'right' });
       y += 12;
 
       // Footer on cover
@@ -5771,77 +5947,77 @@
       // Intro text
       let sn = 1;
       if (d.intro_text) {
-        heading(sn + '. Background & Purpose');
+        heading(sn + '. ' + t('background'));
         sn++;
         d.intro_text.split('\n').filter(l => l.trim()).forEach(p => para(p));
       }
 
       // Scope
-      heading(sn + '. Scope & Deliverables');
+      heading(sn + '. ' + t('scope'));
       sn++;
 
       if (isService) {
-        subheading('The Foocus Platform');
-        para('Foocus provides ongoing measurement, documentation and reporting of partner value generated through ' + d.client_name + '\'s commercial activities during the contract period.');
+        subheading(t('platform_title'));
+        para(t('platform_desc').replace('{client}', d.client_name));
 
         if (d.partners.length > 0) {
-          label('Partners included:');
+          label(t('partners_included'));
           d.partners.forEach(p => bullet(p));
-          note('Additional partners may be added by agreement. Up to 10 partners are included in the license fee.');
+          note(t('partners_note'));
           y += 2;
         }
 
         if (d.channels.length > 0) {
-          label('Channels monitored:');
-          d.channels.forEach(c => bullet(CHANNEL_LABELS[c] || c));
+          label(t('channels'));
+          d.channels.forEach(c => bullet(getCL(c)));
           y += 2;
         }
 
         if (d.measurements.length > 0) {
-          label('Measurements:');
-          d.measurements.forEach(m => bullet(MEASUREMENT_LABELS[m] || m));
+          label(t('measurements'));
+          d.measurements.forEach(m => bullet(getML(m)));
           y += 2;
         }
 
         if (d.deliverables.length > 0) {
-          label('Deliverables included:');
-          d.deliverables.forEach(dl => bullet(DELIVERABLE_LABELS[dl] || dl));
+          label(t('deliverables'));
+          d.deliverables.forEach(dl => bullet(getDL(dl)));
           y += 2;
         }
 
         if (d.setup_items.length > 0) {
-          label('Setup & onboarding:');
+          label(t('setup_title'));
           para('Foocus completes setup within 1–2 weeks from contract signing, including:');
-          d.setup_items.forEach(s => bullet(SETUP_LABELS[s] || s));
-          note('Note: Social media can be measured up to 90 days back from start date.');
+          d.setup_items.forEach(s => bullet(getSL(s)));
+          note(t('setup_note'));
           y += 2;
         }
 
-        subheading('Support & Advisory');
-        para('The license includes ongoing support for the Foocus platform' + (d.strategy_days > 0 ? ', as well as ' + d.strategy_days + ' strategy day' + (d.strategy_days > 1 ? 's' : '') + ' during the first contract year.' : '.'));
-        label('Support included:');
-        bullet('Ongoing email and phone support on business days');
-        bullet('Guidance on dashboard and reporting features');
-        bullet('Training of new users');
-        bullet('Up to ' + d.support_hours_per_quarter + ' hours per quarter of support and advisory');
+        subheading(t('support_title'));
+        para(t('support_desc') + (d.strategy_days > 0 ? t('support_strategy').replace('{days}', d.strategy_days) : '.'));
+        label(t('support_included'));
+        bullet(t('support_email'));
+        bullet(t('support_dashboard'));
+        bullet(t('support_training'));
+        bullet(t('support_hours').replace('{hours}', d.support_hours_per_quarter));
 
         if (d.strategy_days > 0) {
           y += 2;
           label('Strategy development');
-          para('Foocus conducts ' + d.strategy_days + ' strategy day' + (d.strategy_days > 1 ? 's' : '') + ' at ' + d.client_name + ' to connect platform data with commercial objectives.');
-          note('Travel and accommodation costs are invoiced at cost. Timing agreed mutually.');
+          para(t('strategy_desc').replace('{days}', d.strategy_days).replace('{client}', d.client_name));
+          note(t('strategy_note'));
         }
       } else {
-        subheading('Project Description');
-        para(d.project_scope || 'Not specified');
+        subheading(t('project_desc_title'));
+        para(d.project_scope || t('not_specified'));
         if (d.deliverables.length > 0) {
           label('Deliverables:');
-          d.deliverables.forEach(dl => bullet(DELIVERABLE_LABELS[dl] || dl));
+          d.deliverables.forEach(dl => bullet(getDL(dl)));
         }
       }
 
       // Pricing
-      heading(sn + '. Pricing & Invoicing');
+      heading(sn + '. ' + t('pricing'));
       sn++;
       checkBreak(12 + d.pricing.length * 8 + 10);
 
@@ -5853,11 +6029,11 @@
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...muted);
       const c1 = mL + 3, c2 = mL + cW * 0.5, c3 = mL + cW * 0.62, c4 = mL + cW * 0.76, c5 = pageW - mR - 3;
-      doc.text('DESCRIPTION', c1, tY + 5);
-      doc.text('QTY', c2, tY + 5);
-      doc.text('UNIT PRICE', c3, tY + 5);
-      doc.text('MONTHS', c4, tY + 5);
-      doc.text('TOTAL', c5, tY + 5, { align: 'right' });
+      doc.text(t('description').toUpperCase(), c1, tY + 5);
+      doc.text(t('qty').toUpperCase(), c2, tY + 5);
+      doc.text(t('unit_price').toUpperCase(), c3, tY + 5);
+      doc.text(t('months').toUpperCase(), c4, tY + 5);
+      doc.text(t('total_excl').toUpperCase(), c5, tY + 5, { align: 'right' });
       y = tY + 8;
 
       const totalAmount = d.pricing.reduce((s, p) => s + p.amount, 0);
@@ -5886,52 +6062,52 @@
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(255, 255, 255);
-      doc.text('TOTAL' + (isService ? ' (FIRST YEAR)' : ''), c1, y + 5.5);
+      doc.text(isService ? t('total_first_year') : t('total_label'), c1, y + 5.5);
       doc.text(formatCurrency(totalAmount) + ' NOK', c5, y + 5.5, { align: 'right' });
       y += 14;
 
       doc.setTextColor(...txt);
       const adjustText = d.price_adjustment === '7-15' ? '7–15% or per Foocus price list' : d.price_adjustment === 'kpi' ? 'per consumer price index (CPI)' : 'no adjustment';
-      bullet('First invoice issued upon signing of this agreement');
-      bullet(isService ? 'Subsequent license fees invoiced in advance at the start of each contract period' : 'Subsequent payments invoiced in advance per agreed payment plan');
-      bullet('Payment due ' + d.payment_days + ' days from invoice date');
-      bullet('All prices are exclusive of VAT (25%)');
-      bullet('Prices may be adjusted annually: ' + adjustText);
-      if (d.billing_email) { note('Invoicing address: ' + d.billing_email); }
+      bullet(t('invoice_signing'));
+      bullet(isService ? t('invoice_advance') : t('invoice_advance_project'));
+      bullet(t('payment_due').replace('{days}', d.payment_days));
+      bullet(t('excl_vat'));
+      bullet(t('price_adjust').replace('{method}', adjustText));
+      if (d.billing_email) { note(t('billing_address') + ': ' + d.billing_email); }
       y += 4;
 
       // Period
-      heading(sn + '. Contract Period');
+      heading(sn + '. ' + t('period'));
       sn++;
-      bullet('Contract period: ' + d.period_months + ' months from ' + (d.start_date ? new Date(d.start_date).toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'}) : 'signing date'));
+      bullet(t('period_text').replace('{months}', d.period_months).replace('{date}', d.start_date ? new Date(d.start_date).toLocaleDateString(contractLang === 'no' ? 'nb-NO' : 'en-GB', {day:'numeric',month:'long',year:'numeric'}) : t('signing_date')));
       if (d.auto_renewal) {
-        bullet('Automatically renewed for ' + d.period_months + ' months unless terminated in writing at least ' + d.notice_days + ' days before expiry');
+        bullet(t('auto_renewal').replace('{months}', d.period_months).replace('{days}', d.notice_days));
       } else {
-        bullet('Expires at the end of the period without automatic renewal');
+        bullet(t('no_renewal'));
       }
-      bullet('Termination notices sent to the contacts listed in section 1');
+      bullet(t('termination'));
       y += 4;
 
       // Standard clauses
-      heading(sn + '. Confidentiality');
+      heading(sn + '. ' + t('confidentiality'));
       sn++;
-      para('Both parties commit to treating all information regarding the other party\'s trade secrets, clients, pricing and strategies as confidential. This obligation applies during the contract period and for 2 years after termination.');
+      para(t('confidentiality_text'));
 
-      heading(sn + '. Intellectual Property');
+      heading(sn + '. ' + t('ip'));
       sn++;
-      para('Foocus retains all rights to the platform, methodology, algorithms and reporting formats. Reports and data delivered to ' + d.client_name + ' may be used freely by ' + d.client_name + ' in their own operations and towards their own partners.');
+      para(t('ip_text').replace(/\{client\}/g, d.client_name));
 
-      heading(sn + '. Limitation of Liability');
+      heading(sn + '. ' + t('liability'));
       sn++;
-      para('Foocus is not liable for indirect losses, lost profits or consequential damages. Foocus\'s total liability under this agreement is limited to the agreed annual license fee.');
+      para(t('liability_text'));
 
-      heading(sn + '. Governing Law');
+      heading(sn + '. ' + t('governing'));
       sn++;
-      para('This agreement is governed by Norwegian law. Disputes shall first be attempted resolved amicably. Failing this, Oslo District Court shall be the legal venue.');
+      para(t('governing_text'));
 
       // Signatures
-      heading(sn + '. Signatures');
-      para('By signing, both parties confirm that they have read, understood and accept all terms in this agreement.');
+      heading(sn + '. ' + t('signatures'));
+      para(t('signatures_text'));
       checkBreak(40);
 
       y += 4;
@@ -5944,7 +6120,7 @@
       doc.setFontSize(7);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...accent);
-      doc.text('SUPPLIER', mL + 4, y + 5);
+      doc.text(t('supplier'), mL + 4, y + 5);
       doc.setDrawColor(...line);
       doc.setLineWidth(0.2);
       doc.line(mL + 4, y + 20, mL + colW - 4, y + 20);
@@ -5964,7 +6140,7 @@
       doc.setFontSize(7);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...muted);
-      doc.text('CLIENT', cx + 4, y + 5);
+      doc.text(t('client'), cx + 4, y + 5);
       doc.setDrawColor(...line);
       doc.setLineWidth(0.2);
       doc.line(cx + 4, y + 20, cx + colW - 4, y + 20);
@@ -5994,7 +6170,7 @@
           doc.setTextColor(...muted);
           doc.text('FOOCUS  ·  ' + d.title.toUpperCase(), mL, 10);
           doc.setFont('helvetica', 'normal');
-          doc.text('CONFIDENTIAL', pageW - mR, 10, { align: 'right' });
+          doc.text(t('confidential'), pageW - mR, 10, { align: 'right' });
 
           // Header line
           doc.setDrawColor(...line);
@@ -6011,7 +6187,7 @@
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...muted);
         doc.text('Foocus AS  ·  ' + FOOCUS_INFO.org_nr + '  ·  foocus.ai', mL, pageH - 13);
-        doc.text('Page ' + i + ' of ' + totalPages, pageW - mR, pageH - 13, { align: 'right' });
+        doc.text(t('page_of').replace('{page}', i).replace('{total}', totalPages), pageW - mR, pageH - 13, { align: 'right' });
 
         // Owl icon bottom-right on last page
         if (i === totalPages) {
