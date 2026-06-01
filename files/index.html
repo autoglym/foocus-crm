@@ -2095,14 +2095,27 @@
     }
     .tag-input::placeholder { color: var(--text-muted); }
 
+    .pricing-row-group { margin-bottom: 12px; }
     .pricing-row {
       display: grid;
       grid-template-columns: 4fr 70px 100px 70px 110px 32px;
       gap: 8px;
       align-items: center;
-      margin-bottom: 8px;
     }
     .pricing-row .form-input { margin: 0; min-width: 0; }
+    .pricing-note-input {
+      width: 100%;
+      padding: 5px 10px;
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-style: italic;
+      margin-top: 4px;
+    }
+    .pricing-note-input::placeholder { color: var(--text-muted); opacity: 0.5; }
+    .pricing-note-input:focus { outline: none; border-color: var(--accent); color: var(--text-primary); }
     .pricing-header {
       display: grid;
       grid-template-columns: 4fr 70px 100px 70px 110px 32px;
@@ -3120,21 +3133,27 @@
                   <span></span>
                 </div>
                 <div id="pricingRows">
-                  <div class="pricing-row">
-                    <input type="text" class="form-input" value="Platform license - monitoring, reporting and support" data-pricing-desc>
-                    <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
-                    <input type="number" class="form-input" value="6250" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
-                    <input type="number" class="form-input" value="12" min="1" data-pricing-months onchange="updatePricingTotal()">
-                    <div class="line-total" data-pricing-linetotal>75 000</div>
-                    <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
+                  <div class="pricing-row-group">
+                    <div class="pricing-row">
+                      <input type="text" class="form-input" value="Platform license - monitoring, reporting and support" data-pricing-desc>
+                      <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
+                      <input type="number" class="form-input" value="6250" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
+                      <input type="number" class="form-input" value="12" min="1" data-pricing-months onchange="updatePricingTotal()">
+                      <div class="line-total" data-pricing-linetotal>75 000</div>
+                      <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
+                    </div>
+                    <input type="text" class="pricing-note-input" placeholder="Add a note (e.g. one-time fee, includes X-Y period...)" data-pricing-note>
                   </div>
-                  <div class="pricing-row">
-                    <input type="text" class="form-input" value="One-time setup - logo training, press monitoring, verification" data-pricing-desc>
-                    <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
-                    <input type="number" class="form-input" value="15000" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
-                    <input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()">
-                    <div class="line-total" data-pricing-linetotal>15 000</div>
-                    <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
+                  <div class="pricing-row-group">
+                    <div class="pricing-row">
+                      <input type="text" class="form-input" value="One-time setup - logo training, press monitoring, verification" data-pricing-desc>
+                      <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
+                      <input type="number" class="form-input" value="15000" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
+                      <input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()">
+                      <div class="line-total" data-pricing-linetotal>15 000</div>
+                      <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
+                    </div>
+                    <input type="text" class="pricing-note-input" placeholder="Add a note (e.g. one-time fee, includes X-Y period...)" data-pricing-note>
                   </div>
                 </div>
                 <button class="btn btn-secondary" onclick="addPricingRow()" style="margin-top:12px;">
@@ -5438,13 +5457,16 @@
       // Pricing
       if (d.pricing && d.pricing.length > 0) {
         document.getElementById('pricingRows').innerHTML = d.pricing.map(p => `
-          <div class="pricing-row">
-            <input type="text" class="form-input" value="${escapeHtml(p.description)}" data-pricing-desc>
-            <input type="number" class="form-input" value="${p.qty || 1}" min="1" data-pricing-qty onchange="updatePricingTotal()">
-            <input type="number" class="form-input" value="${p.unit_price || p.amount || 0}" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
-            <input type="number" class="form-input" value="${p.months || 1}" min="1" data-pricing-months onchange="updatePricingTotal()">
-            <div class="line-total" data-pricing-linetotal>${formatCurrency(p.amount || 0)}</div>
-            <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
+          <div class="pricing-row-group">
+            <div class="pricing-row">
+              <input type="text" class="form-input" value="${escapeHtml(p.description)}" data-pricing-desc>
+              <input type="number" class="form-input" value="${p.qty || 1}" min="1" data-pricing-qty onchange="updatePricingTotal()">
+              <input type="number" class="form-input" value="${p.unit_price || p.amount || 0}" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
+              <input type="number" class="form-input" value="${p.months || 1}" min="1" data-pricing-months onchange="updatePricingTotal()">
+              <div class="line-total" data-pricing-linetotal>${formatCurrency(p.amount || 0)}</div>
+              <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
+            </div>
+            <input type="text" class="pricing-note-input" value="${escapeHtml(p.note || '')}" placeholder="Add a note (e.g. one-time fee, includes X-Y period...)" data-pricing-note>
           </div>`).join('');
         updatePricingTotal();
       }
@@ -5540,20 +5562,23 @@
     // Pricing
     function addPricingRow() {
       const container = document.getElementById('pricingRows');
-      const row = document.createElement('div');
-      row.className = 'pricing-row';
-      row.innerHTML = `
-        <input type="text" class="form-input" placeholder="Description" data-pricing-desc>
-        <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
-        <input type="number" class="form-input" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
-        <input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()">
-        <div class="line-total" data-pricing-linetotal>0</div>
-        <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>`;
-      container.appendChild(row);
+      const group = document.createElement('div');
+      group.className = 'pricing-row-group';
+      group.innerHTML = `
+        <div class="pricing-row">
+          <input type="text" class="form-input" placeholder="Description" data-pricing-desc>
+          <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
+          <input type="number" class="form-input" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
+          <input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()">
+          <div class="line-total" data-pricing-linetotal>0</div>
+          <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
+        </div>
+        <input type="text" class="pricing-note-input" placeholder="Add a note (e.g. one-time fee, includes X-Y period...)" data-pricing-note>`;
+      container.appendChild(group);
     }
 
     function removePricingRow(btn) {
-      btn.closest('.pricing-row').remove();
+      btn.closest('.pricing-row-group').remove();
       updatePricingTotal();
     }
 
@@ -5575,13 +5600,18 @@
     function gatherContractData() {
       const getCheckedValues = (selector) => [...document.querySelectorAll(selector)].filter(cb => cb.checked).map(cb => cb.value);
 
-      const pricing = [...document.querySelectorAll('.pricing-row')].map(row => ({
-        description: row.querySelector('[data-pricing-desc]').value,
-        qty: parseFloat(row.querySelector('[data-pricing-qty]')?.value) || 1,
-        unit_price: parseFloat(row.querySelector('[data-pricing-unit]')?.value) || 0,
-        months: parseFloat(row.querySelector('[data-pricing-months]')?.value) || 1,
-        amount: (parseFloat(row.querySelector('[data-pricing-qty]')?.value) || 1) * (parseFloat(row.querySelector('[data-pricing-unit]')?.value) || 0) * (parseFloat(row.querySelector('[data-pricing-months]')?.value) || 1)
-      })).filter(p => p.description);
+      const pricing = [...document.querySelectorAll('.pricing-row-group')].map(group => {
+        const row = group.querySelector('.pricing-row');
+        const noteEl = group.querySelector('[data-pricing-note]');
+        return {
+          description: row.querySelector('[data-pricing-desc]').value,
+          qty: parseFloat(row.querySelector('[data-pricing-qty]')?.value) || 1,
+          unit_price: parseFloat(row.querySelector('[data-pricing-unit]')?.value) || 0,
+          months: parseFloat(row.querySelector('[data-pricing-months]')?.value) || 1,
+          amount: (parseFloat(row.querySelector('[data-pricing-qty]')?.value) || 1) * (parseFloat(row.querySelector('[data-pricing-unit]')?.value) || 0) * (parseFloat(row.querySelector('[data-pricing-months]')?.value) || 1),
+          note: noteEl ? noteEl.value : ''
+        };
+      }).filter(p => p.description);
 
       return {
         intro_text: document.getElementById('contractIntroText').value,
@@ -5688,7 +5718,7 @@
         <h2>3. Price og fakturering</h2>
         <table>
           <tr><th>Description</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Unit price</th><th style="text-align:right;">Months</th><th style="text-align:right;">Total (excl. VAT)</th></tr>
-          ${d.pricing.map(p => `<tr><td>${escapeHtml(p.description)}</td><td style="text-align:right;font-family:monospace;">${p.qty || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.unit_price || p.amount)} NOK</td><td style="text-align:right;font-family:monospace;">${p.months || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.amount)} NOK</td></tr>`).join('')}
+          ${d.pricing.map(p => `<tr><td>${escapeHtml(p.description)}${p.note ? `<br><span style="font-size:11px;font-style:italic;color:#888;">${escapeHtml(p.note)}</span>` : ''}</td><td style="text-align:right;font-family:monospace;">${p.qty || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.unit_price || p.amount)} NOK</td><td style="text-align:right;font-family:monospace;">${p.months || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.amount)} NOK</td></tr>`).join('')}
           <tr style="font-weight:bold;"><td colspan="4">TOTAL${isService ? ' FIRST YEAR' : ''} (excl. travel expenses)</td><td style="text-align:right;font-family:monospace;">${formatCurrency(totalAmount)} NOK</td></tr>
         </table>
         <ul>
@@ -6050,6 +6080,15 @@
         doc.text(formatCurrency(p.amount) + ' NOK', c5, y + 4, { align: 'right' });
         doc.setFont('helvetica', 'normal');
         y += 7;
+        if (p.note) {
+          doc.setFontSize(7.5);
+          doc.setFont('helvetica', 'italic');
+          doc.setTextColor(...muted);
+          doc.text(p.note, c1, y + 2);
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'normal');
+          y += 5;
+        }
       });
 
       // Total row
