@@ -5676,17 +5676,20 @@
       }
 
       function drawOwlIcon(x, yPos, size) {
-        // Simplified owl pictogram
         const s = size / 24;
         doc.setFillColor(...brand);
-        doc.circle(x + 8*s, yPos + 12*s, 6*s, 'F');
-        doc.circle(x + 16*s, yPos + 12*s, 6*s, 'F');
+        doc.ellipse(x + 8*s, yPos + 12*s, 6*s, 6*s, 'F');
+        doc.ellipse(x + 16*s, yPos + 12*s, 6*s, 6*s, 'F');
         doc.setFillColor(255, 255, 255);
-        doc.circle(x + 8*s, yPos + 12*s, 3*s, 'F');
-        doc.circle(x + 16*s, yPos + 12*s, 3*s, 'F');
-        doc.setFillColor(...brand);
-        doc.triangle(x + 2*s, yPos + 8*s, x + 6*s, yPos + 3*s, x + 8*s, yPos + 8*s, 'F');
-        doc.triangle(x + 16*s, yPos + 8*s, x + 18*s, yPos + 3*s, x + 22*s, yPos + 8*s, 'F');
+        doc.ellipse(x + 8*s, yPos + 12*s, 3*s, 3*s, 'F');
+        doc.ellipse(x + 16*s, yPos + 12*s, 3*s, 3*s, 'F');
+        // Ears as lines
+        doc.setDrawColor(...brand);
+        doc.setLineWidth(1.5*s);
+        doc.line(x + 2*s, yPos + 8*s, x + 6*s, yPos + 3*s);
+        doc.line(x + 6*s, yPos + 3*s, x + 8*s, yPos + 8*s);
+        doc.line(x + 16*s, yPos + 8*s, x + 18*s, yPos + 3*s);
+        doc.line(x + 18*s, yPos + 3*s, x + 22*s, yPos + 8*s);
       }
 
       // ========== PAGE 1: COVER ==========
@@ -5933,7 +5936,7 @@
       // Supplier signature box
       doc.setDrawColor(...accent);
       doc.setLineWidth(0.4);
-      doc.roundedRect(mL, y, colW, 32, 2, 2, 'S');
+      doc.rect(mL, y, colW, 32, 'S');
       doc.setFontSize(7);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...accent);
@@ -5953,7 +5956,7 @@
       const cx = mL + colW + 12;
       doc.setDrawColor(...line);
       doc.setLineWidth(0.4);
-      doc.roundedRect(cx, y, colW, 32, 2, 2, 'S');
+      doc.rect(cx, y, colW, 32, 'S');
       doc.setFontSize(7);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...muted);
