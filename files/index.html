@@ -5516,8 +5516,9 @@
           <tr style="font-weight:bold;"><td colspan="4">TOTAL${isService ? ' FIRST YEAR' : ''} (excl. travel expenses)</td><td style="text-align:right;font-family:monospace;">${formatCurrency(totalAmount)} NOK</td></tr>
         </table>
         <ul>
-          <li>${isService ? 'Lisensavgiften faktureres ved oppstart og fornyes arlig ved avtalefornyelse' : 'Faktureres iht. avtalt betalingsplan'}</li>
-          <li>Forfall ${d.payment_days} dager fra fakturadato</li>
+          <li>${isService ? 'License fee invoiced in advance at the start of each contract period' : 'Invoiced in advance per agreed payment plan'}</li>
+          <li>Payment due ${d.payment_days} days from invoice date</li>
+          <li>All prices are exclusive of VAT (25%)</li>
           <li>Priceene kan justeres arlig med ${adjustmentText}</li>
         </ul>
 
@@ -5890,8 +5891,9 @@
 
       doc.setTextColor(...txt);
       const adjustText = d.price_adjustment === '7-15' ? '7–15% or per Foocus price list' : d.price_adjustment === 'kpi' ? 'per consumer price index (CPI)' : 'no adjustment';
-      bullet(isService ? 'License fee invoiced at start and renewed annually' : 'Invoiced per agreed payment plan');
+      bullet(isService ? 'License fee invoiced in advance at the start of each contract period' : 'Invoiced in advance per agreed payment plan');
       bullet('Payment due ' + d.payment_days + ' days from invoice date');
+      bullet('All prices are exclusive of VAT (25%)');
       bullet('Prices may be adjusted annually: ' + adjustText);
       if (d.billing_email) { note('Invoicing address: ' + d.billing_email); }
       y += 4;
