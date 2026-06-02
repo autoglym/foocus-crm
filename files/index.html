@@ -5650,109 +5650,111 @@
       const d = gatherContractData();
       const isService = getSelectedTemplate() === 'service';
       const totalAmount = d.pricing.reduce((s, p) => s + p.amount, 0);
-      const adjustmentText = d.price_adjustment === '7-15' ? '7-15 % eller iht. Foocus\' gjeldende prisliste' : d.price_adjustment === 'kpi' ? 'iht. konsumprisindeksen (KPI)' : 'ingen justering';
+      const adjustmentText = d.price_adjustment === '7-15' ? t('adjust_7_15') : d.price_adjustment === 'kpi' ? t('adjust_kpi') : t('adjust_none');
 
       let html = `
         <div class="preview-header">FOOCUS.AI &bull; ${escapeHtml(d.title)}</div>
-        <h1>SAMARBEIDSAVTALE</h1>
+        <h1>${t('agreement')}</h1>
         <p style="color:#666;margin-bottom:24px;">${escapeHtml(d.title)}</p>
 
-        <h2>1. Avtalens parter</h2>
+        <h2>1. ${t('parties')}</h2>
         <table>
           <tr>
-            <td style="width:50%;"><strong>LEVERANDOR</strong><br>${FOOCUS_INFO.name}<br>Org.nr.: ${FOOCUS_INFO.org_nr}<br>${FOOCUS_INFO.address}<br>${d.foocus_email}<br>Kontakt: ${escapeHtml(d.foocus_contact)}</td>
-            <td><strong>KUNDE</strong><br>${escapeHtml(d.client_name)}<br>Org.nr.: ${escapeHtml(d.client_org_nr)}<br>${escapeHtml(d.client_address)}<br>Kontakt: ${escapeHtml(d.client_contact_name)}<br>${escapeHtml(d.client_contact_email)}</td>
+            <td style="width:50%;"><strong>${t('supplier')}</strong><br>${FOOCUS_INFO.name}<br>Org.nr.: ${FOOCUS_INFO.org_nr}<br>${FOOCUS_INFO.address}<br>${d.foocus_email}<br>${t('contact')}: ${escapeHtml(d.foocus_contact)}</td>
+            <td><strong>${t('client')}</strong><br>${escapeHtml(d.client_name)}<br>Org.nr.: ${escapeHtml(d.client_org_nr)}<br>${escapeHtml(d.client_address)}<br>${t('contact')}: ${escapeHtml(d.client_contact_name)}<br>${escapeHtml(d.client_contact_email)}</td>
           </tr>
         </table>
 
-        ${d.intro_text ? `<h2>1. Background and Purpose</h2>${d.intro_text.split('\n').filter(l => l.trim()).map(p => `<p>${escapeHtml(p)}</p>`).join('')}` : ''}
+        ${d.intro_text ? `<h2>1. ${t('background')}</h2>${d.intro_text.split('\n').filter(l => l.trim()).map(p => `<p>${escapeHtml(p)}</p>`).join('')}` : ''}
 
-        <h2>${d.intro_text ? '2' : '1'}. Scope and Deliverables</h2>`;
+        <h2>${d.intro_text ? '2' : '1'}. ${t('scope')}</h2>`;
 
       if (isService) {
         html += `
-        <h3>Del 1: Foocus-plattformen - Sponsormalinger</h3>
-        <p>Foocus leverer lopende maling, dokumentasjon og rapportering av partnerverdi som skapes gjennom ${escapeHtml(d.client_name)}s kommersielle aktiviteter i lopet av avtaleperioden.</p>`;
+        <h3>${t('platform_title')}</h3>
+        <p>${t('platform_desc').replace('{client}', escapeHtml(d.client_name))}</p>`;
 
         if (d.partners.length > 0) {
-          html += `<p><strong>Partnere inkludert i avtalen:</strong></p><ul>${d.partners.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>
-          <p style="font-size:12px;color:#666;">Ytterligere partnere kan legges til etter avtale. Up to 10 partners are included in the license fee.</p>`;
+          html += `<p><strong>${t('partners_included')}</strong></p><ul>${d.partners.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>
+          <p style="font-size:12px;color:#666;">${t('partners_note')}</p>`;
         }
 
         if (d.channels.length > 0) {
-          html += `<p><strong>Channels to Monitor:</strong></p><ul>${d.channels.map(c => `<li>${CHANNEL_LABELS[c] || c}</li>`).join('')}</ul>`;
+          html += `<p><strong>${t('channels')}</strong></p><ul>${d.channels.map(c => `<li>${getCL(c)}</li>`).join('')}</ul>`;
         }
 
         if (d.measurements.length > 0) {
-          html += `<p><strong>What to Measure:</strong></p><ul>${d.measurements.map(m => `<li>${MEASUREMENT_LABELS[m] || m}</li>`).join('')}</ul>`;
+          html += `<p><strong>${t('measurements')}</strong></p><ul>${d.measurements.map(m => `<li>${getML(m)}</li>`).join('')}</ul>`;
         }
 
         if (d.deliverables.length > 0) {
-          html += `<p><strong>Deliverables inkludert i lisensen:</strong></p><ul>${d.deliverables.map(dl => `<li>${DELIVERABLE_LABELS[dl] || dl}</li>`).join('')}</ul>`;
+          html += `<p><strong>${t('deliverables')}</strong></p><ul>${d.deliverables.map(dl => `<li>${getDL(dl)}</li>`).join('')}</ul>`;
         }
 
         if (d.setup_items.length > 0) {
-          html += `<p><strong>Oppsett og oppstart:</strong></p><p>Foocus gjennomforer oppsett innen 1-2 uker fra avtaleinngaelse og inkluderer:</p><ul>${d.setup_items.map(s => `<li>${SETUP_LABELS[s] || s}</li>`).join('')}</ul>`;
+          html += `<p><strong>${t('setup_title')}</strong></p><p>${t('setup_desc')}</p><ul>${d.setup_items.map(s => `<li>${getSL(s)}</li>`).join('')}</ul>
+          <p style="font-size:12px;color:#666;">${t('setup_note')}</p>`;
         }
 
-        html += `<h3>Del 2: Support og inkludert strategidag</h3>
-        <p>Lisensavgiften inkluderer lopende support knyttet til bruk av Foocus-plattformen${d.strategy_days > 0 ? `, samt ${d.strategy_days} strategidag${d.strategy_days > 1 ? 'er' : ''} i lopet av forste avtalear` : ''}.</p>
-        <p><strong>Support inkludert i lisensen:</strong></p>
+        html += `<h3>${t('support_title')}</h3>
+        <p>${t('support_desc')}${d.strategy_days > 0 ? t('support_strategy').replace('{days}', d.strategy_days) : '.'}</p>
+        <p><strong>${t('support_included')}</strong></p>
         <ul>
-          <li>Ongoing e-post- og telefonsupport pa hverdager</li>
-          <li>Veiledning i bruk av dashboard og rapportfunksjoner</li>
-          <li>Opplaring av nye brukere</li>
-          <li>Inntil ${d.support_hours_per_quarter} timer per kvartal med support og radgivning</li>
+          <li>${t('support_email')}</li>
+          <li>${t('support_dashboard')}</li>
+          <li>${t('support_training')}</li>
+          <li>${t('support_hours').replace('{hours}', d.support_hours_per_quarter)}</li>
         </ul>`;
 
         if (d.strategy_days > 0) {
-          html += `<p><strong>Strategiutvikling - radgivning</strong></p>
-          <p>Foocus gjennomforer ${d.strategy_days} strategidag${d.strategy_days > 1 ? 'er' : ''} hos ${escapeHtml(d.client_name)} for a koble plattformdata pa klubbens kommersielle mal.</p>
-          <p style="font-size:12px;color:#666;">Reise- og overnattingskostnader faktureres til selvkost. Tidspunkt avtales i fellesskap.</p>`;
+          html += `<p><strong>${t('strategy_title')}</strong></p>
+          <p>${t('strategy_desc').replace('{days}', d.strategy_days).replace('{client}', escapeHtml(d.client_name))}</p>
+          <p style="font-size:12px;color:#666;">${t('strategy_note')}</p>`;
         }
       } else {
-        html += `<h3>Prosjektbeskrivelse</h3><p>${escapeHtml(d.project_scope || 'Ikke angitt')}</p>`;
+        html += `<h3>${t('project_desc_title')}</h3><p>${escapeHtml(d.project_scope || t('not_specified'))}</p>`;
         if (d.deliverables.length > 0) {
-          html += `<p><strong>Deliverables:</strong></p><ul>${d.deliverables.map(dl => `<li>${DELIVERABLE_LABELS[dl] || dl}</li>`).join('')}</ul>`;
+          html += `<p><strong>${t('deliverables')}</strong></p><ul>${d.deliverables.map(dl => `<li>${getDL(dl)}</li>`).join('')}</ul>`;
         }
       }
 
+      const previewDateLocale = contractLang === 'no' ? 'nb-NO' : 'en-GB';
       html += `
-        <h2>3. Price og fakturering</h2>
+        <h2>3. ${t('pricing')}</h2>
         <table>
-          <tr><th>Description</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Unit price</th><th style="text-align:right;">Months</th><th style="text-align:right;">Total (excl. VAT)</th></tr>
+          <tr><th>${t('description')}</th><th style="text-align:right;">${t('qty')}</th><th style="text-align:right;">${t('unit_price')}</th><th style="text-align:right;">${t('months')}</th><th style="text-align:right;">${t('total_excl')}</th></tr>
           ${d.pricing.map(p => `<tr><td>${escapeHtml(p.description)}${p.note ? `<br><span style="font-size:11px;font-style:italic;color:#888;">${escapeHtml(p.note)}</span>` : ''}</td><td style="text-align:right;font-family:monospace;">${p.qty || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.unit_price || p.amount)} NOK</td><td style="text-align:right;font-family:monospace;">${p.months || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.amount)} NOK</td></tr>`).join('')}
-          <tr style="font-weight:bold;"><td colspan="4">TOTAL${isService ? ' FIRST YEAR' : ''} (excl. travel expenses)</td><td style="text-align:right;font-family:monospace;">${formatCurrency(totalAmount)} NOK</td></tr>
+          <tr style="font-weight:bold;"><td colspan="4">${isService ? t('total_first_year') : t('total_label')}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(totalAmount)} NOK</td></tr>
         </table>
         <ul>
-          <li>First invoice issued upon signing of this agreement</li>
-          <li>${isService ? 'Subsequent license fees invoiced in advance at the start of each contract period' : 'Subsequent payments invoiced in advance per agreed payment plan'}</li>
-          <li>Payment due ${d.payment_days} days from invoice date</li>
-          <li>All prices are exclusive of VAT (25%)</li>
-          <li>Priceene kan justeres arlig med ${adjustmentText}</li>
+          <li>${t('invoice_signing')}</li>
+          <li>${isService ? t('invoice_advance') : t('invoice_advance_project')}</li>
+          <li>${t('payment_due').replace('{days}', d.payment_days)}</li>
+          <li>${t('excl_vat')}</li>
+          <li>${t('price_adjust').replace('{method}', adjustmentText)}</li>
         </ul>
 
-        <h2>4. Avtaleperiode og oppsigelse</h2>
+        <h2>4. ${t('period')}</h2>
         <ul>
-          <li>Avtaleperioden er ${d.period_months} months fra ${d.start_date ? new Date(d.start_date).toLocaleDateString('nb-NO') : 'signaturdato'}</li>
-          ${d.auto_renewal ? `<li>Avtalen fornyes automatisk med ny ${d.period_months}-monthssperiode med mindre den sies opp skriftlig senest ${d.notice_days} dager for utlop</li>` : `<li>Avtalen utloper ved periodens slutt uten automatisk fornyelse</li>`}
-          <li>Oppsigelse sendes til kontaktpersonene oppfort i punkt 1</li>
+          <li>${t('period_text').replace('{months}', d.period_months).replace('{date}', d.start_date ? new Date(d.start_date).toLocaleDateString(previewDateLocale) : t('signing_date'))}</li>
+          ${d.auto_renewal ? `<li>${t('auto_renewal').replace('{months}', d.period_months).replace('{days}', d.notice_days)}</li>` : `<li>${t('no_renewal')}</li>`}
+          <li>${t('termination')}</li>
         </ul>
 
-        <h2>5. Konfidensialitet</h2>
-        <p>Begge parter forplikter seg til a behandle all informasjon om den annen parts forretningshemmeligheter, kunder, priser og strategier konfidensielt. Konfidensialitetsplikten gjelder i avtaleperioden og i 2 ar etter avtalens opphor.</p>
+        <h2>5. ${t('confidentiality')}</h2>
+        <p>${t('confidentiality_text')}</p>
 
-        <h2>6. Immaterielle rettigheter</h2>
-        <p>Foocus beholder alle rettigheter til plattformen, metodikk, algoritmer og rapporteringsformater. Rapporter og data levert til ${escapeHtml(d.client_name)} kan brukes fritt i egen virksomhet og overfor egne partnere.</p>
+        <h2>6. ${t('ip')}</h2>
+        <p>${t('ip_text').replace(/\{client\}/g, escapeHtml(d.client_name))}</p>
 
-        <h2>7. Ansvarsbegrensning</h2>
-        <p>Foocus er ikke ansvarlig for indirekte tap, tapt fortjeneste eller konsekvenstap. Foocus sitt samlede ansvar under denne avtalen er begrenset til avtalt arlig lisensavgift.</p>
+        <h2>7. ${t('liability')}</h2>
+        <p>${t('liability_text')}</p>
 
-        <h2>8. Verneting og lovvalg</h2>
-        <p>Avtalen er underlagt norsk rett. Eventuelle tvister skal forst forsokes lost i minnelighet. Dersom dette ikke lykkes, er Oslo tingrett verneting.</p>
+        <h2>8. ${t('governing')}</h2>
+        <p>${t('governing_text')}</p>
 
-        <h2>9. Underskrifter</h2>
-        <p>Ved underskrift bekrefter begge parter at de har lest, forstatt og aksepterer alle vilkar i denne avtalen.</p>
+        <h2>9. ${t('signatures')}</h2>
+        <p>${t('signatures_text')}</p>
         <table>
           <tr>
             <td style="width:50%;height:80px;vertical-align:bottom;"><strong>${escapeHtml(d.foocus_contact)}</strong><br>${FOOCUS_INFO.name}<br>Oslo, ___/___-${new Date().getFullYear()}</td>
