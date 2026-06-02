@@ -4146,14 +4146,21 @@
     })();
 
     // ===== DATA LOADING =====
+    function withTimeout(promise, ms) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+      ]);
+    }
+
     async function loadAllData() {
       try {
-        const [clientsRes, tasksRes, docsRes, contractsRes] = await Promise.all([
+        const [clientsRes, tasksRes, docsRes, contractsRes] = await withTimeout(Promise.all([
           sb.from('clients').select('*').order('updated_at', { ascending: false }),
           sb.from('tasks').select('*').order('due_date', { ascending: true }),
           sb.from('documents').select('*').order('created_at', { ascending: false }),
           sb.from('contracts').select('*').order('created_at', { ascending: false })
-        ]);
+        ]), 6000);
 
         clients = clientsRes.data || [];
         tasks = tasksRes.data || [];
