@@ -4060,7 +4060,7 @@
         }
       });
 
-      // Check for existing session (with timeout)
+      // Check for existing session (with timeout + manual refresh fallback)
       let session = null;
       try {
         const sessionResult = await Promise.race([
@@ -4068,8 +4068,55 @@
           new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 5000))
         ]);
         session = sessionResult.data?.session;
+        // If token is expired, force a refresh
+        if (session && session.expires_at && session.expires_at * 1000 < Date.now()) {
+          console.log('Token expired, refreshing...');
+          const { data: refreshData, error: refreshErr } = await Promise.race([
+            sb.auth.refreshSession(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Refresh timeout')), 5000))
+          ]);
+          if (refreshErr || !refreshData?.session) {
+            console.error('Refresh failed:', refreshErr);
+            session = null;
+          } else {
+            session = refreshData.session;
+          }
+        }
       } catch(e) {
         console.error('Session check timeout/error:', e);
+        // SDK hung — bypass it and refresh the token directly via REST
+        const storageKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+        if (storageKey) {
+          try {
+            const storedToken = JSON.parse(localStorage.getItem(storageKey));
+            if (storedToken?.refresh_token) {
+              const res = await Promise.race([
+                fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+                  method: 'POST',
+                  headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ refresh_token: storedToken.refresh_token })
+                }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Fetch refresh timeout')), 5000))
+              ]);
+              const freshTokens = await res.json();
+              if (freshTokens.access_token) {
+                // Store the fresh tokens and set session in SDK
+                localStorage.setItem(storageKey, JSON.stringify(freshTokens));
+                const { data: setData } = await Promise.race([
+                  sb.auth.setSession({ access_token: freshTokens.access_token, refresh_token: freshTokens.refresh_token }),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('setSession timeout')), 5000))
+                ]);
+                if (setData?.session) {
+                  session = setData.session;
+                  console.log('Session recovered via direct REST refresh');
+                }
+              }
+            }
+          } catch(e2) {
+            console.error('Manual refresh also failed:', e2);
+            localStorage.removeItem(storageKey);
+          }
+        }
       }
 
       if (session && !isPasswordRecovery) {
