@@ -3645,7 +3645,41 @@
     // ===== SUPABASE CONFIG =====
     const SUPABASE_URL = 'https://izeefglmytbszpsntcur.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6ZWVmZ2xteXRic3pwc250Y3VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNjEwMTksImV4cCI6MjA3OTgzNzAxOX0.nfQZY4-7FRc15tKVZlIBwSRvhMS0C7i4KJyIhxf6YiU';
-    
+
+    // Pre-flight: refresh expired tokens BEFORE SDK init to prevent internal lock
+    (function preflight() {
+      const storageKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+      if (!storageKey) return;
+      try {
+        const stored = JSON.parse(localStorage.getItem(storageKey));
+        if (!stored?.access_token) return;
+        const parts = stored.access_token.split('.');
+        if (parts.length !== 3) return;
+        const payload = JSON.parse(atob(parts[1]));
+        const expired = payload.exp && (payload.exp * 1000 < Date.now());
+        if (expired && stored.refresh_token) {
+          console.log('[preflight] Token expired, refreshing before SDK init...');
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', false); // synchronous
+          xhr.setRequestHeader('apikey', SUPABASE_KEY);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.send(JSON.stringify({ refresh_token: stored.refresh_token }));
+          if (xhr.status === 200) {
+            const fresh = JSON.parse(xhr.responseText);
+            if (fresh.access_token) {
+              localStorage.setItem(storageKey, JSON.stringify(fresh));
+              console.log('[preflight] Token refreshed successfully');
+            }
+          } else {
+            console.warn('[preflight] Refresh failed, clearing stale token');
+            localStorage.removeItem(storageKey);
+          }
+        }
+      } catch(e) {
+        console.error('[preflight] Error:', e);
+      }
+    })();
+
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // ===== STATE =====
@@ -4060,7 +4094,7 @@
         }
       });
 
-      // Check for existing session (with timeout + manual refresh fallback)
+      // Check for existing session (preflight already refreshed expired tokens)
       let session = null;
       try {
         const sessionResult = await Promise.race([
@@ -4068,53 +4102,18 @@
           new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 5000))
         ]);
         session = sessionResult.data?.session;
-        // If token is expired, force a refresh
-        if (session && session.expires_at && session.expires_at * 1000 < Date.now()) {
-          console.log('Token expired, refreshing...');
-          const { data: refreshData, error: refreshErr } = await Promise.race([
-            sb.auth.refreshSession(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Refresh timeout')), 5000))
-          ]);
-          if (refreshErr || !refreshData?.session) {
-            console.error('Refresh failed:', refreshErr);
-            session = null;
-          } else {
-            session = refreshData.session;
-          }
-        }
       } catch(e) {
         console.error('Session check timeout/error:', e);
-        // SDK is locked — bypass it entirely via REST refresh, then reload
+        // SDK is stuck — clear token and reload once to get a clean slate
         const storageKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
-        if (storageKey && !sessionStorage.getItem('_sbRefreshAttempted')) {
-          try {
-            const storedToken = JSON.parse(localStorage.getItem(storageKey));
-            if (storedToken?.refresh_token) {
-              const res = await Promise.race([
-                fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
-                  method: 'POST',
-                  headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ refresh_token: storedToken.refresh_token })
-                }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Fetch refresh timeout')), 5000))
-              ]);
-              const freshTokens = await res.json();
-              if (freshTokens.access_token) {
-                // Store fresh tokens and reload — SDK will pick them up on next init
-                localStorage.setItem(storageKey, JSON.stringify(freshTokens));
-                sessionStorage.setItem('_sbRefreshAttempted', '1');
-                console.log('Tokens refreshed via REST, reloading...');
-                window.location.reload();
-                return;
-              }
-            }
-          } catch(e2) {
-            console.error('REST refresh failed:', e2);
-          }
+        if (storageKey && !sessionStorage.getItem('_sbCleanReload')) {
+          localStorage.removeItem(storageKey);
+          sessionStorage.setItem('_sbCleanReload', '1');
+          console.log('SDK stuck, clearing token and reloading...');
+          window.location.reload();
+          return;
         }
-        // If we get here, clear stale token so login works cleanly
-        if (storageKey) localStorage.removeItem(storageKey);
-        sessionStorage.removeItem('_sbRefreshAttempted');
+        sessionStorage.removeItem('_sbCleanReload');
       }
 
       if (session && !isPasswordRecovery) {
