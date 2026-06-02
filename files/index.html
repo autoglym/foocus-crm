@@ -4215,27 +4215,41 @@
         const [clientsRes, tasksRes, docsRes, contractsRes] = await withTimeout(Promise.all([
           sb.from('clients').select('*').order('updated_at', { ascending: false }),
           sb.from('tasks').select('*').order('due_date', { ascending: true }),
-          sb.from('documents').select('*').order('created_at', { ascending: false }),
+          sb.from('documents').select('id,client_id,name,doc_type,created_at').order('created_at', { ascending: false }),
           sb.from('contracts').select('*').order('created_at', { ascending: false })
-        ]), 6000);
+        ]), 15000);
+
+        if (clientsRes.error) console.error('Clients query error:', clientsRes.error);
+        if (tasksRes.error) console.error('Tasks query error:', tasksRes.error);
+        if (docsRes.error) console.error('Docs query error:', docsRes.error);
+        if (contractsRes.error) console.error('Contracts query error:', contractsRes.error);
 
         clients = clientsRes.data || [];
         tasks = tasksRes.data || [];
         documents = docsRes.data || [];
         contracts = contractsRes.data || [];
+        console.log(`Data loaded: ${clients.length} clients, ${tasks.length} tasks, ${documents.length} docs, ${contracts.length} contracts`);
       } catch(e) {
         console.error('Load core data error:', e);
+        // If Promise.all failed, try loading each table individually
+        console.log('Trying individual table loads...');
+        try { const r = await withTimeout(sb.from('clients').select('*'), 10000); clients = r.data || []; console.log('Clients loaded:', clients.length); } catch(e2) { console.error('Individual clients load failed:', e2); }
+        try { const r = await withTimeout(sb.from('tasks').select('*'), 10000); tasks = r.data || []; console.log('Tasks loaded:', tasks.length); } catch(e2) { console.error('Individual tasks load failed:', e2); }
+        try { const r = await withTimeout(sb.from('documents').select('id,client_id,name,doc_type,created_at'), 10000); documents = r.data || []; console.log('Docs loaded:', documents.length); } catch(e2) { console.error('Individual docs load failed:', e2); }
+        try { const r = await withTimeout(sb.from('contracts').select('*'), 10000); contracts = r.data || []; console.log('Contracts loaded:', contracts.length); } catch(e2) { console.error('Individual contracts load failed:', e2); }
       }
 
       // Load financials
       try {
-        const { data: finData } = await sb.from('financials').select('*').limit(1).maybeSingle();
+        const { data: finData, error: finErr } = await withTimeout(sb.from('financials').select('*').limit(1).maybeSingle(), 10000);
+        if (finErr) console.error('Financials error:', finErr);
         if (finData) financials = finData;
       } catch(e) { console.error('Load financials error:', e); }
 
       // Load costs
       try {
-        const { data: costsData } = await sb.from('costs').select('*').order('name');
+        const { data: costsData, error: costsErr } = await withTimeout(sb.from('costs').select('*').order('name'), 10000);
+        if (costsErr) console.error('Costs error:', costsErr);
         if (costsData) costs = costsData;
       } catch(e) { costs = []; console.error('Load costs error:', e); }
 
@@ -5043,11 +5057,23 @@
       e.target.value = '';
     }
 
-    function openDoc(docId) {
+    async function openDoc(docId) {
       const doc = documents.find(d => d.id === docId);
-      if (doc?.data) {
+      if (!doc) return;
+      // Fetch full doc data on demand (not loaded in listing for performance)
+      let docData = doc.data;
+      if (!docData) {
+        try {
+          const { data: fullDoc } = await sb.from('documents').select('data').eq('id', docId).maybeSingle();
+          if (fullDoc?.data) {
+            docData = fullDoc.data;
+            doc.data = docData; // cache it
+          }
+        } catch(e) { console.error('Failed to load document data:', e); }
+      }
+      if (docData) {
         const win = window.open();
-        win.document.write(`<iframe src="${doc.data}" style="width:100%;height:100%;border:none;"></iframe>`);
+        win.document.write(`<iframe src="${docData}" style="width:100%;height:100%;border:none;"></iframe>`);
       }
     }
 
