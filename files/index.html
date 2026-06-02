@@ -4079,7 +4079,22 @@
         document.getElementById('userEmail').textContent = currentUser.email;
 
         updateStatus('loading', 'Loading...');
+
+        // Timeout after 8 seconds - show app anyway with empty data
+        const loadTimeout = setTimeout(() => {
+          updateStatus('disconnected', 'Offline - retry');
+          document.getElementById('statusDot').style.cursor = 'pointer';
+          document.getElementById('statusText').style.cursor = 'pointer';
+          document.getElementById('statusText').onclick = () => { appInitialized = false; initApp(); };
+          setupNavigation();
+          setupFilterTabs();
+          setupDetailTabs();
+          setupFileInputs();
+          renderDashboard();
+        }, 8000);
+
         await loadAllData();
+        clearTimeout(loadTimeout);
         updateStatus('connected', 'Connected');
 
         setupNavigation();
