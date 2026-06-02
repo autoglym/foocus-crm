@@ -4060,8 +4060,17 @@
         }
       });
 
-      // Check for existing session
-      const { data: { session } } = await sb.auth.getSession();
+      // Check for existing session (with timeout)
+      let session = null;
+      try {
+        const sessionResult = await Promise.race([
+          sb.auth.getSession(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 5000))
+        ]);
+        session = sessionResult.data?.session;
+      } catch(e) {
+        console.error('Session check timeout/error:', e);
+      }
 
       if (session && !isPasswordRecovery) {
         currentUser = session.user;
