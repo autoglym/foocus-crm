@@ -3646,7 +3646,9 @@
     const SUPABASE_URL = 'https://izeefglmytbszpsntcur.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6ZWVmZ2xteXRic3pwc250Y3VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNjEwMTksImV4cCI6MjA3OTgzNzAxOX0.nfQZY4-7FRc15tKVZlIBwSRvhMS0C7i4KJyIhxf6YiU';
 
-    // Manage session manually — SDK v2's internal init hangs on stored tokens
+    // ===== SESSION MANAGEMENT =====
+    // We manage auth entirely ourselves — the Supabase SDK v2 auth module
+    // uses Web Locks that deadlock when tokens expire between page loads.
     const STORAGE_KEY = 'foocus_session';
 
     function getStoredSession() {
@@ -3658,7 +3660,7 @@
         const payload = JSON.parse(atob(parts[1]));
         const expired = payload.exp && (payload.exp * 1000 < Date.now());
         if (expired) {
-          console.log('[preflight] Token expired, refreshing...');
+          console.log('[auth] Token expired, refreshing...');
           const xhr = new XMLHttpRequest();
           xhr.open('POST', SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', false);
           xhr.setRequestHeader('apikey', SUPABASE_KEY);
@@ -3668,7 +3670,7 @@
             const fresh = JSON.parse(xhr.responseText);
             if (fresh.access_token) {
               localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
-              console.log('[preflight] Token refreshed');
+              console.log('[auth] Token refreshed');
               return fresh;
             }
           }
@@ -3677,49 +3679,61 @@
         }
         return stored;
       } catch(e) {
-        console.error('[preflight] Error:', e);
+        console.error('[auth] Preflight error:', e);
         localStorage.removeItem(STORAGE_KEY);
         return null;
       }
     }
 
-    function saveSession(session) {
-      if (session) {
+    function saveSession(data) {
+      if (data) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-          expires_at: session.expires_at,
-          user: session.user
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+          expires_at: data.expires_at,
+          user: data.user
         }));
       } else {
         localStorage.removeItem(STORAGE_KEY);
       }
     }
 
-    // Clear any old SDK-format tokens that cause the lock
-    (function clearOldTokens() {
-      Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token')).forEach(k => {
-        localStorage.removeItem(k);
-        console.log('[preflight] Cleared old SDK token:', k);
-      });
-    })();
+    // Clear ALL old SDK tokens to prevent Web Lock deadlock
+    Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token')).forEach(k => localStorage.removeItem(k));
+    Object.keys(localStorage).filter(k => k === 'foocus-auth').forEach(k => localStorage.removeItem(k));
 
+    // Get stored session BEFORE any SDK interaction
     const _storedSession = getStoredSession();
 
-    // Create client — we handle session storage ourselves via custom key
-    // Use a unique storageKey so SDK never finds old sb-*-auth-token locks
+    // Create Supabase client with auth DISABLED — we manage auth headers ourselves
     let sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        storageKey: 'foocus-auth',
-        storage: {
-          getItem: (key) => localStorage.getItem(key),
-          setItem: (key, value) => localStorage.setItem(key, value),
-          removeItem: (key) => localStorage.removeItem(key)
-        }
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      global: {
+        headers: _storedSession ? { 'Authorization': 'Bearer ' + _storedSession.access_token } : {}
       }
     });
+
+    // Function to update the client's auth headers
+    function updateClientAuth(accessToken) {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        global: {
+          headers: accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {}
+        }
+      });
+    }
+
+    // Login via REST API (bypasses SDK auth module entirely)
+    async function loginWithPassword(email, password) {
+      const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error_description || data.msg || data.error);
+      return data;
+    }
 
     // ===== STATE =====
     let clients = [];
@@ -3745,7 +3759,7 @@
     let refreshTimer = null;
     function setupAutoRefresh(session) {
       if (refreshTimer) clearInterval(refreshTimer);
-      // Refresh 5 minutes before expiry, check every 4 minutes
+      // Check every 4 minutes, refresh when < 5 minutes left
       refreshTimer = setInterval(async () => {
         try {
           const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -3753,11 +3767,17 @@
           const parts = stored.access_token.split('.');
           const payload = JSON.parse(atob(parts[1]));
           const expiresIn = (payload.exp * 1000) - Date.now();
-          if (expiresIn < 5 * 60 * 1000) { // Less than 5 min left
-            console.log('[refresh] Token expiring soon, refreshing...');
-            const { data, error } = await sb.auth.refreshSession();
-            if (data?.session) {
-              saveSession(data.session);
+          if (expiresIn < 5 * 60 * 1000) {
+            console.log('[refresh] Token expiring soon, refreshing via REST...');
+            const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+              method: 'POST',
+              headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refresh_token: stored.refresh_token })
+            });
+            const fresh = await res.json();
+            if (fresh.access_token) {
+              saveSession(fresh);
+              updateClientAuth(fresh.access_token);
               console.log('[refresh] Token refreshed');
             }
           }
@@ -3864,20 +3884,14 @@
       
       try {
         console.log('Attempting login for:', email);
-        const { data, error } = await Promise.race([
-          sb.auth.signInWithPassword({ email, password }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Login timed out. Please try again.')), 10000))
-        ]);
-        console.log('Login response:', !!data?.session, error);
+        const sessionData = await loginWithPassword(email, password);
+        console.log('Login success:', sessionData.user?.email);
 
-        if (error) throw error;
-
-        if (data.session) {
-          currentUser = data.user;
-          saveSession(data.session);
-          setupAutoRefresh(data.session);
-          await initApp();
-        }
+        currentUser = sessionData.user;
+        saveSession(sessionData);
+        updateClientAuth(sessionData.access_token);
+        setupAutoRefresh(sessionData);
+        await initApp();
       } catch (error) {
         console.error('Login error:', error);
         errorEl.textContent = error.message || 'Login failed. Please try again.';
@@ -3932,8 +3946,11 @@
     async function handleLogout() {
       saveSession(null);
       if (refreshTimer) clearInterval(refreshTimer);
-      await sb.auth.signOut();
-      window.location.reload();
+      updateClientAuth(null);
+      currentUser = null;
+      appInitialized = false;
+      document.getElementById('authContainer').style.display = 'flex';
+      document.getElementById('appWrapper').classList.remove('active');
     }
 
     // ===== E-SIGNING =====
@@ -4144,63 +4161,13 @@
         isPasswordRecovery = true;
       }
 
-      // Recover session from our own storage
-      if (_storedSession && _storedSession.access_token && !isPasswordRecovery) {
-        console.log('[init] Recovering session...');
-        try {
-          const result = await Promise.race([
-            sb.auth.setSession({
-              access_token: _storedSession.access_token,
-              refresh_token: _storedSession.refresh_token
-            }),
-            new Promise((resolve) => setTimeout(() => resolve({ data: { session: null }, error: 'timeout' }), 5000))
-          ]);
-          if (result.data?.session) {
-            currentUser = result.data.session.user;
-            saveSession(result.data.session);
-            console.log('[init] Session recovered for:', currentUser.email);
-            setupAutoRefresh(result.data.session);
-            await initApp();
-          } else {
-            console.warn('[init] setSession failed or timed out:', result.error);
-            // Use stored user info to proceed even if SDK is slow
-            if (_storedSession.user) {
-              currentUser = _storedSession.user;
-              console.log('[init] Using stored user:', currentUser.email);
-              setupAutoRefresh(_storedSession);
-              await initApp();
-            } else {
-              localStorage.removeItem(STORAGE_KEY);
-            }
-          }
-        } catch(e) {
-          console.error('[init] Session recovery error:', e);
-          localStorage.removeItem(STORAGE_KEY);
-        }
+      // Recover session from our own storage — no SDK auth calls needed
+      if (_storedSession && _storedSession.user && !isPasswordRecovery) {
+        console.log('[init] Session found for:', _storedSession.user.email);
+        currentUser = _storedSession.user;
+        setupAutoRefresh(_storedSession);
+        await initApp();
       }
-
-      // Listen for auth state changes
-      sb.auth.onAuthStateChange(async (event, session) => {
-        console.log('[auth] Event:', event);
-        if (event === 'PASSWORD_RECOVERY' || isPasswordRecovery) {
-          isPasswordRecovery = true;
-          document.getElementById('authContainer').style.display = 'flex';
-          document.getElementById('appWrapper').classList.remove('active');
-          document.getElementById('loginForm').style.display = 'none';
-          document.getElementById('signupForm').style.display = 'none';
-          document.getElementById('resetForm').style.display = 'none';
-          document.getElementById('newPasswordForm').style.display = 'block';
-        } else if (event === 'TOKEN_REFRESHED' && session) {
-          saveSession(session);
-        } else if (event === 'SIGNED_OUT') {
-          currentUser = null;
-          appInitialized = false;
-          isPasswordRecovery = false;
-          saveSession(null);
-          document.getElementById('authContainer').style.display = 'flex';
-          document.getElementById('appWrapper').classList.remove('active');
-        }
-      });
     });
 
     let appInitialized = false;
