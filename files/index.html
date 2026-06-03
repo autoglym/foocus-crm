@@ -2486,6 +2486,23 @@
       border-radius: var(--radius);
       padding: 32px;
       margin-bottom: 24px;
+      line-height: 1.7;
+    }
+    .signing-contract h4 {
+      margin: 20px 0 8px;
+    }
+    .signing-contract ul {
+      margin: 8px 0 16px;
+      padding-left: 24px;
+    }
+    .signing-contract li {
+      margin-bottom: 4px;
+    }
+    .signing-contract p {
+      margin-bottom: 10px;
+    }
+    .signing-contract table {
+      margin-bottom: 16px;
     }
     .signing-form {
       background: var(--bg-card);
@@ -3757,9 +3774,29 @@
 
     // ===== AUTO REFRESH =====
     let refreshTimer = null;
+    async function refreshToken() {
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (!stored?.refresh_token) return false;
+      try {
+        const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: stored.refresh_token })
+        });
+        const fresh = await res.json();
+        if (fresh.access_token) {
+          saveSession(fresh);
+          updateClientAuth(fresh.access_token);
+          console.log('[refresh] Token refreshed');
+          return true;
+        }
+      } catch(e) { console.error('[refresh] Error:', e); }
+      return false;
+    }
+
     function setupAutoRefresh(session) {
       if (refreshTimer) clearInterval(refreshTimer);
-      // Check every 4 minutes, refresh when < 5 minutes left
+      // Check every 60 seconds, refresh when < 10 minutes left
       refreshTimer = setInterval(async () => {
         try {
           const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -3767,24 +3804,26 @@
           const parts = stored.access_token.split('.');
           const payload = JSON.parse(atob(parts[1]));
           const expiresIn = (payload.exp * 1000) - Date.now();
-          if (expiresIn < 5 * 60 * 1000) {
-            console.log('[refresh] Token expiring soon, refreshing via REST...');
-            const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
-              method: 'POST',
-              headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ refresh_token: stored.refresh_token })
-            });
-            const fresh = await res.json();
-            if (fresh.access_token) {
-              saveSession(fresh);
-              updateClientAuth(fresh.access_token);
-              console.log('[refresh] Token refreshed');
-            }
+          if (expiresIn < 10 * 60 * 1000) {
+            await refreshToken();
           }
         } catch(e) {
           console.error('[refresh] Error:', e);
         }
-      }, 4 * 60 * 1000);
+      }, 60 * 1000);
+    }
+
+    // Wrapper: auto-retry on JWT expired
+    async function sbQuery(queryFn) {
+      const result = await queryFn(sb);
+      if (result.error && result.error.message && result.error.message.includes('JWT expired')) {
+        console.log('[sbQuery] JWT expired, refreshing and retrying...');
+        const refreshed = await refreshToken();
+        if (refreshed) {
+          return await queryFn(sb);
+        }
+      }
+      return result;
     }
 
     // ===== AUTH FUNCTIONS =====
@@ -4051,7 +4090,7 @@
           <h2 style="margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">${t('agreement')}</h2>
           <p style="color:var(--text-secondary);margin-bottom:24px;">${escapeHtml(d.title || '')}</p>
 
-          <h3 style="color:var(--accent);">1. ${t('parties')}</h3>
+          <h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">1. ${t('parties')}</h3>
           <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
             <tr>
               <td style="width:50%;padding:12px;border:1px solid var(--border);vertical-align:top;">
@@ -4066,12 +4105,12 @@
         let sectionNum = 1;
 
         if (d.intro_text) {
-          contractHtml += `<h3 style="color:var(--accent);">1. ${t('background')}</h3>
+          contractHtml += `<h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">1. ${t('background')}</h3>
           ${d.intro_text.split(/\\n|\\r\\n|\\r|\n/).filter(l => l.trim()).map(p => '<p style="margin:0 0 12px 0;line-height:1.7;">' + escapeHtml(p) + '</p>').join('')}`;
           sectionNum = 2;
         }
 
-        contractHtml += `<h3 style="color:var(--accent);">${sectionNum}. ${t('scope')}</h3>`;
+        contractHtml += `<h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">${sectionNum}. ${t('scope')}</h3>`;
 
         if (isService) {
           contractHtml += `<h4>${t('platform_title')}</h4><p>${t('platform_desc').replace('{client}', escapeHtml(d.client_name || ''))}</p>`;
@@ -4091,7 +4130,7 @@
         }
 
         contractHtml += `
-          <h3 style="color:var(--accent);">${sectionNum + 1}. ${t('pricing')}</h3>
+          <h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">${sectionNum + 1}. ${t('pricing')}</h3>
           <table style="width:100%;border-collapse:collapse;">
             <tr style="background:var(--bg-tertiary);"><th style="padding:8px;text-align:left;border:1px solid var(--border);">${t('description')}</th><th style="padding:8px;text-align:right;border:1px solid var(--border);">${t('total_excl')}</th></tr>
             ${(d.pricing || []).map(p => '<tr><td style="padding:8px;border:1px solid var(--border);">' + escapeHtml(p.description) + (p.note ? '<br><span style="font-size:12px;font-style:italic;color:var(--text-muted);">' + escapeHtml(p.note) + '</span>' : '') + '</td><td style="padding:8px;text-align:right;border:1px solid var(--border);font-family:JetBrains Mono,monospace;">' + formatCurrency(p.amount) + ' NOK</td></tr>').join('')}
@@ -4104,23 +4143,23 @@
             <li>${t('excl_vat')}</li>
           </ul>
 
-          <h3 style="color:var(--accent);">${sectionNum + 2}. ${t('period')}</h3>
+          <h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">${sectionNum + 2}. ${t('period')}</h3>
           <ul>
             <li>${t('period_text').replace('{months}', d.period_months || 12).replace('{date}', d.start_date ? new Date(d.start_date).toLocaleDateString(previewDateLocale) : t('signing_date'))}</li>
             ${d.auto_renewal ? '<li>' + t('auto_renewal').replace('{months}', d.period_months || 12).replace('{days}', d.notice_days || 90) + '</li>' : '<li>' + t('no_renewal') + '</li>'}
             <li>${t('termination')}</li>
           </ul>
 
-          <h3 style="color:var(--accent);">${sectionNum + 3}. ${t('confidentiality')}</h3>
+          <h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">${sectionNum + 3}. ${t('confidentiality')}</h3>
           <p>${t('confidentiality_text')}</p>
 
-          <h3 style="color:var(--accent);">${sectionNum + 4}. ${t('ip')}</h3>
+          <h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">${sectionNum + 4}. ${t('ip')}</h3>
           <p>${t('ip_text').replace(/\{client\}/g, escapeHtml(d.client_name || ''))}</p>
 
-          <h3 style="color:var(--accent);">${sectionNum + 5}. ${t('liability')}</h3>
+          <h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">${sectionNum + 5}. ${t('liability')}</h3>
           <p>${t('liability_text')}</p>
 
-          <h3 style="color:var(--accent);">${sectionNum + 6}. ${t('governing')}</h3>
+          <h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">${sectionNum + 6}. ${t('governing')}</h3>
           <p>${t('governing_text')}</p>`;
 
         document.getElementById('signingContent').innerHTML = `
@@ -4980,8 +5019,12 @@
         if (currentClientId) openClientDetail(currentClientId);
         else { renderDashboard(); renderClientsOnly(); renderTargetsOnly(); }
       } catch (error) {
+        if (error.message && error.message.includes('JWT expired')) {
+          console.log('[save] JWT expired, refreshing and retrying...');
+          if (await refreshToken()) { btn.disabled = false; btn.textContent = 'Save'; return saveClient(); }
+        }
         console.error('Save error:', error);
-        alert('Failed to save: ' + error.message);
+        alert('Kunne ikke lagre: ' + error.message);
       } finally {
         btn.disabled = false;
         btn.textContent = 'Save';
@@ -5024,8 +5067,12 @@
         renderAllTasks();
         renderMatrix();
       } catch (error) {
+        if (error.message && error.message.includes('JWT expired')) {
+          console.log('[save] JWT expired, refreshing and retrying...');
+          if (await refreshToken()) { btn.disabled = false; btn.textContent = 'Save'; return saveTask(); }
+        }
         console.error('Save error:', error);
-        alert('Failed to save: ' + error.message);
+        alert('Kunne ikke lagre: ' + error.message);
       } finally {
         btn.disabled = false;
         btn.textContent = 'Save';
