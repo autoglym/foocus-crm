@@ -3646,70 +3646,51 @@
     const SUPABASE_URL = 'https://izeefglmytbszpsntcur.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6ZWVmZ2xteXRic3pwc250Y3VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNjEwMTksImV4cCI6MjA3OTgzNzAxOX0.nfQZY4-7FRc15tKVZlIBwSRvhMS0C7i4KJyIhxf6YiU';
 
-    // Pre-flight: refresh expired tokens BEFORE SDK init to prevent internal lock
-    (function preflight() {
+    // Read stored session BEFORE SDK init (SDK's internal init hangs)
+    function getStoredSession() {
       const storageKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
-      if (!storageKey) return;
+      if (!storageKey) return null;
       try {
         const stored = JSON.parse(localStorage.getItem(storageKey));
-        if (!stored?.access_token) return;
+        if (!stored?.access_token || !stored?.refresh_token) return null;
         const parts = stored.access_token.split('.');
-        if (parts.length !== 3) return;
+        if (parts.length !== 3) return null;
         const payload = JSON.parse(atob(parts[1]));
         const expired = payload.exp && (payload.exp * 1000 < Date.now());
         if (expired) {
-          // Remove the expired token entirely — SDK will start clean
-          // User will need to re-login but SDK won't get stuck
-          console.log('[preflight] Removing expired token to prevent SDK lock');
+          // Refresh synchronously before SDK touches it
+          console.log('[preflight] Token expired, refreshing...');
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', false);
+          xhr.setRequestHeader('apikey', SUPABASE_KEY);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.send(JSON.stringify({ refresh_token: stored.refresh_token }));
+          if (xhr.status === 200) {
+            const fresh = JSON.parse(xhr.responseText);
+            if (fresh.access_token) {
+              localStorage.setItem(storageKey, JSON.stringify(fresh));
+              console.log('[preflight] Token refreshed');
+              return fresh;
+            }
+          }
+          // Refresh failed — clear stale token
           localStorage.removeItem(storageKey);
+          return null;
         }
+        return stored;
       } catch(e) {
         console.error('[preflight] Error:', e);
-        // If token is malformed, remove it
-        const sk = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
-        if (sk) localStorage.removeItem(sk);
+        return null;
       }
-    })();
-
-    // Create client — if preflight cleared a bad token, SDK starts clean
-    let sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // Ensure SDK client can actually make queries — recreate if stuck
-    async function ensureWorkingClient(session) {
-      try {
-        const testResult = await Promise.race([
-          sb.from('clients').select('id').limit(1),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('stuck')), 5000))
-        ]);
-        if (testResult.error) {
-          console.warn('[ensureWorkingClient] Query error:', testResult.error.message);
-        } else {
-          console.log('[ensureWorkingClient] SDK client works');
-          return sb;
-        }
-      } catch(e) {
-        console.warn('[ensureWorkingClient] SDK stuck, recreating client');
-      }
-      // Create fresh client and set session explicitly
-      const freshClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-        auth: { autoRefreshToken: true, persistSession: true }
-      });
-      if (session) {
-        try {
-          await Promise.race([
-            freshClient.auth.setSession({
-              access_token: session.access_token,
-              refresh_token: session.refresh_token
-            }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('setSession timeout')), 5000))
-          ]);
-          console.log('[ensureWorkingClient] Fresh client with session ready');
-        } catch(e) {
-          console.warn('[ensureWorkingClient] setSession timed out, client may work without session');
-        }
-      }
-      return freshClient;
     }
+
+    const _storedSession = getStoredSession();
+
+    // Create client WITHOUT persistent session to avoid SDK lock on init
+    // We manage session recovery ourselves
+    let sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
 
     // ===== STATE =====
     let clients = [];
@@ -3828,12 +3809,12 @@
       
       try {
         console.log('Attempting login for:', email);
-        // Use a fresh client for login to avoid stuck SDK lock
-        const loginClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        // Create a fresh persistent client for login
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
           auth: { autoRefreshToken: true, persistSession: true }
         });
         const { data, error } = await Promise.race([
-          loginClient.auth.signInWithPassword({ email, password }),
+          sb.auth.signInWithPassword({ email, password }),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Login timed out. Please try again.')), 10000))
         ]);
         console.log('Login response:', !!data?.session, error);
@@ -3842,7 +3823,6 @@
 
         if (data.session) {
           currentUser = data.user;
-          sb = loginClient; // Use the fresh client going forward
           await initApp();
         }
       } catch (error) {
@@ -4108,9 +4088,37 @@
         isPasswordRecovery = true;
       }
 
-      // Listen for auth changes
+      // Recover session from pre-flight stored token (bypasses SDK lock entirely)
+      if (_storedSession && _storedSession.access_token && !isPasswordRecovery) {
+        console.log('[init] Recovering session from stored token');
+        try {
+          const { data, error } = await sb.auth.setSession({
+            access_token: _storedSession.access_token,
+            refresh_token: _storedSession.refresh_token
+          });
+          if (data?.session) {
+            currentUser = data.session.user;
+            console.log('[init] Session recovered for:', currentUser.email);
+            // Switch to a persistent client now that session is set
+            sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+              auth: { persistSession: true, autoRefreshToken: true }
+            });
+            await sb.auth.setSession({
+              access_token: _storedSession.access_token,
+              refresh_token: _storedSession.refresh_token
+            });
+            await initApp();
+          } else {
+            console.error('[init] setSession failed:', error);
+          }
+        } catch(e) {
+          console.error('[init] Session recovery error:', e);
+        }
+      }
+
+      // Listen for auth changes (login/logout/password recovery)
       sb.auth.onAuthStateChange(async (event, session) => {
-        console.log('[auth] Event:', event, 'Session:', !!session);
+        console.log('[auth] Event:', event);
         if (event === 'PASSWORD_RECOVERY' || isPasswordRecovery) {
           isPasswordRecovery = true;
           document.getElementById('authContainer').style.display = 'flex';
@@ -4119,37 +4127,14 @@
           document.getElementById('signupForm').style.display = 'none';
           document.getElementById('resetForm').style.display = 'none';
           document.getElementById('newPasswordForm').style.display = 'block';
-        } else if (event === 'SIGNED_IN' && session && !isPasswordRecovery) {
-          currentUser = session.user;
-          document.getElementById('newPasswordForm').style.display = 'none';
-          // Ensure SDK client works after sign-in
-          sb = await ensureWorkingClient(session);
-          await initApp();
         } else if (event === 'SIGNED_OUT') {
           currentUser = null;
+          appInitialized = false;
           isPasswordRecovery = false;
           document.getElementById('authContainer').style.display = 'flex';
           document.getElementById('appWrapper').classList.remove('active');
         }
       });
-
-      // Check for existing session
-      let session = null;
-      try {
-        const sessionResult = await Promise.race([
-          sb.auth.getSession(),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Session timeout')), 5000))
-        ]);
-        session = sessionResult.data?.session;
-      } catch(e) {
-        console.error('Session check timeout:', e.message);
-      }
-
-      if (session && !isPasswordRecovery) {
-        currentUser = session.user;
-        sb = await ensureWorkingClient(session);
-        await initApp();
-      }
     });
 
     let appInitialized = false;
