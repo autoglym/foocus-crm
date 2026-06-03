@@ -3706,9 +3706,19 @@
 
     const _storedSession = getStoredSession();
 
-    // Create client with persistSession:false — we handle storage ourselves
+    // Create client — we handle session storage ourselves via custom key
+    // Use a unique storageKey so SDK never finds old sb-*-auth-token locks
     let sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false }
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        storageKey: 'foocus-auth',
+        storage: {
+          getItem: (key) => localStorage.getItem(key),
+          setItem: (key, value) => localStorage.setItem(key, value),
+          removeItem: (key) => localStorage.removeItem(key)
+        }
+      }
     });
 
     // ===== STATE =====
@@ -3854,10 +3864,6 @@
       
       try {
         console.log('Attempting login for:', email);
-        // Create a fresh persistent client for login
-        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-          auth: { autoRefreshToken: true, persistSession: true }
-        });
         const { data, error } = await Promise.race([
           sb.auth.signInWithPassword({ email, password }),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Login timed out. Please try again.')), 10000))
@@ -4138,26 +4144,34 @@
         isPasswordRecovery = true;
       }
 
-      // Recover session from our own storage (bypasses SDK lock entirely)
+      // Recover session from our own storage
       if (_storedSession && _storedSession.access_token && !isPasswordRecovery) {
-        console.log('[init] Recovering session from stored token');
+        console.log('[init] Recovering session...');
         try {
-          const { data, error } = await sb.auth.setSession({
-            access_token: _storedSession.access_token,
-            refresh_token: _storedSession.refresh_token
-          });
-          if (data?.session) {
-            currentUser = data.session.user;
-            saveSession(data.session);
+          const result = await Promise.race([
+            sb.auth.setSession({
+              access_token: _storedSession.access_token,
+              refresh_token: _storedSession.refresh_token
+            }),
+            new Promise((resolve) => setTimeout(() => resolve({ data: { session: null }, error: 'timeout' }), 5000))
+          ]);
+          if (result.data?.session) {
+            currentUser = result.data.session.user;
+            saveSession(result.data.session);
             console.log('[init] Session recovered for:', currentUser.email);
-
-            // Set up auto-refresh timer
-            setupAutoRefresh(data.session);
-
+            setupAutoRefresh(result.data.session);
             await initApp();
           } else {
-            console.error('[init] setSession failed:', error);
-            localStorage.removeItem(STORAGE_KEY);
+            console.warn('[init] setSession failed or timed out:', result.error);
+            // Use stored user info to proceed even if SDK is slow
+            if (_storedSession.user) {
+              currentUser = _storedSession.user;
+              console.log('[init] Using stored user:', currentUser.email);
+              setupAutoRefresh(_storedSession);
+              await initApp();
+            } else {
+              localStorage.removeItem(STORAGE_KEY);
+            }
           }
         } catch(e) {
           console.error('[init] Session recovery error:', e);
