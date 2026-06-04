@@ -252,8 +252,8 @@
 
     .titlebar {
       height: 52px;
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border);
+      background: #3d7a8a;
+      border-bottom: none;
       display: flex;
       align-items: center;
       padding: 0 24px;
@@ -263,7 +263,7 @@
     .titlebar-logo {
       width: 32px;
       height: 32px;
-      background: #3d7a8a;
+      background: rgba(255,255,255,0.15);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -279,7 +279,7 @@
     .titlebar h1 {
       font-size: 15px;
       font-weight: 600;
-      color: var(--text-primary);
+      color: #fff;
       letter-spacing: -0.3px;
     }
 
@@ -295,7 +295,7 @@
       align-items: center;
       gap: 8px;
       font-size: 12px;
-      color: var(--text-muted);
+      color: rgba(255,255,255,0.7);
     }
 
     .status-dot {
@@ -313,15 +313,15 @@
 
     .user-email {
       font-size: 13px;
-      color: var(--text-secondary);
+      color: rgba(255,255,255,0.85);
     }
 
     .logout-btn {
       padding: 6px 12px;
-      background: var(--bg-tertiary);
-      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
       border-radius: 6px;
-      color: var(--text-secondary);
+      color: #fff;
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
@@ -330,8 +330,8 @@
     }
 
     .logout-btn:hover {
-      background: var(--bg-hover);
-      color: var(--text-primary);
+      background: rgba(255,255,255,0.25);
+      color: #fff;
     }
 
     .status-dot.disconnected {
