@@ -2096,70 +2096,59 @@
     .tag-input::placeholder { color: var(--text-muted); }
 
     .pricing-row-group {
-      margin-bottom: 12px;
-      background: var(--bg-tertiary);
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       padding: 12px;
     }
-    .pricing-row {
+    .pricing-desc-row {
       display: flex;
-      flex-wrap: wrap;
       gap: 8px;
       align-items: center;
+      margin-bottom: 8px;
     }
-    .pricing-row .form-input { margin: 0; min-width: 0; }
-    .pricing-row .form-input[data-pricing-desc] {
-      flex: 1 1 100%;
+    .pricing-desc-row .form-input {
+      flex: 1;
+      min-width: 0;
+      margin: 0;
       font-size: 14px;
     }
-    .pricing-row .pricing-numbers {
+    .pricing-desc-row .btn-ghost { padding: 6px 8px; font-size: 16px; }
+    .pricing-nums-row {
       display: flex;
-      gap: 8px;
-      align-items: center;
-      flex: 1 1 100%;
+      gap: 10px;
+      align-items: flex-end;
     }
-    .pricing-row .pricing-num-field {
+    .pricing-num-field {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 3px;
     }
-    .pricing-row .pricing-num-field label {
+    .pricing-num-field label {
       font-size: 10px;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .pricing-row .pricing-num-field input {
-      width: 90px;
+    .pricing-num-field input {
+      width: 100px;
       text-align: right;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-    }
-    .pricing-row .line-total {
-      margin-left: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      text-align: right;
-    }
-    .pricing-row .line-total label {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .pricing-row .line-total span {
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
+      margin: 0;
+      min-width: 0;
+    }
+    .pricing-num-field.pricing-linjesum {
+      margin-left: auto;
+      text-align: right;
+    }
+    .pricing-num-field.pricing-linjesum .linjesum-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
       font-weight: 600;
       color: var(--text-primary);
-    }
-    .pricing-row .btn-remove-row {
-      align-self: flex-end;
-      padding: 6px;
-      margin-bottom: 2px;
+      padding: 8px 0;
     }
     .pricing-note-input {
       width: 100%;
@@ -2170,11 +2159,31 @@
       color: var(--text-muted);
       font-size: 11px;
       font-style: italic;
-      margin-top: 8px;
+      margin-top: 6px;
     }
     .pricing-note-input::placeholder { color: var(--text-muted); opacity: 0.5; }
     .pricing-note-input:focus { outline: none; border-color: var(--accent); color: var(--text-primary); }
     .pricing-header { display: none; }
+    .pricing-currency-select {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .pricing-currency-select button {
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .pricing-currency-select button.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
     .pricing-header span {
       font-size: 10px;
       font-weight: 600;
@@ -3196,48 +3205,24 @@
             <!-- Step 4: Pricing -->
             <div class="wizard-panel" id="wizardPanel3">
               <div class="wizard-section">
-                <h3>Pricing</h3>
-                <div class="pricing-header"></div>
-                <div id="pricingRows">
-                  <div class="pricing-row-group">
-                    <div class="pricing-row">
-                      <input type="text" class="form-input" value="Platform license - monitoring, reporting and support" data-pricing-desc placeholder="Beskrivelse">
-                      <div class="pricing-numbers">
-                        <div class="pricing-num-field"><label>Antall</label><input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()"></div>
-                        <div class="pricing-num-field"><label>Enhetspris</label><input type="number" class="form-input" value="6250" placeholder="0" data-pricing-unit onchange="updatePricingTotal()"></div>
-                        <div class="pricing-num-field"><label>Måneder</label><input type="number" class="form-input" value="12" min="1" data-pricing-months onchange="updatePricingTotal()"></div>
-                        <div class="line-total"><label>Linjesum</label><span data-pricing-linetotal>75 000</span></div>
-                        <button class="btn btn-ghost btn-remove-row" onclick="removePricingRow(this)">&times;</button>
-                      </div>
-                    </div>
-                    <input type="text" class="pricing-note-input" placeholder="Legg til notat (f.eks. engangskostnad, inkl. periode...)" data-pricing-note>
-                  </div>
-                  <div class="pricing-row-group">
-                    <div class="pricing-row">
-                      <input type="text" class="form-input" value="One-time setup - logo training, press monitoring, verification" data-pricing-desc placeholder="Beskrivelse">
-                      <div class="pricing-numbers">
-                        <div class="pricing-num-field"><label>Antall</label><input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()"></div>
-                        <div class="pricing-num-field"><label>Enhetspris</label><input type="number" class="form-input" value="15000" placeholder="0" data-pricing-unit onchange="updatePricingTotal()"></div>
-                        <div class="pricing-num-field"><label>Måneder</label><input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()"></div>
-                        <div class="line-total"><label>Linjesum</label><span data-pricing-linetotal>15 000</span></div>
-                        <button class="btn btn-ghost btn-remove-row" onclick="removePricingRow(this)">&times;</button>
-                      </div>
-                    </div>
-                    <input type="text" class="pricing-note-input" placeholder="Legg til notat (f.eks. engangskostnad, inkl. periode...)" data-pricing-note>
-                  </div>
+                <h3>Prissetting</h3>
+                <div class="pricing-currency-select">
+                  <button class="active" onclick="setPricingCurrency('NOK', this)">NOK</button>
+                  <button onclick="setPricingCurrency('EUR', this)">EUR</button>
                 </div>
+                <div id="pricingRows"></div>
                 <button class="btn btn-secondary" onclick="addPricingRow()" style="margin-top:12px;">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                  Add price line
+                  Legg til prislinje
                 </button>
                 <div class="pricing-total">
-                  <span>Total (excl. VAT and travel expenses)</span>
-                  <span class="pricing-total-value" id="pricingTotal">90 000 NOK</span>
+                  <span>Totalt (ekskl. mva. og reiseutgifter)</span>
+                  <span class="pricing-total-value" id="pricingTotal">0 NOK</span>
                 </div>
               </div>
 
               <div class="wizard-section">
-                <h3>Invoicing Terms</h3>
+                <h3>Faktureringsvilkår</h3>
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Payment Terms (days)</label>
@@ -5731,17 +5716,10 @@
       selectTemplate('service', document.querySelector('.checkbox-item[onclick*="service"]'));
 
       // Reset pricing
-      document.getElementById('pricingRows').innerHTML = `
-        <div class="pricing-row">
-          <input type="text" class="form-input" value="Platform license - monitoring, reporting and support" data-pricing-desc>
-          <input type="number" class="form-input" value="75000" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
-          <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
-        </div>
-        <div class="pricing-row">
-          <input type="text" class="form-input" value="One-time setup - logo training, press monitoring, verification" data-pricing-desc>
-          <input type="number" class="form-input" value="15000" placeholder="Amount" data-pricing-amount onchange="updatePricingTotal()">
-          <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
-        </div>`;
+      document.getElementById('pricingRows').innerHTML =
+        buildPricingRowHtml('Platform license - monitoring, reporting and support', 1, 6250, 12, 75000, '') +
+        buildPricingRowHtml('One-time setup - logo training, press monitoring, verification', 1, 15000, 1, 15000, '');
+      setPricingCurrency('NOK', document.querySelector('.pricing-currency-select button'));
       updatePricingTotal();
     }
 
@@ -5779,21 +5757,13 @@
 
       // Pricing
       if (d.pricing && d.pricing.length > 0) {
-        document.getElementById('pricingRows').innerHTML = d.pricing.map(p => `
-          <div class="pricing-row-group">
-            <div class="pricing-row">
-              <input type="text" class="form-input" value="${escapeHtml(p.description)}" data-pricing-desc placeholder="Beskrivelse">
-              <div class="pricing-numbers">
-                <div class="pricing-num-field"><label>Antall</label><input type="number" class="form-input" value="${p.qty || 1}" min="1" data-pricing-qty onchange="updatePricingTotal()"></div>
-                <div class="pricing-num-field"><label>Enhetspris</label><input type="number" class="form-input" value="${p.unit_price || p.amount || 0}" placeholder="0" data-pricing-unit onchange="updatePricingTotal()"></div>
-                <div class="pricing-num-field"><label>Måneder</label><input type="number" class="form-input" value="${p.months || 1}" min="1" data-pricing-months onchange="updatePricingTotal()"></div>
-                <div class="line-total"><label>Linjesum</label><span data-pricing-linetotal>${formatCurrency(p.amount || 0)}</span></div>
-                <button class="btn btn-ghost btn-remove-row" onclick="removePricingRow(this)">&times;</button>
-              </div>
-            </div>
-            <input type="text" class="pricing-note-input" value="${escapeHtml(p.note || '')}" placeholder="Legg til notat (f.eks. engangskostnad, inkl. periode...)" data-pricing-note>
-          </div>`).join('');
+        document.getElementById('pricingRows').innerHTML = d.pricing.map(p =>
+          buildPricingRowHtml(p.description, p.qty || 1, p.unit_price || p.amount || 0, p.months || 1, p.amount || 0, p.note || '')
+        ).join('');
         updatePricingTotal();
+      }
+      if (d.currency) {
+        setPricingCurrency(d.currency, document.querySelector(`.pricing-currency-select button:${d.currency === 'EUR' ? 'last-child' : 'first-child'}`));
       }
 
       if (contract.client_id) {
@@ -5885,23 +5855,34 @@
     }
 
     // Pricing
-    function addPricingRow() {
-      const container = document.getElementById('pricingRows');
-      const group = document.createElement('div');
-      group.className = 'pricing-row-group';
-      group.innerHTML = `
-        <div class="pricing-row">
-          <input type="text" class="form-input" placeholder="Beskrivelse" data-pricing-desc>
-          <div class="pricing-numbers">
-            <div class="pricing-num-field"><label>Antall</label><input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()"></div>
-            <div class="pricing-num-field"><label>Enhetspris</label><input type="number" class="form-input" placeholder="0" data-pricing-unit onchange="updatePricingTotal()"></div>
-            <div class="pricing-num-field"><label>Måneder</label><input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()"></div>
-            <div class="line-total"><label>Linjesum</label><span data-pricing-linetotal>0</span></div>
-            <button class="btn btn-ghost btn-remove-row" onclick="removePricingRow(this)">&times;</button>
-          </div>
+    let pricingCurrency = 'NOK';
+
+    function setPricingCurrency(currency, btn) {
+      pricingCurrency = currency;
+      document.querySelectorAll('.pricing-currency-select button').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      updatePricingTotal();
+    }
+
+    function buildPricingRowHtml(desc, qty, unitPrice, months, amount, note) {
+      const lineTotal = amount || (qty * unitPrice * months);
+      return `<div class="pricing-row-group">
+        <div class="pricing-desc-row">
+          <input type="text" class="form-input" value="${escapeHtml(desc || '')}" data-pricing-desc placeholder="Beskrivelse">
+          <button class="btn btn-ghost" onclick="removePricingRow(this)">&times;</button>
         </div>
-        <input type="text" class="pricing-note-input" placeholder="Legg til notat (f.eks. engangskostnad, inkl. periode...)" data-pricing-note>`;
-      container.appendChild(group);
+        <div class="pricing-nums-row">
+          <div class="pricing-num-field"><label>Antall</label><input type="number" class="form-input" value="${qty || 1}" min="1" data-pricing-qty onchange="updatePricingTotal()"></div>
+          <div class="pricing-num-field"><label>Enhetspris</label><input type="number" class="form-input" value="${unitPrice || 0}" placeholder="0" data-pricing-unit onchange="updatePricingTotal()"></div>
+          <div class="pricing-num-field"><label>Måneder</label><input type="number" class="form-input" value="${months || 1}" min="1" data-pricing-months onchange="updatePricingTotal()"></div>
+          <div class="pricing-num-field pricing-linjesum"><label>Linjesum</label><div class="linjesum-value" data-pricing-linetotal>${formatCurrency(lineTotal)}</div></div>
+        </div>
+        <input type="text" class="pricing-note-input" value="${escapeHtml(note || '')}" placeholder="Legg til notat (f.eks. engangskostnad, inkl. periode...)" data-pricing-note>
+      </div>`;
+    }
+
+    function addPricingRow() {
+      document.getElementById('pricingRows').insertAdjacentHTML('beforeend', buildPricingRowHtml('', 1, 0, 1, 0, ''));
     }
 
     function removePricingRow(btn) {
@@ -5911,16 +5892,16 @@
 
     function updatePricingTotal() {
       let grandTotal = 0;
-      document.querySelectorAll('.pricing-row').forEach(row => {
-        const qty = parseFloat(row.querySelector('[data-pricing-qty]')?.value) || 1;
-        const unit = parseFloat(row.querySelector('[data-pricing-unit]')?.value) || 0;
-        const months = parseFloat(row.querySelector('[data-pricing-months]')?.value) || 1;
+      document.querySelectorAll('.pricing-row-group').forEach(group => {
+        const qty = parseFloat(group.querySelector('[data-pricing-qty]')?.value) || 1;
+        const unit = parseFloat(group.querySelector('[data-pricing-unit]')?.value) || 0;
+        const months = parseFloat(group.querySelector('[data-pricing-months]')?.value) || 1;
         const lineTotal = qty * unit * months;
-        const lineTotalEl = row.querySelector('[data-pricing-linetotal]');
+        const lineTotalEl = group.querySelector('[data-pricing-linetotal]');
         if (lineTotalEl) lineTotalEl.textContent = formatCurrency(lineTotal);
         grandTotal += lineTotal;
       });
-      document.getElementById('pricingTotal').textContent = formatCurrency(grandTotal) + ' NOK';
+      document.getElementById('pricingTotal').textContent = formatCurrency(grandTotal) + ' ' + pricingCurrency;
     }
 
     // Gather all wizard data
@@ -5965,7 +5946,8 @@
         notice_days: parseInt(document.getElementById('contractNoticeDays').value) || 90,
         foocus_contact: document.getElementById('contractFoocusContact').value,
         foocus_email: document.getElementById('contractFoocusEmail').value,
-        project_scope: document.getElementById('contractProjectScope').value
+        project_scope: document.getElementById('contractProjectScope').value,
+        currency: pricingCurrency
       };
     }
 
