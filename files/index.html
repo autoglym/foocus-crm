@@ -5963,6 +5963,14 @@
 
     // Preview
     function renderContractPreview() {
+      // Ensure contractLang matches the active button state
+      const langEnBtn = document.getElementById('langEn');
+      if (langEnBtn && langEnBtn.classList.contains('active')) {
+        contractLang = 'en';
+      } else {
+        contractLang = 'no';
+      }
+      console.log('[preview] Rendering with language:', contractLang);
       const d = gatherContractData();
       const isService = getSelectedTemplate() === 'service';
       const totalAmount = d.pricing.reduce((s, p) => s + p.amount, 0);
