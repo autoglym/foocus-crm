@@ -4112,7 +4112,10 @@
         }
 
         const d = contract.contract_data || {};
+        // Set contract language for signing page
+        if (d.lang) contractLang = d.lang;
         const totalAmount = (d.pricing || []).reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+        const currency = d.currency || 'NOK';
 
         // Render full contract (matches preview) and signing form
         const isService = contract.template_type === 'service';
@@ -4168,8 +4171,8 @@
           <h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">${sectionNum + 1}. ${t('pricing')}</h3>
           <table style="width:100%;border-collapse:collapse;">
             <tr style="background:var(--bg-tertiary);"><th style="padding:8px;text-align:left;border:1px solid var(--border);">${t('description')}</th><th style="padding:8px;text-align:right;border:1px solid var(--border);">${t('total_excl')}</th></tr>
-            ${(d.pricing || []).map(p => '<tr><td style="padding:8px;border:1px solid var(--border);">' + escapeHtml(p.description) + (p.note ? '<br><span style="font-size:12px;font-style:italic;color:var(--text-muted);">' + escapeHtml(p.note) + '</span>' : '') + '</td><td style="padding:8px;text-align:right;border:1px solid var(--border);font-family:JetBrains Mono,monospace;">' + formatCurrency(p.amount) + ' NOK</td></tr>').join('')}
-            <tr style="font-weight:bold;"><td style="padding:8px;border:1px solid var(--border);">${t('total_label')}</td><td style="padding:8px;text-align:right;border:1px solid var(--border);font-family:JetBrains Mono,monospace;">${formatCurrency(totalAmount)} NOK</td></tr>
+            ${(d.pricing || []).map(p => '<tr><td style="padding:8px;border:1px solid var(--border);">' + escapeHtml(p.description) + (p.note ? '<br><span style="font-size:12px;font-style:italic;color:var(--text-muted);">' + escapeHtml(p.note) + '</span>' : '') + '</td><td style="padding:8px;text-align:right;border:1px solid var(--border);font-family:JetBrains Mono,monospace;">' + formatCurrency(p.amount) + ' ' + currency + '</td></tr>').join('')}
+            <tr style="font-weight:bold;"><td style="padding:8px;border:1px solid var(--border);">${t('total_label')}</td><td style="padding:8px;text-align:right;border:1px solid var(--border);font-family:JetBrains Mono,monospace;">${formatCurrency(totalAmount)} ${currency}</td></tr>
           </table>
           <ul style="font-size:13px;color:var(--text-secondary);">
             <li>${t('invoice_signing')}</li>
@@ -5306,6 +5309,7 @@
 
     function setContractLang(lang) {
       contractLang = lang;
+      console.log('[lang] Contract language set to:', lang);
       document.getElementById('langNo').classList.toggle('active', lang === 'no');
       document.getElementById('langEn').classList.toggle('active', lang === 'en');
     }
@@ -5746,6 +5750,9 @@
       document.getElementById('contractFoocusEmail').value = d.foocus_email || FOOCUS_INFO.email;
       document.getElementById('contractProjectScope').value = d.project_scope || '';
 
+      // Restore language
+      if (d.lang) setContractLang(d.lang);
+
       wizardPartners = d.partners || [];
       renderPartnerTags();
 
@@ -5947,7 +5954,8 @@
         foocus_contact: document.getElementById('contractFoocusContact').value,
         foocus_email: document.getElementById('contractFoocusEmail').value,
         project_scope: document.getElementById('contractProjectScope').value,
-        currency: pricingCurrency
+        currency: pricingCurrency,
+        lang: contractLang
       };
     }
 
