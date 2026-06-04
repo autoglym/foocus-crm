@@ -1953,7 +1953,7 @@
 
     /* Contract Generator Wizard */
     .wizard-container {
-      max-width: 800px;
+      max-width: 900px;
     }
 
     .wizard-steps {
@@ -2098,11 +2098,20 @@
     .pricing-row-group { margin-bottom: 12px; }
     .pricing-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 70px 100px 70px 110px 32px;
-      gap: 8px;
+      grid-template-columns: minmax(0, 1fr) 60px 85px 60px 95px 28px;
+      gap: 6px;
       align-items: center;
     }
     .pricing-row .form-input { margin: 0; min-width: 0; width: 100%; }
+    .pricing-row .form-input[data-pricing-desc] { font-size: 13px; }
+    .pricing-row .form-input[data-pricing-qty],
+    .pricing-row .form-input[data-pricing-unit],
+    .pricing-row .form-input[data-pricing-months] {
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      padding: 8px 6px;
+    }
     .pricing-note-input {
       width: 100%;
       padding: 5px 10px;
@@ -2118,16 +2127,16 @@
     .pricing-note-input:focus { outline: none; border-color: var(--accent); color: var(--text-primary); }
     .pricing-header {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 70px 100px 70px 110px 32px;
-      gap: 8px;
+      grid-template-columns: minmax(0, 1fr) 60px 85px 60px 95px 28px;
+      gap: 6px;
       margin-bottom: 6px;
     }
     @media (max-width: 700px) {
       .pricing-row, .pricing-header {
-        grid-template-columns: minmax(0, 1fr) 55px 80px 55px 90px 28px;
+        grid-template-columns: minmax(0, 1fr) 50px 70px 50px 80px 24px;
         gap: 4px;
       }
-      .pricing-row .form-input { font-size: 12px; padding: 6px; }
+      .pricing-row .form-input { font-size: 12px; padding: 6px 4px; }
     }
     .pricing-header span {
       font-size: 10px;
