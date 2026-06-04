@@ -3028,8 +3028,8 @@
               <div class="wizard-section">
                 <h3>Contract Language</h3>
                 <div style="display:flex;gap:8px;margin-bottom:20px;">
-                  <button class="granularity-btn active" id="langNo" onclick="setContractLang('no')">Norsk</button>
-                  <button class="granularity-btn" id="langEn" onclick="setContractLang('en')">English</button>
+                  <button type="button" class="granularity-btn active" id="langNo" onclick="setContractLang('no')">Norsk</button>
+                  <button type="button" class="granularity-btn" id="langEn" onclick="setContractLang('en')">English</button>
                 </div>
               </div>
               <div class="wizard-section">
@@ -5310,8 +5310,10 @@
     function setContractLang(lang) {
       contractLang = lang;
       console.log('[lang] Contract language set to:', lang);
-      document.getElementById('langNo').classList.toggle('active', lang === 'no');
-      document.getElementById('langEn').classList.toggle('active', lang === 'en');
+      const noBtn = document.getElementById('langNo');
+      const enBtn = document.getElementById('langEn');
+      if (noBtn) { noBtn.classList.toggle('active', lang === 'no'); noBtn.style.background = lang === 'no' ? 'var(--accent)' : ''; noBtn.style.color = lang === 'no' ? '#fff' : ''; }
+      if (enBtn) { enBtn.classList.toggle('active', lang === 'en'); enBtn.style.background = lang === 'en' ? 'var(--accent)' : ''; enBtn.style.color = lang === 'en' ? '#fff' : ''; }
     }
 
     function t(key) { return CONTRACT_TEXTS[contractLang]?.[key] || CONTRACT_TEXTS['en'][key] || key; }
@@ -5750,8 +5752,8 @@
       document.getElementById('contractFoocusEmail').value = d.foocus_email || FOOCUS_INFO.email;
       document.getElementById('contractProjectScope').value = d.project_scope || '';
 
-      // Restore language
-      if (d.lang) setContractLang(d.lang);
+      // Restore language (default to 'no' for old contracts without lang)
+      setContractLang(d.lang || 'no');
 
       wizardPartners = d.partners || [];
       renderPartnerTags();
@@ -5963,14 +5965,15 @@
 
     // Preview
     function renderContractPreview() {
-      // Ensure contractLang matches the active button state
+      // Sync language from UI — check inline style AND class
       const langEnBtn = document.getElementById('langEn');
-      if (langEnBtn && langEnBtn.classList.contains('active')) {
+      const langNoBtn = document.getElementById('langNo');
+      if (langEnBtn && (langEnBtn.classList.contains('active') || langEnBtn.style.background)) {
         contractLang = 'en';
       } else {
         contractLang = 'no';
       }
-      console.log('[preview] Rendering with language:', contractLang);
+      console.log('[preview] Language:', contractLang, 'EN active:', langEnBtn?.classList.contains('active'), 'NO active:', langNoBtn?.classList.contains('active'));
       const d = gatherContractData();
       const isService = getSelectedTemplate() === 'service';
       const totalAmount = d.pricing.reduce((s, p) => s + p.amount, 0);
