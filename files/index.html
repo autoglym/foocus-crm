@@ -2095,22 +2095,71 @@
     }
     .tag-input::placeholder { color: var(--text-muted); }
 
-    .pricing-row-group { margin-bottom: 12px; }
+    .pricing-row-group {
+      margin-bottom: 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
     .pricing-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 60px 85px 60px 95px 28px;
-      gap: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
       align-items: center;
     }
-    .pricing-row .form-input { margin: 0; min-width: 0; width: 100%; }
-    .pricing-row .form-input[data-pricing-desc] { font-size: 13px; }
-    .pricing-row .form-input[data-pricing-qty],
-    .pricing-row .form-input[data-pricing-unit],
-    .pricing-row .form-input[data-pricing-months] {
+    .pricing-row .form-input { margin: 0; min-width: 0; }
+    .pricing-row .form-input[data-pricing-desc] {
+      flex: 1 1 100%;
+      font-size: 14px;
+    }
+    .pricing-row .pricing-numbers {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex: 1 1 100%;
+    }
+    .pricing-row .pricing-num-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .pricing-row .pricing-num-field label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .pricing-row .pricing-num-field input {
+      width: 90px;
       text-align: right;
       font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
-      padding: 8px 6px;
+    }
+    .pricing-row .line-total {
+      margin-left: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: right;
+    }
+    .pricing-row .line-total label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .pricing-row .line-total span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .pricing-row .btn-remove-row {
+      align-self: flex-end;
+      padding: 6px;
+      margin-bottom: 2px;
     }
     .pricing-note-input {
       width: 100%;
@@ -2121,23 +2170,11 @@
       color: var(--text-muted);
       font-size: 11px;
       font-style: italic;
-      margin-top: 4px;
+      margin-top: 8px;
     }
     .pricing-note-input::placeholder { color: var(--text-muted); opacity: 0.5; }
     .pricing-note-input:focus { outline: none; border-color: var(--accent); color: var(--text-primary); }
-    .pricing-header {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 60px 85px 60px 95px 28px;
-      gap: 6px;
-      margin-bottom: 6px;
-    }
-    @media (max-width: 700px) {
-      .pricing-row, .pricing-header {
-        grid-template-columns: minmax(0, 1fr) 50px 70px 50px 80px 24px;
-        gap: 4px;
-      }
-      .pricing-row .form-input { font-size: 12px; padding: 6px 4px; }
-    }
+    .pricing-header { display: none; }
     .pricing-header span {
       font-size: 10px;
       font-weight: 600;
@@ -3160,36 +3197,33 @@
             <div class="wizard-panel" id="wizardPanel3">
               <div class="wizard-section">
                 <h3>Pricing</h3>
-                <div class="pricing-header">
-                  <span>Description</span>
-                  <span>Qty</span>
-                  <span>Unit price</span>
-                  <span>Months</span>
-                  <span style="text-align:right;">Line total</span>
-                  <span></span>
-                </div>
+                <div class="pricing-header"></div>
                 <div id="pricingRows">
                   <div class="pricing-row-group">
                     <div class="pricing-row">
-                      <input type="text" class="form-input" value="Platform license - monitoring, reporting and support" data-pricing-desc>
-                      <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
-                      <input type="number" class="form-input" value="6250" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
-                      <input type="number" class="form-input" value="12" min="1" data-pricing-months onchange="updatePricingTotal()">
-                      <div class="line-total" data-pricing-linetotal>75 000</div>
-                      <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
+                      <input type="text" class="form-input" value="Platform license - monitoring, reporting and support" data-pricing-desc placeholder="Beskrivelse">
+                      <div class="pricing-numbers">
+                        <div class="pricing-num-field"><label>Antall</label><input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()"></div>
+                        <div class="pricing-num-field"><label>Enhetspris</label><input type="number" class="form-input" value="6250" placeholder="0" data-pricing-unit onchange="updatePricingTotal()"></div>
+                        <div class="pricing-num-field"><label>Måneder</label><input type="number" class="form-input" value="12" min="1" data-pricing-months onchange="updatePricingTotal()"></div>
+                        <div class="line-total"><label>Linjesum</label><span data-pricing-linetotal>75 000</span></div>
+                        <button class="btn btn-ghost btn-remove-row" onclick="removePricingRow(this)">&times;</button>
+                      </div>
                     </div>
-                    <input type="text" class="pricing-note-input" placeholder="Add a note (e.g. one-time fee, includes X-Y period...)" data-pricing-note>
+                    <input type="text" class="pricing-note-input" placeholder="Legg til notat (f.eks. engangskostnad, inkl. periode...)" data-pricing-note>
                   </div>
                   <div class="pricing-row-group">
                     <div class="pricing-row">
-                      <input type="text" class="form-input" value="One-time setup - logo training, press monitoring, verification" data-pricing-desc>
-                      <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
-                      <input type="number" class="form-input" value="15000" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
-                      <input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()">
-                      <div class="line-total" data-pricing-linetotal>15 000</div>
-                      <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
+                      <input type="text" class="form-input" value="One-time setup - logo training, press monitoring, verification" data-pricing-desc placeholder="Beskrivelse">
+                      <div class="pricing-numbers">
+                        <div class="pricing-num-field"><label>Antall</label><input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()"></div>
+                        <div class="pricing-num-field"><label>Enhetspris</label><input type="number" class="form-input" value="15000" placeholder="0" data-pricing-unit onchange="updatePricingTotal()"></div>
+                        <div class="pricing-num-field"><label>Måneder</label><input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()"></div>
+                        <div class="line-total"><label>Linjesum</label><span data-pricing-linetotal>15 000</span></div>
+                        <button class="btn btn-ghost btn-remove-row" onclick="removePricingRow(this)">&times;</button>
+                      </div>
                     </div>
-                    <input type="text" class="pricing-note-input" placeholder="Add a note (e.g. one-time fee, includes X-Y period...)" data-pricing-note>
+                    <input type="text" class="pricing-note-input" placeholder="Legg til notat (f.eks. engangskostnad, inkl. periode...)" data-pricing-note>
                   </div>
                 </div>
                 <button class="btn btn-secondary" onclick="addPricingRow()" style="margin-top:12px;">
@@ -5748,14 +5782,16 @@
         document.getElementById('pricingRows').innerHTML = d.pricing.map(p => `
           <div class="pricing-row-group">
             <div class="pricing-row">
-              <input type="text" class="form-input" value="${escapeHtml(p.description)}" data-pricing-desc>
-              <input type="number" class="form-input" value="${p.qty || 1}" min="1" data-pricing-qty onchange="updatePricingTotal()">
-              <input type="number" class="form-input" value="${p.unit_price || p.amount || 0}" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
-              <input type="number" class="form-input" value="${p.months || 1}" min="1" data-pricing-months onchange="updatePricingTotal()">
-              <div class="line-total" data-pricing-linetotal>${formatCurrency(p.amount || 0)}</div>
-              <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
+              <input type="text" class="form-input" value="${escapeHtml(p.description)}" data-pricing-desc placeholder="Beskrivelse">
+              <div class="pricing-numbers">
+                <div class="pricing-num-field"><label>Antall</label><input type="number" class="form-input" value="${p.qty || 1}" min="1" data-pricing-qty onchange="updatePricingTotal()"></div>
+                <div class="pricing-num-field"><label>Enhetspris</label><input type="number" class="form-input" value="${p.unit_price || p.amount || 0}" placeholder="0" data-pricing-unit onchange="updatePricingTotal()"></div>
+                <div class="pricing-num-field"><label>Måneder</label><input type="number" class="form-input" value="${p.months || 1}" min="1" data-pricing-months onchange="updatePricingTotal()"></div>
+                <div class="line-total"><label>Linjesum</label><span data-pricing-linetotal>${formatCurrency(p.amount || 0)}</span></div>
+                <button class="btn btn-ghost btn-remove-row" onclick="removePricingRow(this)">&times;</button>
+              </div>
             </div>
-            <input type="text" class="pricing-note-input" value="${escapeHtml(p.note || '')}" placeholder="Add a note (e.g. one-time fee, includes X-Y period...)" data-pricing-note>
+            <input type="text" class="pricing-note-input" value="${escapeHtml(p.note || '')}" placeholder="Legg til notat (f.eks. engangskostnad, inkl. periode...)" data-pricing-note>
           </div>`).join('');
         updatePricingTotal();
       }
@@ -5855,14 +5891,16 @@
       group.className = 'pricing-row-group';
       group.innerHTML = `
         <div class="pricing-row">
-          <input type="text" class="form-input" placeholder="Description" data-pricing-desc>
-          <input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()">
-          <input type="number" class="form-input" placeholder="0" data-pricing-unit onchange="updatePricingTotal()" style="font-family:'JetBrains Mono',monospace;">
-          <input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()">
-          <div class="line-total" data-pricing-linetotal>0</div>
-          <button class="btn btn-ghost" onclick="removePricingRow(this)" style="padding:8px;">&times;</button>
+          <input type="text" class="form-input" placeholder="Beskrivelse" data-pricing-desc>
+          <div class="pricing-numbers">
+            <div class="pricing-num-field"><label>Antall</label><input type="number" class="form-input" value="1" min="1" data-pricing-qty onchange="updatePricingTotal()"></div>
+            <div class="pricing-num-field"><label>Enhetspris</label><input type="number" class="form-input" placeholder="0" data-pricing-unit onchange="updatePricingTotal()"></div>
+            <div class="pricing-num-field"><label>Måneder</label><input type="number" class="form-input" value="1" min="1" data-pricing-months onchange="updatePricingTotal()"></div>
+            <div class="line-total"><label>Linjesum</label><span data-pricing-linetotal>0</span></div>
+            <button class="btn btn-ghost btn-remove-row" onclick="removePricingRow(this)">&times;</button>
+          </div>
         </div>
-        <input type="text" class="pricing-note-input" placeholder="Add a note (e.g. one-time fee, includes X-Y period...)" data-pricing-note>`;
+        <input type="text" class="pricing-note-input" placeholder="Legg til notat (f.eks. engangskostnad, inkl. periode...)" data-pricing-note>`;
       container.appendChild(group);
     }
 
