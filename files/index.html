@@ -5916,14 +5916,16 @@
       const getCheckedValues = (selector) => [...document.querySelectorAll(selector)].filter(cb => cb.checked).map(cb => cb.value);
 
       const pricing = [...document.querySelectorAll('.pricing-row-group')].map(group => {
-        const row = group.querySelector('.pricing-row');
         const noteEl = group.querySelector('[data-pricing-note]');
+        const qty = parseFloat(group.querySelector('[data-pricing-qty]')?.value) || 1;
+        const unitPrice = parseFloat(group.querySelector('[data-pricing-unit]')?.value) || 0;
+        const months = parseFloat(group.querySelector('[data-pricing-months]')?.value) || 1;
         return {
-          description: row.querySelector('[data-pricing-desc]').value,
-          qty: parseFloat(row.querySelector('[data-pricing-qty]')?.value) || 1,
-          unit_price: parseFloat(row.querySelector('[data-pricing-unit]')?.value) || 0,
-          months: parseFloat(row.querySelector('[data-pricing-months]')?.value) || 1,
-          amount: (parseFloat(row.querySelector('[data-pricing-qty]')?.value) || 1) * (parseFloat(row.querySelector('[data-pricing-unit]')?.value) || 0) * (parseFloat(row.querySelector('[data-pricing-months]')?.value) || 1),
+          description: group.querySelector('[data-pricing-desc]')?.value || '',
+          qty,
+          unit_price: unitPrice,
+          months,
+          amount: qty * unitPrice * months,
           note: noteEl ? noteEl.value : ''
         };
       }).filter(p => p.description);
