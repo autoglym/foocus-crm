@@ -110,8 +110,8 @@
     .auth-logo-icon {
       width: 48px;
       height: 48px;
-      background: linear-gradient(135deg, var(--accent), var(--important));
-      border-radius: 12px;
+      background: #3d7a8a;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -263,8 +263,8 @@
     .titlebar-logo {
       width: 32px;
       height: 32px;
-      background: linear-gradient(135deg, var(--accent), var(--important));
-      border-radius: 8px;
+      background: #3d7a8a;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -2623,7 +2623,7 @@
     <div class="auth-box">
       <div class="auth-logo">
         <div class="auth-logo-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70" fill="white"><path d="M25 35c0-10 8-18 18-18 6 0 11 3 14 7.5L60 19c-5-7-13-12-22-12C21 7 7 21 7 38s14 25 31 25c9 0 17-5 22-12l-3-5.5c-3 4.5-8 7.5-14 7.5-10 0-18-8-18-18zM75 35c0 10-8 18-18 18-6 0-11-3-14-7.5L40 51c5 7 13 12 22 12 17 0 31-14 31-28S79 7 62 7c-9 0-17 5-22 12l3 5.5c3-4.5 8-7.5 14-7.5 10 0 18 8 18 18z"/></svg>
         </div>
         <h1>Foocus CRM</h1>
       </div>
@@ -2693,7 +2693,7 @@
   <div class="app-wrapper" id="appWrapper">
     <div class="titlebar">
       <div class="titlebar-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70" fill="white"><path d="M25 35c0-10 8-18 18-18 6 0 11 3 14 7.5L60 19c-5-7-13-12-22-12C21 7 7 21 7 38s14 25 31 25c9 0 17-5 22-12l-3-5.5c-3 4.5-8 7.5-14 7.5-10 0-18-8-18-18zM75 35c0 10-8 18-18 18-6 0-11-3-14-7.5L40 51c5 7 13 12 22 12 17 0 31-14 31-28S79 7 62 7c-9 0-17 5-22 12l3 5.5c3-4.5 8-7.5 14-7.5 10 0 18 8 18 18z"/></svg>
       </div>
       <h1>Foocus CRM</h1>
       <div class="titlebar-right">
@@ -5300,7 +5300,7 @@
     const FOOCUS_INFO = {
       name: 'Foocus AS',
       org_nr: '924 869 232',
-      address: 'Birchs vei 35, 3530 Røyse, Norway',
+      get address() { return 'Birchs vei 35, 3530 Røyse, ' + (contractLang === 'en' ? 'Norway' : 'Norge'); },
       email: 'glenn@foocus.ai',
       contact: 'Glenn Myklebust, CEO'
     };
