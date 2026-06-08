@@ -2963,13 +2963,14 @@
 
               <!-- Costs Section -->
               <div class="cashflow-section active" id="cashflowCosts">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                  <p style="font-size:12px;color:var(--text-muted);">Recurring and one-time expenses with due dates</p>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                  <p style="font-size:12px;color:var(--text-muted);">Faste og engangskostnader</p>
                   <button class="btn btn-primary" onclick="openCostModal()" style="padding:6px 14px;font-size:12px;">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                    Add Expense
+                    Legg til kostnad
                   </button>
                 </div>
+                <div id="costCategoryFilter" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
                 <div id="costsTableContainer">
                   <div class="empty-costs">No expenses added yet. Click "Add Expense" to get started.</div>
                 </div>
@@ -7280,43 +7281,69 @@
     }
 
     // --- Costs table ---
+    let costCategoryFilter = 'all';
+
+    function renderCostCategoryFilters() {
+      const categories = [...new Set(costs.map(c => c.category || 'Ukategorisert').filter(Boolean))].sort();
+      const filterEl = document.getElementById('costCategoryFilter');
+      if (!filterEl || categories.length < 2) { if (filterEl) filterEl.innerHTML = ''; return; }
+
+      filterEl.innerHTML = `
+        <button class="filter-tab ${costCategoryFilter === 'all' ? 'active' : ''}" onclick="setCostCategoryFilter('all')" style="padding:4px 12px;font-size:11px;border-radius:20px;border:1px solid var(--border);background:${costCategoryFilter === 'all' ? 'var(--accent)' : 'transparent'};color:${costCategoryFilter === 'all' ? '#fff' : 'var(--text-muted)'};cursor:pointer;">Alle (${costs.length})</button>
+        ${categories.map(cat => {
+          const count = costs.filter(c => (c.category || 'Ukategorisert') === cat).length;
+          const isActive = costCategoryFilter === cat;
+          return `<button class="filter-tab ${isActive ? 'active' : ''}" onclick="setCostCategoryFilter('${escapeHtml(cat)}')" style="padding:4px 12px;font-size:11px;border-radius:20px;border:1px solid var(--border);background:${isActive ? 'var(--accent)' : 'transparent'};color:${isActive ? '#fff' : 'var(--text-muted)'};cursor:pointer;">${escapeHtml(cat)} (${count})</button>`;
+        }).join('')}`;
+    }
+
+    function setCostCategoryFilter(cat) {
+      costCategoryFilter = cat;
+      renderCostCategoryFilters();
+      renderCostsTable();
+    }
+
     function renderCostsTable() {
+      renderCostCategoryFilters();
       const container = document.getElementById('costsTableContainer');
       if (costs.length === 0) {
-        container.innerHTML = '<div class="empty-costs">No expenses added yet. Click "Add Expense" to get started.</div>';
+        container.innerHTML = '<div class="empty-costs">Ingen kostnader lagt til ennå.</div>';
         return;
       }
+      const filtered = costCategoryFilter === 'all' ? costs : costs.filter(c => (c.category || 'Ukategorisert') === costCategoryFilter);
       const totalMonthly = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
+      const filteredTotal = filtered.reduce((s, c) => s + (parseFloat(c.amount) || 0) * (c.cost_type === 'recurring' ? 1 : 1), 0);
       container.innerHTML = `
         <table class="costs-table">
           <thead><tr>
-            <th>Name</th><th>Amount</th><th>Type</th><th>Due Day</th><th>Period</th><th>Category</th><th></th>
+            <th>Navn</th><th>Beløp</th><th>Type</th><th>Forfallsdag</th><th>Periode</th><th>Kategori</th><th>MVA</th><th></th>
           </tr></thead>
-          <tbody>${costs.map(c => {
+          <tbody>${filtered.map(c => {
             const isRec = c.cost_type === 'recurring';
             const dateStr = isRec
-              ? `${c.day_of_month}. every month`
+              ? `${c.day_of_month}. hver mnd`
               : new Date(c.one_time_date).toLocaleDateString('nb-NO');
             const periodStr = isRec
-              ? `${c.start_date ? new Date(c.start_date).toLocaleDateString('nb-NO', {month:'short',year:'2-digit'}) : 'Start'} - ${c.end_date ? new Date(c.end_date).toLocaleDateString('nb-NO', {month:'short',year:'2-digit'}) : 'Ongoing'}`
-              : '-';
+              ? `${c.start_date ? new Date(c.start_date).toLocaleDateString('nb-NO', {month:'short',year:'2-digit'}) : 'Start'} – ${c.end_date ? new Date(c.end_date).toLocaleDateString('nb-NO', {month:'short',year:'2-digit'}) : 'Løpende'}`
+              : '–';
             return `<tr>
               <td><strong>${escapeHtml(c.name)}</strong>${c.notes ? `<br><span style="font-size:11px;color:var(--text-muted);">${escapeHtml(c.notes)}</span>` : ''}</td>
               <td class="mono">${formatCurrency(c.amount)} NOK</td>
-              <td><span class="cost-type-badge ${c.cost_type}">${isRec ? 'Fast' : 'One-time'}</span></td>
+              <td><span class="cost-type-badge ${c.cost_type}">${isRec ? 'Fast' : 'Engang'}</span></td>
               <td>${dateStr}</td>
               <td style="font-size:12px;">${periodStr}</td>
               <td style="font-size:12px;color:var(--text-muted);">${escapeHtml(c.category || '')}</td>
+              <td style="font-size:11px;">${c.has_mva !== false ? '✓' : '–'}</td>
               <td><div class="cost-actions">
-                <button class="cost-action-btn" onclick="editCost('${c.id}')">Edit</button>
-                <button class="cost-action-btn delete" onclick="deleteCost('${c.id}')">Delete</button>
+                <button class="cost-action-btn" onclick="editCost('${c.id}')">Rediger</button>
+                <button class="cost-action-btn delete" onclick="deleteCost('${c.id}')">Slett</button>
               </div></td>
             </tr>`;
           }).join('')}</tbody>
         </table>
-        <div style="text-align:right;padding:12px 14px;font-size:13px;border-top:1px solid var(--border);">
-          <span style="color:var(--text-muted);">Total fixed expenses/month:</span>
-          <strong style="font-family:'JetBrains Mono',monospace;margin-left:8px;">${formatCurrency(totalMonthly)} NOK</strong>
+        <div style="display:flex;justify-content:space-between;padding:12px 14px;font-size:13px;border-top:1px solid var(--border);">
+          <span style="color:var(--text-muted);">Faste kostnader/mnd: <strong style="font-family:'JetBrains Mono',monospace;">${formatCurrency(totalMonthly)} NOK</strong></span>
+          ${costCategoryFilter !== 'all' ? `<span style="color:var(--text-muted);">${escapeHtml(costCategoryFilter)}: <strong style="font-family:'JetBrains Mono',monospace;">${formatCurrency(filteredTotal)} NOK</strong></span>` : ''}
         </div>`;
     }
 
