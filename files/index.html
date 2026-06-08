@@ -6873,12 +6873,84 @@
       // Income entries
       const incomeData = periods.map(p => getIncomeForPeriod(p.start, p.end));
 
-      // Cash flow projection
+      // MVA calculation — Norwegian bimonthly terms
+      // Terms: jan-feb (due 10 apr), mar-apr (due 10 jun), may-jun (due 31 aug),
+      //        jul-aug (due 10 okt), sep-oct (due 10 des), nov-dec (due 10 feb+1)
+      const MVA_RATE = 0.25;
+      const MVA_FRACTION = MVA_RATE / (1 + MVA_RATE); // 0.2 — extract MVA from incl. amount
+
+      function getMvaTermDueDate(year, termIndex) {
+        // termIndex 0=jan/feb, 1=mar/apr, 2=may/jun, 3=jul/aug, 4=sep/oct, 5=nov/dec
+        const dueDates = [
+          new Date(year, 3, 10),   // jan-feb → 10 apr
+          new Date(year, 5, 10),   // mar-apr → 10 jun
+          new Date(year, 7, 31),   // may-jun → 31 aug (special summer deadline)
+          new Date(year, 9, 10),   // jul-aug → 10 okt
+          new Date(year, 11, 10),  // sep-oct → 10 des
+          new Date(year + 1, 1, 10) // nov-dec → 10 feb next year
+        ];
+        return dueDates[termIndex];
+      }
+
+      function getTermIndex(month) { return Math.floor(month / 2); } // jan=0→term0, mar=2→term1, etc.
+
+      // Calculate MVA per period and MVA payment dates
+      const mvaPayments = periods.map(() => 0);
+      const mvaTermAccumulator = {}; // key: "YYYY-T" → { outgoing, incoming, dueDate }
+
+      // Accumulate MVA from all income and costs per month
+      for (let i = 0; i < periods.length; i++) {
+        const pStart = periods[i].start;
+        const pEnd = periods[i].end;
+
+        // Outgoing MVA (on revenue — we owe this)
+        const totalRevenue = dataExisting[i] + dataNearClosing[i] + dataNegotiation[i] + dataLeads[i] + incomeData[i];
+        const outgoingMva = totalRevenue * MVA_FRACTION;
+
+        // Incoming MVA (on costs — we get this back)
+        const incomingMva = costData[i] * MVA_FRACTION;
+
+        // Assign to bimonthly terms
+        let checkMonth = new Date(pStart.getFullYear(), pStart.getMonth(), 1);
+        while (checkMonth <= pEnd) {
+          const y = checkMonth.getFullYear();
+          const m = checkMonth.getMonth();
+          const termIdx = getTermIndex(m);
+          const termKey = `${y}-${termIdx}`;
+
+          if (!mvaTermAccumulator[termKey]) {
+            mvaTermAccumulator[termKey] = { outgoing: 0, incoming: 0, dueDate: getMvaTermDueDate(y, termIdx) };
+          }
+
+          // Distribute period amounts proportionally across months in period
+          const monthsInPeriod = Math.max(1, (pEnd.getMonth() - pStart.getMonth()) + 1 + (pEnd.getFullYear() - pStart.getFullYear()) * 12);
+          mvaTermAccumulator[termKey].outgoing += outgoingMva / monthsInPeriod;
+          mvaTermAccumulator[termKey].incoming += incomingMva / monthsInPeriod;
+
+          checkMonth = new Date(y, m + 1, 1);
+        }
+      }
+
+      // Place MVA payments on their due dates
+      for (const [termKey, term] of Object.entries(mvaTermAccumulator)) {
+        const netMva = term.outgoing - term.incoming; // positive = we owe
+        if (netMva > 0) {
+          // Find the period containing the due date
+          for (let i = 0; i < periods.length; i++) {
+            if (term.dueDate >= periods[i].start && term.dueDate <= periods[i].end) {
+              mvaPayments[i] += netMva;
+              break;
+            }
+          }
+        }
+      }
+
+      // Cash flow projection (all amounts incl. MVA, MVA payments deducted at term dates)
       const cashData = [];
       let runningCash = financials.cash_balance || 0;
       for (let i = 0; i < periods.length; i++) {
         const totalIn = dataExisting[i] + dataNearClosing[i] + dataNegotiation[i] + dataLeads[i] + incomeData[i];
-        const totalOut = costData[i];
+        const totalOut = costData[i] + mvaPayments[i];
         runningCash = runningCash + totalIn - totalOut;
         cashData.push(runningCash);
       }
@@ -6907,10 +6979,27 @@
           <div class="forecast-kpi-sub">NOK / month</div>
         </div>
         <div class="forecast-kpi ${netMonthly >= 0 ? 'green' : 'amber'}">
-          <div class="forecast-kpi-label">Net Cash Flow</div>
+          <div class="forecast-kpi-label">Netto cashflow</div>
           <div class="forecast-kpi-value">${netMonthly >= 0 ? '+' : ''}${formatCurrency(netMonthly)}</div>
-          <div class="forecast-kpi-sub">NOK / month</div>
-        </div>`;
+          <div class="forecast-kpi-sub">NOK / måned (inkl. MVA)</div>
+        </div>
+        ${(() => {
+          // Find next upcoming MVA payment
+          const now = new Date();
+          const upcoming = Object.entries(mvaTermAccumulator)
+            .map(([k, v]) => ({ ...v, net: v.outgoing - v.incoming }))
+            .filter(t => t.net > 0 && t.dueDate >= now)
+            .sort((a, b) => a.dueDate - b.dueDate);
+          if (upcoming.length > 0) {
+            const next = upcoming[0];
+            return `<div class="forecast-kpi amber">
+              <div class="forecast-kpi-label">Neste MVA-oppgjør</div>
+              <div class="forecast-kpi-value">${formatCurrency(Math.round(next.net))}</div>
+              <div class="forecast-kpi-sub">Frist: ${next.dueDate.toLocaleDateString('nb-NO', {day:'numeric',month:'short',year:'numeric'})}</div>
+            </div>`;
+          }
+          return '';
+        })()}`;
 
       // Quick stats
       document.getElementById('cashflowQuickStats').innerHTML = `
@@ -6939,6 +7028,7 @@
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#c084fc;"></div> Leads</div>
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#22d3ee;"></div> Payments</div>
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#ef4444;"></div> Expenses</div>
+        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#f97316;"></div> MVA-oppgjør</div>
         <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#3b82f6;border-radius:50%;"></div> Cash</div>`;
 
       // Render chart
@@ -6960,6 +7050,7 @@
             { label: 'Leads', data: dataLeads, backgroundColor: '#c084fc', stack: 'revenue', order: 3 },
             { label: 'Payments', data: incomeData, backgroundColor: '#22d3ee', stack: 'revenue', order: 2 },
             { label: 'Expenses', data: costData.map(v => -v), backgroundColor: 'rgba(239,68,68,0.7)', stack: 'costs', order: 1 },
+            { label: 'MVA-oppgjør', data: mvaPayments.map(v => -v), backgroundColor: 'rgba(249,115,22,0.7)', stack: 'costs', order: 1 },
             { label: 'Cash', data: cashData, type: 'line', borderColor: '#3b82f6', borderWidth: 2.5, pointRadius: forecastGranularity === 'day' ? 0 : 4, pointBackgroundColor: '#3b82f6', fill: false, yAxisID: 'y2', order: 0 }
           ]
         },
