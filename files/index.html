@@ -3429,7 +3429,13 @@
             </div>
             
             <div class="breakeven-message" id="breakevenMessage"></div>
-            
+
+            <div class="breakeven-input-section" style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border);">
+              <h3 style="margin-bottom:16px;">6-måneders fremover-visning</h3>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Basert på faktiske fakturaer og kostnader de neste 6 månedene — ikke pipeline-prognoser.</p>
+              <div id="breakeven6m"></div>
+            </div>
+
             <div class="breakeven-breakdown">
               <h3>Pipeline Breakdown</h3>
               <div class="breakdown-list" id="breakdownList"></div>
@@ -7697,7 +7703,56 @@
         messageEl.className = 'breakeven-message far';
       }
       messageEl.innerHTML = message;
-      
+
+      // 6-month forward view — actual invoices vs actual costs
+      const now6 = new Date();
+      const sixMonthsOut = new Date(now6.getFullYear(), now6.getMonth() + 6, now6.getDate());
+      const income6m = incomeEntries.filter(i => {
+        const dStr = (i.due_date || '').slice(0, 10);
+        const nowStr6 = now6.toISOString().slice(0, 10);
+        const endStr6 = sixMonthsOut.toISOString().slice(0, 10);
+        return dStr >= nowStr6 && dStr <= endStr6;
+      }).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+      const costs6m = getCostsForPeriod(now6, sixMonthsOut);
+      const mrrFromClients6m = clients.filter(c => c.stage === 'client').reduce((s, c) => s + getMonthlyRevenue(c), 0) * 6;
+      const net6m = income6m - costs6m;
+      const net6mWithMrr = income6m + mrrFromClients6m - costs6m;
+      const cashAfter6m = (financials.cash_balance || 0) + net6m;
+      const cashAfter6mWithMrr = (financials.cash_balance || 0) + net6mWithMrr;
+      const gap6m = costs6m - income6m; // what you need to invoice to break even over 6m
+      const covered6m = income6m > 0 ? Math.round((income6m / costs6m) * 100) : 0;
+
+      document.getElementById('breakeven6m').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Fakturaer (6 mnd)</div>
+            <div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;">${formatCurrency(income6m)}</div>
+            <div style="font-size:11px;color:var(--text-muted);">Registrerte innbetalinger</div>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Kostnader (6 mnd)</div>
+            <div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--urgent);">${formatCurrency(costs6m)}</div>
+            <div style="font-size:11px;color:var(--text-muted);">Faste + engang</div>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid ${net6m >= 0 ? 'var(--client)' : 'var(--urgent)'};border-radius:var(--radius);padding:16px;">
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Netto (fakturaer)</div>
+            <div style="font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${net6m >= 0 ? 'var(--client)' : 'var(--urgent)'};">${net6m >= 0 ? '+' : ''}${formatCurrency(net6m)}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${covered6m}% dekket</div>
+          </div>
+        </div>
+        ${gap6m > 0 ? `
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;">
+          <div style="font-size:13px;margin-bottom:8px;"><strong>Du mangler ${formatCurrency(gap6m)} NOK</strong> i registrerte fakturaer for å dekke 6 måneder.</div>
+          <div style="height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${Math.min(100, covered6m)}%;background:${covered6m >= 80 ? 'var(--client)' : covered6m >= 50 ? 'var(--target)' : 'var(--urgent)'};border-radius:4px;transition:width 0.3s;"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">Cash etter 6 mnd (kun fakturaer): <strong>${formatCurrency(cashAfter6m)} NOK</strong></div>
+        </div>` : `
+        <div style="background:rgba(16,185,129,0.1);border:1px solid var(--client);border-radius:var(--radius);padding:16px;">
+          <div style="font-size:13px;color:var(--client);"><strong>✓ Fakturaer dekker kostnadene for 6 måneder!</strong></div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Cash etter 6 mnd: <strong>${formatCurrency(cashAfter6m)} NOK</strong></div>
+        </div>`}`;
+
       // Render breakdown list
       const allClients = [...clients].sort((a, b) => {
         const aWeighted = (parseFloat(a.deal_value) || 0) * ((a.probability ?? (a.category === 'high_value_client' ? 100 : 50)) / 100);
