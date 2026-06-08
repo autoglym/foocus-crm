@@ -3113,7 +3113,7 @@
                 <h3>Partners / Logos to Monitor</h3>
                 <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Add partners included in the agreement. Press Enter to add.</p>
                 <div class="tag-input-container" id="partnersTagContainer">
-                  <input type="text" class="tag-input" id="partnerInput" placeholder="Skriv inn partnernavnet og trykk Enter" onkeydown="handlePartnerTag(event)" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off">
+                  <input type="text" class="tag-input" id="partnerInput" placeholder="Skriv inn partnernavnet og trykk Enter" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off" lang="en" data-form-type="other">
                 </div>
                 <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Up to 10 partners are included in the license fee.</p>
               </div>
@@ -5828,19 +5828,33 @@
       s.addEventListener('click', () => showWizardPanel(parseInt(s.dataset.wizardStep)));
     });
 
-    // Tag input for partners
-    function handlePartnerTag(event) {
-      if (event.key === 'Enter') {
-        event.preventDefault();
+    // Tag input for partners — intercept and undo macOS autocorrect
+    (function() {
+      document.addEventListener('DOMContentLoaded', () => {
         const input = document.getElementById('partnerInput');
-        const val = input.value.trim();
-        if (val && !wizardPartners.includes(val)) {
-          wizardPartners.push(val);
-          renderPartnerTags();
-        }
-        input.value = '';
-      }
-    }
+        if (!input) return;
+
+        // Block autocorrect replacements entirely
+        input.addEventListener('beforeinput', (e) => {
+          if (e.inputType === 'insertReplacementText' || e.inputType === 'insertFromComposition') {
+            e.preventDefault(); // Block the autocorrect replacement
+          }
+        });
+
+        input.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            const val = input.value.trim();
+            if (val && !wizardPartners.includes(val)) {
+              wizardPartners.push(val);
+              renderPartnerTags();
+            }
+            input.value = '';
+          }
+        });
+      });
+    })();
+    function handlePartnerTag(event) {} // kept for backward compat
 
     function removePartnerTag(index) {
       wizardPartners.splice(index, 1);
