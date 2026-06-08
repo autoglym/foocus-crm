@@ -3404,7 +3404,7 @@
                   <div class="stat-info">
                     <div class="stat-label">ARR Secured</div>
                     <div class="stat-value" id="beSecured">0 NOK</div>
-                    <div class="stat-percent" id="beSecuredPercent">0% of goal</div>
+                    <div class="stat-percent" id="beSecuredPercent">0% av mål</div>
                   </div>
                 </div>
                 
@@ -3413,7 +3413,7 @@
                   <div class="stat-info">
                     <div class="stat-label">Target ARR Weighted</div>
                     <div class="stat-value" id="beTarget">0 NOK</div>
-                    <div class="stat-percent" id="beTargetPercent">0% of goal</div>
+                    <div class="stat-percent" id="beTargetPercent">0% av mål</div>
                   </div>
                 </div>
                 
@@ -3422,7 +3422,7 @@
                   <div class="stat-info">
                     <div class="stat-label">Total Potential</div>
                     <div class="stat-value" id="beTotal">0 NOK</div>
-                    <div class="stat-percent" id="beTotalPercent">0% of goal</div>
+                    <div class="stat-percent" id="beTotalPercent">0% av mål</div>
                   </div>
                 </div>
               </div>
@@ -4692,27 +4692,32 @@
     }
 
     function renderKPIs() {
-      // ARR Secured = only confirmed clients (stage=client), not leads/prospects
+      // All revenue shown as GROSS (inkl. MVA for Norwegian clients)
+      function grossValue(client, baseValue) {
+        return client.has_mva !== false ? baseValue * 1.25 : baseValue;
+      }
+
       const securedClients = clients.filter(c => c.stage === 'client');
       const nonSecuredClients = clients.filter(c => c.stage !== 'client');
 
+      // ARR Secured = gross revenue from confirmed clients
       const arrSecured = securedClients.reduce((sum, c) => {
-        return sum + (parseFloat(c.deal_value) || 0);
+        return sum + grossValue(c, parseFloat(c.deal_value) || 0);
       }, 0);
 
-      // ARR Weighted = secured + all others weighted by probability
+      // ARR Weighted = secured + others weighted by probability (gross)
       const arrWeighted = arrSecured + nonSecuredClients.reduce((sum, c) => {
         const prob = (c.probability ?? 50) / 100;
-        return sum + (parseFloat(c.deal_value) || 0) * prob;
+        return sum + grossValue(c, (parseFloat(c.deal_value) || 0) * prob);
       }, 0);
 
-      // Target pipeline = non-secured clients
+      // Target pipeline = non-secured (gross)
       const targetWeighted = nonSecuredClients.reduce((sum, c) => {
         const prob = (c.probability ?? 50) / 100;
-        return sum + (parseFloat(c.deal_value) || 0) * prob;
+        return sum + grossValue(c, (parseFloat(c.deal_value) || 0) * prob);
       }, 0);
 
-      const totalPipeline = nonSecuredClients.reduce((sum, c) => sum + (parseFloat(c.deal_value) || 0), 0);
+      const totalPipeline = nonSecuredClients.reduce((sum, c) => sum + grossValue(c, parseFloat(c.deal_value) || 0), 0);
       
       document.getElementById('kpiSecured').innerHTML = `${formatCurrency(arrSecured)}<span>NOK</span>`;
       document.getElementById('kpiWeighted').innerHTML = `${formatCurrency(arrWeighted)}<span>NOK</span>`;
@@ -7063,9 +7068,9 @@
       }
 
       // KPIs
-      // MRR KPIs are eks. MVA (revenue metric, not cashflow)
-      const monthlyRevExisting = existingClients.reduce((s, c) => s + getMonthlyRevenue(c, false), 0);
-      const monthlyRevTotal = monthlyRevExisting + nearClosing.reduce((s, c) => s + getMonthlyRevenue(c, false) * ((c.probability ?? 50) / 100), 0) + inNegotiation.reduce((s, c) => s + getMonthlyRevenue(c, false) * ((c.probability ?? 50) / 100), 0) + leads.reduce((s, c) => s + getMonthlyRevenue(c, false) * ((c.probability ?? 50) / 100), 0);
+      // MRR KPIs shown gross (inkl. MVA) — what actually comes in
+      const monthlyRevExisting = existingClients.reduce((s, c) => s + getMonthlyRevenue(c), 0);
+      const monthlyRevTotal = monthlyRevExisting + nearClosing.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + inNegotiation.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + leads.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0);
       const monthlyCostsRecurring = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
       // Include upcoming one-time costs (next 12 months) spread monthly
       const oneTimeCosts12m = costs.filter(c => {
@@ -7658,40 +7663,58 @@
       const operatingCost = (savedCost && parseFloat(savedCost) > 0) ? parseFloat(savedCost) : annualFromCosts;
       document.getElementById('operatingCost').value = Math.round(operatingCost) || '';
       
-      // Calculate ARR Secured — only confirmed clients (stage=client)
+      // Calculate ARR Secured — gross (inkl. MVA for Norwegian clients)
+      function beGrossValue(client, baseValue) {
+        return client.has_mva !== false ? baseValue * 1.25 : baseValue;
+      }
       const securedList = clients.filter(c => c.stage === 'client');
       const arrSecured = securedList.reduce((sum, c) => {
-        return sum + (parseFloat(c.deal_value) || 0);
+        return sum + beGrossValue(c, parseFloat(c.deal_value) || 0);
       }, 0);
 
-      // Calculate Target ARR Weighted — all non-secured, weighted by probability
+      // Calculate Target ARR Weighted — gross, weighted by probability
       const targetsList = clients.filter(c => c.stage !== 'client');
       const targetWeighted = targetsList.reduce((sum, c) => {
         const prob = (c.probability ?? 50) / 100;
-        return sum + (parseFloat(c.deal_value) || 0) * prob;
+        return sum + beGrossValue(c, (parseFloat(c.deal_value) || 0) * prob);
       }, 0);
+
+      // Net MVA impact on break-even: outgoing MVA (on revenue) - incoming MVA (on costs)
+      // This is an additional annual cost you must cover
+      const annualOutgoingMva = securedList.reduce((sum, c) => {
+        if (c.has_mva === false) return sum;
+        return sum + (parseFloat(c.deal_value) || 0) * 0.25; // 25% MVA on eks. amount
+      }, 0);
+      const annualIncomingMva = costs.reduce((sum, c) => {
+        if (c.has_mva === false) return sum;
+        const amt = parseFloat(c.amount) || 0;
+        return sum + (c.cost_type === 'recurring' ? amt * 12 : amt) * 0.2; // 20% of inkl. amount
+      }, 0);
+      const netMvaAnnual = annualOutgoingMva - annualIncomingMva; // positive = you owe this to Skatteetaten
       
       const totalPotential = arrSecured + targetWeighted;
-      
+      // Real break-even target = operating costs + net MVA you owe
+      const breakEvenTarget = operatingCost + Math.max(0, netMvaAnnual);
+
       // Update stats
       document.getElementById('beSecured').textContent = formatCurrency(arrSecured) + ' NOK';
       document.getElementById('beTarget').textContent = formatCurrency(targetWeighted) + ' NOK';
       document.getElementById('beTotal').textContent = formatCurrency(totalPotential) + ' NOK';
-      
-      // Calculate percentages
-      const securedPercent = operatingCost > 0 ? Math.round((arrSecured / operatingCost) * 100) : 0;
-      const targetPercent = operatingCost > 0 ? Math.round((targetWeighted / operatingCost) * 100) : 0;
-      const totalPercent = operatingCost > 0 ? Math.round((totalPotential / operatingCost) * 100) : 0;
-      
-      document.getElementById('beSecuredPercent').textContent = securedPercent + '% of goal';
-      document.getElementById('beTargetPercent').textContent = targetPercent + '% of goal';
-      document.getElementById('beTotalPercent').textContent = totalPercent + '% of goal';
+
+      // Calculate percentages against real target (inkl. MVA-oppgjør)
+      const securedPercent = breakEvenTarget > 0 ? Math.round((arrSecured / breakEvenTarget) * 100) : 0;
+      const targetPercent = breakEvenTarget > 0 ? Math.round((targetWeighted / breakEvenTarget) * 100) : 0;
+      const totalPercent = breakEvenTarget > 0 ? Math.round((totalPotential / breakEvenTarget) * 100) : 0;
+
+      document.getElementById('beSecuredPercent').textContent = securedPercent + '% av mål';
+      document.getElementById('beTargetPercent').textContent = targetPercent + '% av mål';
+      document.getElementById('beTotalPercent').textContent = totalPercent + '% av mål';
       
       // Update thermometer
-      const maxValue = Math.max(operatingCost, totalPotential) * 1.2;
+      const maxValue = Math.max(breakEvenTarget, totalPotential) * 1.2;
       const securedWidth = maxValue > 0 ? (arrSecured / maxValue) * 100 : 0;
       const totalWidth = maxValue > 0 ? (totalPotential / maxValue) * 100 : 0;
-      const goalPosition = maxValue > 0 ? (operatingCost / maxValue) * 100 : 50;
+      const goalPosition = maxValue > 0 ? (breakEvenTarget / maxValue) * 100 : 50;
       
       document.getElementById('securedBar').style.width = securedWidth + '%';
       document.getElementById('targetZone').style.width = totalWidth + '%';
@@ -7705,15 +7728,15 @@
       if (operatingCost === 0) {
         message = '<span class="emoji">📊</span>Enter your operating cost to see break even progress';
         messageEl.className = 'breakeven-message';
-      } else if (arrSecured >= operatingCost) {
+      } else if (arrSecured >= breakEvenTarget) {
         message = '<span class="emoji">🎉</span>You\'ve hit break even with secured ARR! Targets are pure growth.';
         messageEl.className = 'breakeven-message success';
-      } else if (totalPotential >= operatingCost) {
-        const gap = operatingCost - arrSecured;
+      } else if (totalPotential >= breakEvenTarget) {
+        const gap = breakEvenTarget - arrSecured;
         message = `<span class="emoji">🔥</span>Only <strong>${formatCurrency(gap)} NOK</strong> to go! Your pipeline can get you there.`;
         messageEl.className = 'breakeven-message close';
       } else {
-        const gap = operatingCost - totalPotential;
+        const gap = breakEvenTarget - totalPotential;
         message = `<span class="emoji">💪</span><strong>${formatCurrency(gap)} NOK</strong> more needed. Keep building that pipeline!`;
         messageEl.className = 'breakeven-message far';
       }
