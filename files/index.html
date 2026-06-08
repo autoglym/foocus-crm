@@ -7618,19 +7618,21 @@
     }
 
     function renderBreakEven() {
-      // Auto-calculate from costs table: recurring × 12 + one-time
-      // Only count recurring costs × 12 + future one-time costs (not historical)
-      const nowStr = new Date().toISOString().slice(0, 10);
-      const annualFromCosts = costs.reduce((sum, c) => {
-        const amt = parseFloat(c.amount) || 0;
-        if (c.cost_type === 'recurring') return sum + amt * 12;
-        // One-time: only if in the future
-        if (c.one_time_date && c.one_time_date.slice(0, 10) >= nowStr) return sum + amt;
-        return sum;
-      }, 0);
-      // Use costs table if available, otherwise fall back to manual input
+      // Use manual input if saved, otherwise auto-calculate from costs table
       const savedCost = localStorage.getItem('focusCrmOperatingCost');
-      const operatingCost = annualFromCosts > 0 ? annualFromCosts : (parseFloat(savedCost) || 0);
+      let operatingCost;
+      if (savedCost && parseFloat(savedCost) > 0) {
+        operatingCost = parseFloat(savedCost);
+      } else {
+        // Auto-calculate: recurring × 12 + future one-time costs
+        const nowStr = new Date().toISOString().slice(0, 10);
+        operatingCost = costs.reduce((sum, c) => {
+          const amt = parseFloat(c.amount) || 0;
+          if (c.cost_type === 'recurring') return sum + amt * 12;
+          if (c.one_time_date && c.one_time_date.slice(0, 10) >= nowStr) return sum + amt;
+          return sum;
+        }, 0);
+      }
       document.getElementById('operatingCost').value = Math.round(operatingCost) || '';
       
       // Calculate ARR Secured (clients only)
