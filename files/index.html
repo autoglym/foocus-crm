@@ -7045,7 +7045,55 @@
       const cashAtHand = financials.cash_balance || 0;
       const runway = monthlyBurn > 0 ? Math.floor(cashAtHand / monthlyBurn) : 999;
 
+      // 3-month gap: cash at hand + confirmed income - costs - MVA for next 3 months
+      const now = new Date();
+      const threeMonthsOut = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
+      const income3m = incomeEntries.filter(i => {
+        const d = new Date(i.due_date);
+        return d >= now && d <= threeMonthsOut && i.status !== 'paid';
+      }).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+      const costs3m = (() => {
+        let total = 0;
+        costs.forEach(c => {
+          const amt = parseFloat(c.amount) || 0;
+          if (c.cost_type === 'one_time') {
+            const d = new Date(c.one_time_date);
+            if (d >= now && d <= threeMonthsOut) total += amt;
+          } else {
+            const cStart = c.start_date ? new Date(c.start_date) : new Date('2020-01-01');
+            const cEnd = c.end_date ? new Date(c.end_date) : new Date('2099-12-31');
+            let checkDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            for (let m = 0; m < 3; m++) {
+              const mDate = new Date(checkDate.getFullYear(), checkDate.getMonth() + m, parseInt(c.day_of_month) || 1);
+              if (mDate >= now && mDate <= threeMonthsOut && mDate >= cStart && mDate <= cEnd) total += amt;
+            }
+          }
+        });
+        return total;
+      })();
+      // Pipeline revenue for next 3 months (confirmed clients only)
+      const pipeline3m = (() => {
+        let total = 0;
+        clients.filter(c => c.stage === 'client' || c.category === 'high_value_client').forEach(c => {
+          const monthly = getMonthlyRevenue(c);
+          const billingStart = c.billing_start_date ? new Date(c.billing_start_date) : null;
+          if (!billingStart || billingStart <= threeMonthsOut) {
+            const effectiveMonths = billingStart && billingStart > now
+              ? Math.max(0, 3 - Math.ceil((billingStart - now) / (30.44 * 86400000)))
+              : 3;
+            total += monthly * effectiveMonths;
+          }
+        });
+        return total;
+      })();
+      const gap3m = cashAtHand + income3m + pipeline3m - costs3m;
+
       document.getElementById('forecastKPIs').innerHTML = `
+        <div class="forecast-kpi ${gap3m >= 0 ? 'green' : 'red'}" style="border:2px solid ${gap3m >= 0 ? 'var(--client)' : 'var(--urgent)'};">
+          <div class="forecast-kpi-label">3-måneders gap</div>
+          <div class="forecast-kpi-value">${gap3m >= 0 ? '+' : ''}${formatCurrency(gap3m)}</div>
+          <div class="forecast-kpi-sub">${gap3m >= 0 ? 'Du er dekket ✓' : 'Mangler — må hentes inn'}</div>
+        </div>
         <div class="forecast-kpi blue">
           <div class="forecast-kpi-label">Cash at hand</div>
           <div class="forecast-kpi-value">${formatCurrency(cashAtHand)}</div>
