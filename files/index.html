@@ -3607,8 +3607,15 @@
           <input type="text" class="form-input" id="costName" placeholder="e.g. Amazon Web Services, DigitalOcean">
         </div>
         <div class="form-group">
-          <label class="form-label">Amount (NOK)</label>
+          <label class="form-label">Beløp (inkl. evt. MVA)</label>
           <input type="number" class="form-input" id="costAmount" placeholder="5200" style="font-family:'JetBrains Mono',monospace;">
+        </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="costHasMva" checked>
+            <span class="form-label" style="margin:0;">Inkl. MVA (25%)</span>
+          </label>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Lønn, forsikring, utenlandske tjenester = ikke huk av</p>
         </div>
         <div class="form-group">
           <label class="form-label">Type</label>
@@ -3678,11 +3685,18 @@
           <input type="text" class="form-input" id="incomeDescription" placeholder="e.g. Invoice #1024 - Company AS">
         </div>
         <div class="form-group">
-          <label class="form-label">Amount (NOK)</label>
+          <label class="form-label">Beløp (inkl. evt. MVA)</label>
           <input type="number" class="form-input" id="incomeAmount" placeholder="45000" style="font-family:'JetBrains Mono',monospace;">
         </div>
         <div class="form-group">
-          <label class="form-label">Client (optional)</label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="incomeHasMva" checked>
+            <span class="form-label" style="margin:0;">Inkl. norsk MVA (25%)</span>
+          </label>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Utenlandske kunder (omvendt avgiftsplikt) = ikke huk av</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kunde (valgfri)</label>
           <select class="form-input" id="incomeClientId">
             <option value="">No client</option>
           </select>
@@ -6898,17 +6912,63 @@
       const mvaPayments = periods.map(() => 0);
       const mvaTermAccumulator = {}; // key: "YYYY-T" → { outgoing, incoming, dueDate }
 
+      // Calculate MVA-eligible income and costs per period
+      function getIncomeMvaForPeriod(periodStart, periodEnd) {
+        let mvaTotal = 0;
+        incomeEntries.forEach(inc => {
+          const d = new Date(inc.due_date);
+          if (d >= periodStart && d <= periodEnd && inc.has_mva !== false) {
+            mvaTotal += (parseFloat(inc.amount) || 0) * MVA_FRACTION;
+          }
+        });
+        return mvaTotal;
+      }
+
+      function getCostMvaForPeriod(periodStart, periodEnd) {
+        let mvaTotal = 0;
+        costs.forEach(c => {
+          if (c.has_mva === false) return; // skip non-MVA costs
+          const baseAmount = parseFloat(c.amount) || 0;
+          if (c.cost_type === 'one_time') {
+            const d = new Date(c.one_time_date);
+            if (d >= periodStart && d <= periodEnd) mvaTotal += baseAmount * MVA_FRACTION;
+          } else {
+            const cStart = c.start_date ? new Date(c.start_date) : new Date('2020-01-01');
+            const cEnd = c.end_date ? new Date(c.end_date) : new Date('2099-12-31');
+            let checkDate = new Date(periodStart.getFullYear(), periodStart.getMonth(), 1);
+            while (checkDate <= periodEnd) {
+              const lastDay = new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 0).getDate();
+              const actualDay = Math.min(parseInt(c.day_of_month) || 1, lastDay);
+              const payDate = new Date(checkDate.getFullYear(), checkDate.getMonth(), actualDay);
+              if (payDate >= periodStart && payDate <= periodEnd && payDate >= cStart && payDate <= cEnd) {
+                const overrides = c.month_overrides || {};
+                const monthKey = `${checkDate.getFullYear()}-${String(checkDate.getMonth()+1).padStart(2,'0')}`;
+                const amount = (overrides[monthKey] !== undefined) ? parseFloat(overrides[monthKey]) : baseAmount;
+                mvaTotal += amount * MVA_FRACTION;
+              }
+              checkDate = new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 1);
+            }
+          }
+        });
+        return mvaTotal;
+      }
+
+      // Pipeline revenue is always Norwegian MVA (domestic clients assumed)
+      // TODO: could add per-client MVA flag later
+
       // Accumulate MVA from all income and costs per month
       for (let i = 0; i < periods.length; i++) {
         const pStart = periods[i].start;
         const pEnd = periods[i].end;
 
-        // Outgoing MVA (on revenue — we owe this)
-        const totalRevenue = dataExisting[i] + dataNearClosing[i] + dataNegotiation[i] + dataLeads[i] + incomeData[i];
-        const outgoingMva = totalRevenue * MVA_FRACTION;
+        // Outgoing MVA (on revenue with MVA — we owe this)
+        const pipelineRevenue = dataExisting[i] + dataNearClosing[i] + dataNegotiation[i] + dataLeads[i];
+        const outgoingMvaPipeline = pipelineRevenue * MVA_FRACTION; // pipeline assumed with MVA
+        const outgoingMvaIncome = getIncomeMvaForPeriod(pStart, pEnd);
+        const outgoingMva = outgoingMvaPipeline + outgoingMvaIncome;
 
-        // Incoming MVA (on costs — we get this back)
-        const incomingMva = costData[i] * MVA_FRACTION;
+        // Incoming MVA (on costs with MVA — we get this back)
+        const incomingMva = getCostMvaForPeriod(pStart, pEnd);
 
         // Assign to bimonthly terms
         let checkMonth = new Date(pStart.getFullYear(), pStart.getMonth(), 1);
@@ -7255,7 +7315,8 @@
       document.getElementById('costOneTimeDate').value = '';
       document.getElementById('costCategory').value = '';
       document.getElementById('costNotes').value = '';
-      document.getElementById('costModalTitle').textContent = 'Add Expense';
+      document.getElementById('costModalTitle').textContent = 'Legg til kostnad';
+      document.getElementById('costHasMva').checked = true;
       toggleCostFields();
       renderCostMonthOverrides({});
       openModal('costModal');
@@ -7274,7 +7335,8 @@
       document.getElementById('costOneTimeDate').value = c.one_time_date || '';
       document.getElementById('costCategory').value = c.category || '';
       document.getElementById('costNotes').value = c.notes || '';
-      document.getElementById('costModalTitle').textContent = 'Edit Expense';
+      document.getElementById('costHasMva').checked = c.has_mva !== false; // default true for old entries
+      document.getElementById('costModalTitle').textContent = 'Rediger kostnad';
       toggleCostFields();
       renderCostMonthOverrides(c.month_overrides || {});
       openModal('costModal');
@@ -7293,7 +7355,8 @@
         end_date: costType === 'recurring' ? document.getElementById('costEndDate').value || null : null,
         category: document.getElementById('costCategory').value || null,
         notes: document.getElementById('costNotes').value || null,
-        month_overrides: costType === 'recurring' ? getCostOverridesFromForm() : null
+        month_overrides: costType === 'recurring' ? getCostOverridesFromForm() : null,
+        has_mva: document.getElementById('costHasMva').checked
       };
 
       if (!record.name || !record.amount) return alert('Please enter name and amount');
@@ -7331,7 +7394,8 @@
       document.getElementById('incomeDueDate').value = '';
       document.getElementById('incomeStatus').value = 'pending';
       document.getElementById('incomeType').value = 'one_time';
-      document.getElementById('incomeModalTitle').textContent = 'Add Income';
+      document.getElementById('incomeHasMva').checked = true;
+      document.getElementById('incomeModalTitle').textContent = 'Legg til inntekt';
 
       // Populate client dropdown
       const sel = document.getElementById('incomeClientId');
@@ -7349,7 +7413,8 @@
       document.getElementById('incomeDueDate').value = inc.due_date || '';
       document.getElementById('incomeStatus').value = inc.status || 'pending';
       document.getElementById('incomeType').value = inc.income_type || 'one_time';
-      document.getElementById('incomeModalTitle').textContent = 'Edit Income';
+      document.getElementById('incomeHasMva').checked = inc.has_mva !== false; // default true for old entries
+      document.getElementById('incomeModalTitle').textContent = 'Rediger inntekt';
 
       const sel = document.getElementById('incomeClientId');
       sel.innerHTML = '<option value="">No client</option>' + clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
@@ -7366,7 +7431,8 @@
         client_id: document.getElementById('incomeClientId').value || null,
         due_date: document.getElementById('incomeDueDate').value || null,
         status: document.getElementById('incomeStatus').value,
-        income_type: document.getElementById('incomeType').value
+        income_type: document.getElementById('incomeType').value,
+        has_mva: document.getElementById('incomeHasMva').checked
       };
 
       if (!record.description || !record.amount || !record.due_date) return alert('Please enter description, amount and due date');
