@@ -4685,25 +4685,27 @@
     }
 
     function renderKPIs() {
-      const clientsList = clients.filter(c => c.category === 'high_value_client');
-      const targetsList = clients.filter(c => c.category === 'high_value_target');
-      
-      const arrSecured = clientsList.reduce((sum, c) => {
-        const prob = (c.probability ?? 100) / 100;
-        return sum + (parseFloat(c.deal_value) || 0) * prob;
+      // ARR Secured = only confirmed clients (stage=client), not leads/prospects
+      const securedClients = clients.filter(c => c.stage === 'client');
+      const nonSecuredClients = clients.filter(c => c.stage !== 'client');
+
+      const arrSecured = securedClients.reduce((sum, c) => {
+        return sum + (parseFloat(c.deal_value) || 0);
       }, 0);
-      
-      const arrWeighted = clients.reduce((sum, c) => {
-        const prob = (c.probability ?? 100) / 100;
-        return sum + (parseFloat(c.deal_value) || 0) * prob;
-      }, 0);
-      
-      const targetWeighted = targetsList.reduce((sum, c) => {
+
+      // ARR Weighted = secured + all others weighted by probability
+      const arrWeighted = arrSecured + nonSecuredClients.reduce((sum, c) => {
         const prob = (c.probability ?? 50) / 100;
         return sum + (parseFloat(c.deal_value) || 0) * prob;
       }, 0);
-      
-      const totalPipeline = targetsList.reduce((sum, c) => sum + (parseFloat(c.deal_value) || 0), 0);
+
+      // Target pipeline = non-secured clients
+      const targetWeighted = nonSecuredClients.reduce((sum, c) => {
+        const prob = (c.probability ?? 50) / 100;
+        return sum + (parseFloat(c.deal_value) || 0) * prob;
+      }, 0);
+
+      const totalPipeline = nonSecuredClients.reduce((sum, c) => sum + (parseFloat(c.deal_value) || 0), 0);
       
       document.getElementById('kpiSecured').innerHTML = `${formatCurrency(arrSecured)}<span>NOK</span>`;
       document.getElementById('kpiWeighted').innerHTML = `${formatCurrency(arrWeighted)}<span>NOK</span>`;
@@ -7642,15 +7644,14 @@
       const operatingCost = (savedCost && parseFloat(savedCost) > 0) ? parseFloat(savedCost) : annualFromCosts;
       document.getElementById('operatingCost').value = Math.round(operatingCost) || '';
       
-      // Calculate ARR Secured (clients only)
-      const clientsList = clients.filter(c => c.category === 'high_value_client');
-      const arrSecured = clientsList.reduce((sum, c) => {
-        const prob = (c.probability ?? 100) / 100;
-        return sum + (parseFloat(c.deal_value) || 0) * prob;
+      // Calculate ARR Secured — only confirmed clients (stage=client)
+      const securedList = clients.filter(c => c.stage === 'client');
+      const arrSecured = securedList.reduce((sum, c) => {
+        return sum + (parseFloat(c.deal_value) || 0);
       }, 0);
-      
-      // Calculate Target ARR Weighted (targets only)
-      const targetsList = clients.filter(c => c.category === 'high_value_target');
+
+      // Calculate Target ARR Weighted — all non-secured, weighted by probability
+      const targetsList = clients.filter(c => c.stage !== 'client');
       const targetWeighted = targetsList.reduce((sum, c) => {
         const prob = (c.probability ?? 50) / 100;
         return sum + (parseFloat(c.deal_value) || 0) * prob;
