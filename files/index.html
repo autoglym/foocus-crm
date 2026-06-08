@@ -7069,22 +7069,9 @@
         return dStr >= nowStr && dStr <= endStr && i.status !== 'paid';
       }).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       const costs3m = getCostsForPeriod(now, threeMonthsOut);
-      // Pipeline revenue for next 3 months (confirmed clients only)
-      const pipeline3m = (() => {
-        let total = 0;
-        clients.filter(c => c.stage === 'client').forEach(c => {
-          const monthly = getMonthlyRevenue(c);
-          const billingStart = c.billing_start_date ? new Date(c.billing_start_date) : null;
-          if (!billingStart || billingStart <= threeMonthsOut) {
-            const effectiveMonths = billingStart && billingStart > now
-              ? Math.max(0, 3 - Math.ceil((billingStart - now) / (30.44 * 86400000)))
-              : 3;
-            total += monthly * effectiveMonths;
-          }
-        });
-        return total;
-      })();
-      const gap3m = cashAtHand + income3m + pipeline3m - costs3m;
+      // 3-month gap based ONLY on actual invoices — no pipeline projections
+      // Pipeline would inflate this with spread MRR that doesn't match real cash timing
+      const gap3m = cashAtHand + income3m - costs3m;
 
       document.getElementById('forecastKPIs').innerHTML = `
         <div class="forecast-kpi ${gap3m >= 0 ? 'green' : 'red'}" style="border:2px solid ${gap3m >= 0 ? 'var(--client)' : 'var(--urgent)'};">
@@ -7158,16 +7145,17 @@
 
       // Store raw data for toggle recalculation
       window._fcData = { periods, dataExisting, dataNearClosing, dataNegotiation, dataLeads, incomeData, costData, mvaPayments, cashBalance: financials.cash_balance || 0 };
-      if (!window._fcToggles) window._fcToggles = { nearClosing: false, negotiation: false, leads: false };
+      if (!window._fcToggles) window._fcToggles = { existing: false, nearClosing: false, negotiation: false, leads: false };
 
-      // Legend with toggles
+      // Legend with toggles — baseline is ONLY actual invoices + costs
+      // Pipeline stages are all toggleable "what-if" scenarios
       function renderForecastLegend() {
         const t = window._fcToggles;
         document.getElementById('forecastLegend').innerHTML = `
-          <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#10b981;"></div> Sikre kunder</div>
-          <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#22d3ee;"></div> Betalinger</div>
+          <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#22d3ee;"></div> Fakturaer</div>
           <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#ef4444;"></div> Kostnader</div>
           <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#f97316;"></div> MVA</div>
+          <div class="forecast-legend-item toggleable ${t.existing ? '' : 'off'}" onclick="toggleForecastLayer('existing')"><div class="forecast-legend-dot" style="background:#10b981;"></div> Sikre kunder (MRR)</div>
           <div class="forecast-legend-item toggleable ${t.nearClosing ? '' : 'off'}" onclick="toggleForecastLayer('nearClosing')"><div class="forecast-legend-dot" style="background:#34d399;"></div> Nær landing</div>
           <div class="forecast-legend-item toggleable ${t.negotiation ? '' : 'off'}" onclick="toggleForecastLayer('negotiation')"><div class="forecast-legend-dot" style="background:#f59e0b;"></div> I forhandling</div>
           <div class="forecast-legend-item toggleable ${t.leads ? '' : 'off'}" onclick="toggleForecastLayer('leads')"><div class="forecast-legend-dot" style="background:#c084fc;"></div> Leads</div>
@@ -7180,8 +7168,9 @@
 
     function toggleForecastLayer(layer) {
       window._fcToggles[layer] = !window._fcToggles[layer];
+      const labels = { existing: 'Sikre', nearClosing: 'landing', negotiation: 'forhandling', leads: 'Leads' };
       document.querySelectorAll('.forecast-legend-item.toggleable').forEach(el => {
-        if (el.textContent.trim().includes(layer === 'nearClosing' ? 'landing' : layer === 'negotiation' ? 'forhandling' : 'Leads')) {
+        if (el.textContent.trim().includes(labels[layer])) {
           el.classList.toggle('off', !window._fcToggles[layer]);
         }
       });
@@ -7193,11 +7182,13 @@
       if (!fd) return;
       const t = window._fcToggles || {};
 
-      // Recalculate cash with toggled layers
+      // Recalculate cash — baseline is ONLY actual invoices + costs
+      // Pipeline layers are additive "what-if" toggles
       const cashData = [];
       let runningCash = fd.cashBalance;
       for (let i = 0; i < fd.periods.length; i++) {
-        let totalIn = fd.dataExisting[i] + fd.incomeData[i];
+        let totalIn = fd.incomeData[i]; // baseline: only actual invoices
+        if (t.existing) totalIn += fd.dataExisting[i];
         if (t.nearClosing) totalIn += fd.dataNearClosing[i];
         if (t.negotiation) totalIn += fd.dataNegotiation[i];
         if (t.leads) totalIn += fd.dataLeads[i];
@@ -7219,11 +7210,11 @@
         data: {
           labels: fd.periods.map(p => p.label),
           datasets: [
-            { label: 'Sikre kunder', data: fd.dataExisting, backgroundColor: '#10b981', stack: 'revenue', order: 6 },
+            { label: 'Sikre kunder (MRR)', data: t.existing ? fd.dataExisting : zeroes, backgroundColor: '#10b981', stack: 'revenue', order: 6 },
             { label: 'Nær landing', data: t.nearClosing ? fd.dataNearClosing : zeroes, backgroundColor: '#34d399', stack: 'revenue', order: 5 },
             { label: 'I forhandling', data: t.negotiation ? fd.dataNegotiation : zeroes, backgroundColor: '#f59e0b', stack: 'revenue', order: 4 },
             { label: 'Leads', data: t.leads ? fd.dataLeads : zeroes, backgroundColor: '#c084fc', stack: 'revenue', order: 3 },
-            { label: 'Betalinger', data: fd.incomeData, backgroundColor: '#22d3ee', stack: 'revenue', order: 2 },
+            { label: 'Fakturaer', data: fd.incomeData, backgroundColor: '#22d3ee', stack: 'revenue', order: 2 },
             { label: 'Kostnader', data: fd.costData.map(v => -v), backgroundColor: 'rgba(239,68,68,0.7)', stack: 'costs', order: 1 },
             { label: 'MVA-oppgjør', data: fd.mvaPayments.map(v => -v), backgroundColor: 'rgba(249,115,22,0.7)', stack: 'costs', order: 1 },
             { label: 'Cash', data: cashData, type: 'line', borderColor: '#3b82f6', borderWidth: 2.5, pointRadius: fd.periods.length > 30 ? 0 : 4, pointBackgroundColor: '#3b82f6', fill: false, yAxisID: 'y2', order: 0 }
