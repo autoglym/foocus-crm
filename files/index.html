@@ -4295,13 +4295,28 @@
           contract_data: updatedData
         }).eq('id', contractId);
 
+        // Notify Foocus that contract was signed
+        try {
+          await fetch('https://izeefglmytbszpsntcur.supabase.co/functions/v1/notify-contract-signed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contract_id: contractId,
+              client_name: contract.contract_data?.client_name || '',
+              signed_by: name,
+              title: contract.contract_data?.title || ''
+            })
+          });
+        } catch(e) { console.error('Notification error:', e); }
+
+        const sigLang = contract.contract_data?.lang || 'no';
         document.getElementById('signingContent').innerHTML = `
           <div class="signing-success">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            <h2>Contract Signed!</h2>
-            <p style="color:var(--text-secondary);margin-bottom:8px;">Signed by <strong>${escapeHtml(name)}</strong>${title ? ', ' + escapeHtml(title) : ''}</p>
-            <p style="color:var(--text-muted);font-size:12px;">${new Date().toLocaleString('en-GB')}</p>
-            <p style="color:var(--text-secondary);margin-top:16px;">A confirmation will be sent to both parties. You can close this page.</p>
+            <h2>${sigLang === 'en' ? 'Contract Signed!' : 'Kontrakten er signert!'}</h2>
+            <p style="color:var(--text-secondary);margin-bottom:8px;">${sigLang === 'en' ? 'Signed by' : 'Signert av'} <strong>${escapeHtml(name)}</strong></p>
+            <p style="color:var(--text-muted);font-size:12px;">${new Date().toLocaleString(sigLang === 'en' ? 'en-GB' : 'nb-NO')}</p>
+            <p style="color:var(--text-secondary);margin-top:16px;">${sigLang === 'en' ? 'A confirmation has been sent. You can close this page.' : 'En bekreftelse er sendt. Du kan lukke denne siden.'}</p>
           </div>`;
       } catch (error) {
         alert('Error signing contract: ' + error.message);
