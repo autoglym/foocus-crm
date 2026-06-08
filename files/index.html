@@ -5389,7 +5389,7 @@
 
     function formatCurrency(val) {
       if (!val) return '0';
-      return new Intl.NumberFormat('nb-NO').format(val);
+      return new Intl.NumberFormat('nb-NO', { maximumFractionDigits: 0 }).format(Math.round(val));
     }
 
     function formatDate(dateStr) {
@@ -6915,10 +6915,10 @@
 
       const periods = generatePeriods(forecastGranularity);
 
-      const existingClients = clients.filter(c => c.stage === 'client' || c.category === 'high_value_client');
-      const nearClosing = clients.filter(c => c.stage === 'near_closing' && c.category === 'high_value_target');
-      const inNegotiation = clients.filter(c => c.stage === 'negotiation' && c.category === 'high_value_target');
-      const leads = clients.filter(c => c.stage === 'lead' && c.category === 'high_value_target');
+      const existingClients = clients.filter(c => c.stage === 'client');
+      const nearClosing = clients.filter(c => c.stage === 'near_closing');
+      const inNegotiation = clients.filter(c => c.stage === 'negotiation');
+      const leads = clients.filter(c => c.stage === 'lead');
 
       const dataExistingRaw = periods.map(p => getPipelineRevenueForPeriod(existingClients, p.start, p.end, false));
       const dataNearClosing = periods.map(p => getPipelineRevenueForPeriod(nearClosing, p.start, p.end));
@@ -7072,7 +7072,7 @@
       // Pipeline revenue for next 3 months (confirmed clients only)
       const pipeline3m = (() => {
         let total = 0;
-        clients.filter(c => c.stage === 'client' || c.category === 'high_value_client').forEach(c => {
+        clients.filter(c => c.stage === 'client').forEach(c => {
           const monthly = getMonthlyRevenue(c);
           const billingStart = c.billing_start_date ? new Date(c.billing_start_date) : null;
           if (!billingStart || billingStart <= threeMonthsOut) {
