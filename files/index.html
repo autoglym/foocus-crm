@@ -5828,54 +5828,48 @@
       s.addEventListener('click', () => showWizardPanel(parseInt(s.dataset.wizardStep)));
     });
 
-    // Tag input for partners — defeat macOS autocorrect by reverting
-    // any multi-character replacement (autocorrect signature)
+    // Tag input for partners — build text from raw keystrokes
+    // to completely bypass macOS autocorrect
     (function() {
+      let rawBuffer = '';
       document.addEventListener('DOMContentLoaded', () => {
         const input = document.getElementById('partnerInput');
         if (!input) return;
 
-        let prevValue = '';
-        let userTyping = false;
-
+        // Build string from individual keystrokes, ignoring input.value
         input.addEventListener('keydown', (event) => {
-          userTyping = true;
-          prevValue = input.value;
           if (event.key === 'Enter') {
             event.preventDefault();
-            const val = input.value.trim();
+            const val = rawBuffer.trim();
             if (val && !wizardPartners.includes(val)) {
               wizardPartners.push(val);
               renderPartnerTags();
             }
+            rawBuffer = '';
             input.value = '';
-            prevValue = '';
+          } else if (event.key === 'Backspace') {
+            rawBuffer = rawBuffer.slice(0, -1);
+          } else if (event.key === 'Delete') {
+            rawBuffer = '';
+            input.value = '';
+          } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+            rawBuffer += event.key;
           }
         });
 
-        input.addEventListener('keyup', () => { userTyping = false; });
-
-        // Detect and revert autocorrect: if value changed by more
-        // than 1 char difference without user typing, it's autocorrect
-        input.addEventListener('input', (e) => {
-          const cur = input.value;
-          if (e.inputType === 'insertReplacementText' ||
-              e.inputType === 'insertFromComposition' ||
-              e.inputType === 'insertFromPaste') {
-            // Could be autocorrect — check if it looks like a replacement
-            if (prevValue && Math.abs(cur.length - prevValue.length) > 2) {
-              input.value = prevValue;
-              return;
-            }
+        // Override any autocorrect: force input to show rawBuffer
+        input.addEventListener('input', () => {
+          if (input.value !== rawBuffer) {
+            input.value = rawBuffer;
           }
-          prevValue = cur;
         });
 
-        // Also intercept beforeinput as backup
-        input.addEventListener('beforeinput', (e) => {
-          if (e.inputType === 'insertReplacementText') {
-            e.preventDefault();
-          }
+        // Handle paste
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const pasted = (e.clipboardData || window.clipboardData).getData('text');
+          rawBuffer += pasted;
+          input.value = rawBuffer;
         });
       });
     })();
