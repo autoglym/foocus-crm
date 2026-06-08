@@ -5586,8 +5586,9 @@
             </div>
             <div class="contract-item-actions">
               <span class="contract-status ${c.status}">${STATUS_LABELS[c.status] || c.status}</span>
-              <button class="task-action" onclick="editContract('${c.id}', event)" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
-              <button class="task-action delete" onclick="confirmDeleteContract('${c.id}', event)" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg></button>
+              ${c.status === 'sent' ? `<button class="task-action" onclick="recallContract('${c.id}', event)" title="Tilbakekall" style="color:var(--urgent);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>` : ''}
+              <button class="task-action" onclick="editContract('${c.id}', event)" title="Rediger"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
+              <button class="task-action delete" onclick="confirmDeleteContract('${c.id}', event)" title="Slett"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg></button>
             </div>
           </div>`;
       }).join('');
@@ -5656,6 +5657,23 @@
       document.getElementById('deleteMessage').textContent = 'Deletee denne avtalen?';
       document.getElementById('confirmDeleteBtn').onclick = () => deleteContract(contractId);
       openModal('deleteModal');
+    }
+
+    async function recallContract(contractId, event) {
+      if (event) event.stopPropagation();
+      if (!confirm('Tilbakekall denne kontrakten? Signeringslenken vil slutte å fungere.')) return;
+      try {
+        const { error } = await sb.from('contracts').update({ status: 'draft' }).eq('id', contractId);
+        if (error) throw error;
+        const idx = contracts.findIndex(c => c.id === contractId);
+        if (idx !== -1) contracts[idx].status = 'draft';
+        renderContracts();
+      } catch(e) {
+        if (e.message && e.message.includes('JWT expired')) {
+          if (await refreshToken()) return recallContract(contractId, event);
+        }
+        alert('Kunne ikke tilbakekalle: ' + e.message);
+      }
     }
 
     async function deleteContract(contractId) {
