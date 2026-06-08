@@ -3525,6 +3525,13 @@
             <input type="date" class="form-input" id="clientBillingStart">
           </div>
           <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="clientHasMva" checked>
+              <span class="form-label" style="margin:0;">Norsk MVA (25%)</span>
+            </label>
+            <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Utenlandske kunder = ikke huk av</p>
+          </div>
+          <div class="form-group">
             <label class="form-label">Notes</label>
             <textarea class="form-input" id="clientNotes" placeholder="Notes about this client..."></textarea>
           </div>
@@ -5085,6 +5092,7 @@
       document.getElementById('clientBillingFreq').value = 'annual';
       document.getElementById('clientCloseDate').value = '';
       document.getElementById('clientBillingStart').value = '';
+      document.getElementById('clientHasMva').checked = true;
       openModal('clientModal');
     }
 
@@ -5101,6 +5109,7 @@
       document.getElementById('clientBillingFreq').value = client.billing_frequency || 'annual';
       document.getElementById('clientCloseDate').value = client.estimated_close_date || '';
       document.getElementById('clientBillingStart').value = client.billing_start_date || '';
+      document.getElementById('clientHasMva').checked = client.has_mva !== false;
       document.getElementById('clientNotes').value = client.notes || '';
       openModal('clientModal');
     }
@@ -5153,6 +5162,7 @@
           billing_frequency: document.getElementById('clientBillingFreq').value || 'annual',
           estimated_close_date: document.getElementById('clientCloseDate').value || null,
           billing_start_date: document.getElementById('clientBillingStart').value || null,
+          has_mva: document.getElementById('clientHasMva').checked,
           notes: document.getElementById('clientNotes').value
         };
         
@@ -6751,10 +6761,13 @@
     const STAGE_LABELS = { lead: 'Lead', negotiation: 'In Negotiation', near_closing: 'Near Closing', client: 'Kunde' };
     const FREQ_DIVISORS = { monthly: 1, quarterly: 3, semi_annual: 6, annual: 12 };
 
-    function getMonthlyRevenue(client) {
+    function getMonthlyRevenue(client, inclMva = true) {
       const dealVal = parseFloat(client.deal_value) || 0;
       const freq = client.billing_frequency || 'annual';
-      return dealVal / (FREQ_DIVISORS[freq] || 12);
+      const monthly = dealVal / (FREQ_DIVISORS[freq] || 12);
+      // deal_value is eks. MVA — add 25% for Norwegian clients (actual cash received)
+      if (inclMva && client.has_mva !== false) return monthly * 1.25;
+      return monthly;
     }
 
     // --- Granularity toggle ---
@@ -7050,8 +7063,9 @@
       }
 
       // KPIs
-      const monthlyRevExisting = existingClients.reduce((s, c) => s + getMonthlyRevenue(c), 0);
-      const monthlyRevTotal = monthlyRevExisting + nearClosing.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + inNegotiation.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + leads.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0);
+      // MRR KPIs are eks. MVA (revenue metric, not cashflow)
+      const monthlyRevExisting = existingClients.reduce((s, c) => s + getMonthlyRevenue(c, false), 0);
+      const monthlyRevTotal = monthlyRevExisting + nearClosing.reduce((s, c) => s + getMonthlyRevenue(c, false) * ((c.probability ?? 50) / 100), 0) + inNegotiation.reduce((s, c) => s + getMonthlyRevenue(c, false) * ((c.probability ?? 50) / 100), 0) + leads.reduce((s, c) => s + getMonthlyRevenue(c, false) * ((c.probability ?? 50) / 100), 0);
       const monthlyCostsRecurring = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
       // Include upcoming one-time costs (next 12 months) spread monthly
       const oneTimeCosts12m = costs.filter(c => {
