@@ -2274,19 +2274,38 @@
     .forecast-legend {
       display: flex;
       flex-wrap: wrap;
-      gap: 16px;
+      gap: 8px;
       margin-bottom: 16px;
-      font-size: 13px;
+      font-size: 12px;
     }
     .forecast-legend-item {
       display: flex;
       align-items: center;
       gap: 6px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+    }
+    .forecast-legend-item.toggleable {
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .forecast-legend-item.toggleable:hover {
+      border-color: var(--text-muted);
+    }
+    .forecast-legend-item.toggleable.off {
+      opacity: 0.35;
+    }
+    .forecast-legend-item.toggleable.off .forecast-legend-dot {
+      background: var(--text-muted) !important;
     }
     .forecast-legend-dot {
-      width: 12px;
-      height: 12px;
+      width: 10px;
+      height: 10px;
       border-radius: 3px;
+      flex-shrink: 0;
     }
 
     .forecast-inputs {
@@ -7080,18 +7099,57 @@
           <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${{day:'Daily',week:'Weekly',month:'Monthly',quarter:'Kvartal',year:'Arlig'}[forecastGranularity]}</div>
         </div>`;
 
-      // Legend
-      document.getElementById('forecastLegend').innerHTML = `
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#10b981;"></div> Existing Clients</div>
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#34d399;"></div> Near Closing</div>
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#f59e0b;"></div> In Negotiation</div>
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#c084fc;"></div> Leads</div>
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#22d3ee;"></div> Payments</div>
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#ef4444;"></div> Expenses</div>
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#f97316;"></div> MVA-oppgjør</div>
-        <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#3b82f6;border-radius:50%;"></div> Cash</div>`;
+      // Store raw data for toggle recalculation
+      window._fcData = { periods, dataExisting, dataNearClosing, dataNegotiation, dataLeads, incomeData, costData, mvaPayments, cashBalance: financials.cash_balance || 0 };
+      if (!window._fcToggles) window._fcToggles = { nearClosing: false, negotiation: false, leads: false };
 
-      // Render chart
+      // Legend with toggles
+      function renderForecastLegend() {
+        const t = window._fcToggles;
+        document.getElementById('forecastLegend').innerHTML = `
+          <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#10b981;"></div> Sikre kunder</div>
+          <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#22d3ee;"></div> Betalinger</div>
+          <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#ef4444;"></div> Kostnader</div>
+          <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#f97316;"></div> MVA</div>
+          <div class="forecast-legend-item toggleable ${t.nearClosing ? '' : 'off'}" onclick="toggleForecastLayer('nearClosing')"><div class="forecast-legend-dot" style="background:#34d399;"></div> Nær landing</div>
+          <div class="forecast-legend-item toggleable ${t.negotiation ? '' : 'off'}" onclick="toggleForecastLayer('negotiation')"><div class="forecast-legend-dot" style="background:#f59e0b;"></div> I forhandling</div>
+          <div class="forecast-legend-item toggleable ${t.leads ? '' : 'off'}" onclick="toggleForecastLayer('leads')"><div class="forecast-legend-dot" style="background:#c084fc;"></div> Leads</div>
+          <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#3b82f6;border-radius:50%;"></div> Cash</div>`;
+      }
+      renderForecastLegend();
+
+      updateForecastChart();
+    }
+
+    function toggleForecastLayer(layer) {
+      window._fcToggles[layer] = !window._fcToggles[layer];
+      document.querySelectorAll('.forecast-legend-item.toggleable').forEach(el => {
+        if (el.textContent.trim().includes(layer === 'nearClosing' ? 'landing' : layer === 'negotiation' ? 'forhandling' : 'Leads')) {
+          el.classList.toggle('off', !window._fcToggles[layer]);
+        }
+      });
+      updateForecastChart();
+    }
+
+    function updateForecastChart() {
+      const fd = window._fcData;
+      if (!fd) return;
+      const t = window._fcToggles || {};
+
+      // Recalculate cash with toggled layers
+      const cashData = [];
+      let runningCash = fd.cashBalance;
+      for (let i = 0; i < fd.periods.length; i++) {
+        let totalIn = fd.dataExisting[i] + fd.incomeData[i];
+        if (t.nearClosing) totalIn += fd.dataNearClosing[i];
+        if (t.negotiation) totalIn += fd.dataNegotiation[i];
+        if (t.leads) totalIn += fd.dataLeads[i];
+        const totalOut = fd.costData[i] + fd.mvaPayments[i];
+        runningCash = runningCash + totalIn - totalOut;
+        cashData.push(runningCash);
+      }
+
+      const zeroes = fd.periods.map(() => 0);
       const ctx = document.getElementById('forecastChart').getContext('2d');
       if (forecastChart) forecastChart.destroy();
 
@@ -7102,16 +7160,16 @@
       forecastChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: periods.map(p => p.label),
+          labels: fd.periods.map(p => p.label),
           datasets: [
-            { label: 'Existing Clients', data: dataExisting, backgroundColor: '#10b981', stack: 'revenue', order: 6 },
-            { label: 'Near Closing', data: dataNearClosing, backgroundColor: '#34d399', stack: 'revenue', order: 5 },
-            { label: 'In Negotiation', data: dataNegotiation, backgroundColor: '#f59e0b', stack: 'revenue', order: 4 },
-            { label: 'Leads', data: dataLeads, backgroundColor: '#c084fc', stack: 'revenue', order: 3 },
-            { label: 'Payments', data: incomeData, backgroundColor: '#22d3ee', stack: 'revenue', order: 2 },
-            { label: 'Expenses', data: costData.map(v => -v), backgroundColor: 'rgba(239,68,68,0.7)', stack: 'costs', order: 1 },
-            { label: 'MVA-oppgjør', data: mvaPayments.map(v => -v), backgroundColor: 'rgba(249,115,22,0.7)', stack: 'costs', order: 1 },
-            { label: 'Cash', data: cashData, type: 'line', borderColor: '#3b82f6', borderWidth: 2.5, pointRadius: forecastGranularity === 'day' ? 0 : 4, pointBackgroundColor: '#3b82f6', fill: false, yAxisID: 'y2', order: 0 }
+            { label: 'Sikre kunder', data: fd.dataExisting, backgroundColor: '#10b981', stack: 'revenue', order: 6 },
+            { label: 'Nær landing', data: t.nearClosing ? fd.dataNearClosing : zeroes, backgroundColor: '#34d399', stack: 'revenue', order: 5 },
+            { label: 'I forhandling', data: t.negotiation ? fd.dataNegotiation : zeroes, backgroundColor: '#f59e0b', stack: 'revenue', order: 4 },
+            { label: 'Leads', data: t.leads ? fd.dataLeads : zeroes, backgroundColor: '#c084fc', stack: 'revenue', order: 3 },
+            { label: 'Betalinger', data: fd.incomeData, backgroundColor: '#22d3ee', stack: 'revenue', order: 2 },
+            { label: 'Kostnader', data: fd.costData.map(v => -v), backgroundColor: 'rgba(239,68,68,0.7)', stack: 'costs', order: 1 },
+            { label: 'MVA-oppgjør', data: fd.mvaPayments.map(v => -v), backgroundColor: 'rgba(249,115,22,0.7)', stack: 'costs', order: 1 },
+            { label: 'Cash', data: cashData, type: 'line', borderColor: '#3b82f6', borderWidth: 2.5, pointRadius: fd.periods.length > 30 ? 0 : 4, pointBackgroundColor: '#3b82f6', fill: false, yAxisID: 'y2', order: 0 }
           ]
         },
         options: {
