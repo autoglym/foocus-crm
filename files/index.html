@@ -6823,11 +6823,13 @@
     // --- Calculate costs for a period ---
     function getCostsForPeriod(periodStart, periodEnd) {
       let total = 0;
+      const pStartStr = periodStart.toISOString().slice(0, 10);
+      const pEndStr = periodEnd.toISOString().slice(0, 10);
       costs.forEach(c => {
         const baseAmount = parseFloat(c.amount) || 0;
         if (c.cost_type === 'one_time') {
-          const d = new Date(c.one_time_date);
-          if (d >= periodStart && d <= periodEnd) total += baseAmount;
+          const dStr = (c.one_time_date || '').slice(0, 10);
+          if (dStr >= pStartStr && dStr <= pEndStr) total += baseAmount;
         } else {
           // Recurring: check each month in period
           const cStart = c.start_date ? new Date(c.start_date) : new Date('2020-01-01');
@@ -6857,9 +6859,11 @@
     // --- Calculate income for a period ---
     function getIncomeForPeriod(periodStart, periodEnd) {
       let total = 0;
+      const pStart = periodStart.toISOString().slice(0, 10);
+      const pEnd = periodEnd.toISOString().slice(0, 10);
       incomeEntries.forEach(inc => {
-        const d = new Date(inc.due_date);
-        if (d >= periodStart && d <= periodEnd) {
+        const dStr = (inc.due_date || '').slice(0, 10);
+        if (dStr >= pStart && dStr <= pEnd) {
           total += parseFloat(inc.amount) || 0;
         }
       });
