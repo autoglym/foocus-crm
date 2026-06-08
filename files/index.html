@@ -3111,12 +3111,15 @@
               </div>
 
               <div class="wizard-section" id="wizardPartnersSection">
-                <h3>Partners / Logos to Monitor</h3>
-                <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Add partners included in the agreement. Press Enter to add.</p>
+                <h3>Partnere / logoer som skal overvåkes</h3>
+                <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Legg til partnere som er inkludert i avtalen.</p>
                 <div class="tag-input-container" id="partnersTagContainer">
-                  <input type="search" class="tag-input" id="partnerInput" placeholder="Skriv inn partnernavnet og trykk Enter" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off" lang="zxx" data-form-type="other">
                 </div>
-                <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Up to 10 partners are included in the license fee.</p>
+                <button type="button" class="btn btn-secondary" onclick="addPartnerViaPrompt()" style="margin-top:8px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  Legg til partner
+                </button>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Opptil 10 partnere er inkludert i lisensavgiften.</p>
               </div>
 
               <div class="wizard-section" id="wizardChannelsSection">
@@ -5872,52 +5875,14 @@
       s.addEventListener('click', () => showWizardPanel(parseInt(s.dataset.wizardStep)));
     });
 
-    // Tag input for partners — build text from raw keystrokes
-    // to completely bypass macOS autocorrect
-    (function() {
-      let rawBuffer = '';
-      document.addEventListener('DOMContentLoaded', () => {
-        const input = document.getElementById('partnerInput');
-        if (!input) return;
-
-        // Build string from individual keystrokes, ignoring input.value
-        input.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            const val = rawBuffer.trim();
-            if (val && !wizardPartners.includes(val)) {
-              wizardPartners.push(val);
-              renderPartnerTags();
-            }
-            rawBuffer = '';
-            input.value = '';
-          } else if (event.key === 'Backspace') {
-            rawBuffer = rawBuffer.slice(0, -1);
-          } else if (event.key === 'Delete') {
-            rawBuffer = '';
-            input.value = '';
-          } else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
-            rawBuffer += event.key;
-          }
-        });
-
-        // Override any autocorrect: force input to show rawBuffer
-        input.addEventListener('input', () => {
-          if (input.value !== rawBuffer) {
-            input.value = rawBuffer;
-          }
-        });
-
-        // Handle paste
-        input.addEventListener('paste', (e) => {
-          e.preventDefault();
-          const pasted = (e.clipboardData || window.clipboardData).getData('text');
-          rawBuffer += pasted;
-          input.value = rawBuffer;
-        });
-      });
-    })();
-    function handlePartnerTag(event) {} // kept for backward compat
+    // Add partner via prompt dialog — bypasses macOS autocorrect entirely
+    function addPartnerViaPrompt() {
+      const val = prompt('Partnernavn:');
+      if (val && val.trim() && !wizardPartners.includes(val.trim())) {
+        wizardPartners.push(val.trim());
+        renderPartnerTags();
+      }
+    }
 
     function removePartnerTag(index) {
       wizardPartners.splice(index, 1);
