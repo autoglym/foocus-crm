@@ -6985,11 +6985,9 @@
         const pStart = periods[i].start;
         const pEnd = periods[i].end;
 
-        // Outgoing MVA (on revenue with MVA — we owe this)
-        const pipelineRevenue = dataExisting[i] + dataNearClosing[i] + dataNegotiation[i] + dataLeads[i];
-        const outgoingMvaPipeline = pipelineRevenue * MVA_FRACTION; // pipeline assumed with MVA
-        const outgoingMvaIncome = getIncomeMvaForPeriod(pStart, pEnd);
-        const outgoingMva = outgoingMvaPipeline + outgoingMvaIncome;
+        // Outgoing MVA — ONLY on actual income entries (not pipeline forecasts)
+        // You don't owe MVA on revenue you haven't invoiced yet
+        const outgoingMva = getIncomeMvaForPeriod(pStart, pEnd);
 
         // Incoming MVA (on costs with MVA — we get this back)
         const incomingMva = getCostMvaForPeriod(pStart, pEnd);
