@@ -2096,74 +2096,75 @@
     .tag-input::placeholder { color: var(--text-muted); }
 
     .pricing-row-group {
-      margin-bottom: 8px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 12px;
-    }
-    .pricing-desc-row {
       display: flex;
       gap: 8px;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
-    .pricing-desc-row .form-input {
+    .pricing-row-group .form-input { margin: 0; min-width: 0; }
+    .pricing-row-group .pricing-desc {
       flex: 1;
-      min-width: 0;
-      margin: 0;
       font-size: 14px;
     }
-    .pricing-desc-row .btn-ghost { padding: 6px 8px; font-size: 16px; }
-    .pricing-nums-row {
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-    }
-    .pricing-num-field {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-    .pricing-num-field label {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .pricing-num-field input {
-      width: 100px;
+    .pricing-row-group .pricing-amount {
+      width: 130px;
       text-align: right;
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
-      margin: 0;
-      min-width: 0;
     }
-    .pricing-num-field.pricing-linjesum {
-      margin-left: auto;
-      text-align: right;
-    }
-    .pricing-num-field.pricing-linjesum .linjesum-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-      padding: 8px 0;
+    .pricing-row-group .btn-ghost { padding: 6px 8px; font-size: 16px; flex-shrink: 0; }
+    .pricing-note-row {
+      margin: -2px 0 10px 0;
+      padding-left: 4px;
     }
     .pricing-note-input {
-      width: 100%;
-      padding: 5px 10px;
+      width: calc(100% - 170px);
+      padding: 4px 10px;
       background: transparent;
       border: 1px dashed var(--border);
       border-radius: 4px;
       color: var(--text-muted);
       font-size: 11px;
       font-style: italic;
-      margin-top: 6px;
     }
     .pricing-note-input::placeholder { color: var(--text-muted); opacity: 0.5; }
     .pricing-note-input:focus { outline: none; border-color: var(--accent); color: var(--text-primary); }
-    .pricing-header { display: none; }
+    .pricing-header {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .pricing-header span {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .pricing-header span:first-child { flex: 1; }
+    .pricing-header span:nth-child(2) { width: 130px; text-align: right; }
+    .pricing-header span:nth-child(3) { width: 30px; }
+    .pricing-addons-section {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border);
+    }
+    .pricing-addons-section h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text-secondary);
+    }
+    .addon-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .addon-row .form-input { margin: 0; min-width: 0; }
+    .addon-row .addon-desc { flex: 1; font-size: 13px; }
+    .addon-row .addon-price { width: 160px; font-size: 13px; }
+    .addon-row .btn-ghost { padding: 6px 8px; font-size: 16px; flex-shrink: 0; }
     .pricing-currency-select {
       display: flex;
       gap: 4px;
@@ -3210,8 +3211,13 @@
                   <button class="active" onclick="setPricingCurrency('NOK', this)">NOK</button>
                   <button onclick="setPricingCurrency('EUR', this)">EUR</button>
                 </div>
+                <div class="pricing-header">
+                  <span>Beskrivelse</span>
+                  <span>Beløp</span>
+                  <span></span>
+                </div>
                 <div id="pricingRows"></div>
-                <button class="btn btn-secondary" onclick="addPricingRow()" style="margin-top:12px;">
+                <button class="btn btn-secondary" onclick="addPricingRow()" style="margin-top:8px;">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                   Legg til prislinje
                 </button>
@@ -3222,18 +3228,28 @@
               </div>
 
               <div class="wizard-section">
+                <h3>Valgfrie tillegg</h3>
+                <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Kan legges til ved signering eller underveis i avtaleperioden.</p>
+                <div id="addonRows"></div>
+                <button class="btn btn-secondary" onclick="addAddonRow()" style="margin-top:8px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  Legg til tillegg
+                </button>
+              </div>
+
+              <div class="wizard-section">
                 <h3>Faktureringsvilkår</h3>
                 <div class="form-row">
                   <div class="form-group">
-                    <label class="form-label">Payment Terms (days)</label>
+                    <label class="form-label">Betalingsbetingelser (dager)</label>
                     <input type="number" class="form-input" id="contractPaymentDays" value="10" min="1">
                   </div>
                   <div class="form-group">
-                    <label class="form-label">Annual Price Adjustment</label>
+                    <label class="form-label">Årlig prisjustering</label>
                     <select class="form-input form-select" id="contractPriceAdjustment">
-                      <option value="7-15">7-15% or per price list</option>
+                      <option value="7-15">7–15 % eller per prisliste</option>
                       <option value="kpi">Iht. konsumprisindeksen (KPI)</option>
-                      <option value="fixed">No adjustment</option>
+                      <option value="fixed">Ingen justering</option>
                     </select>
                   </div>
                 </div>
@@ -4180,6 +4196,13 @@
             <li>${t('payment_due').replace('{days}', d.payment_days || 10)}</li>
             <li>${t('excl_vat')}</li>
           </ul>
+
+          ${(d.addons && d.addons.length > 0) ? `
+          <h4 style="margin-top:20px;margin-bottom:8px;">${contractLang === 'en' ? 'Optional add-ons' : 'Valgfrie tillegg'}</h4>
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">${contractLang === 'en' ? 'Can be added at signing or at any point during the contract period.' : 'Kan legges til ved signering eller underveis i avtaleperioden.'}</p>
+          <table style="width:100%;border-collapse:collapse;">
+            ${d.addons.map(a => '<tr><td style="padding:6px 8px;border:1px solid var(--border);font-size:13px;">' + escapeHtml(a.description) + '</td><td style="padding:6px 8px;border:1px solid var(--border);text-align:right;font-family:JetBrains Mono,monospace;font-size:13px;white-space:nowrap;">' + escapeHtml(a.price) + '</td></tr>').join('')}
+          </table>` : ''}
 
           <h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">${sectionNum + 2}. ${t('period')}</h3>
           <ul>
@@ -5723,8 +5746,9 @@
 
       // Reset pricing
       document.getElementById('pricingRows').innerHTML =
-        buildPricingRowHtml('Platform license - monitoring, reporting and support', 1, 6250, 12, 75000, '') +
-        buildPricingRowHtml('One-time setup - logo training, press monitoring, verification', 1, 15000, 1, 15000, '');
+        buildPricingRowHtml('Platform license - monitoring, reporting and support', 75000, '') +
+        buildPricingRowHtml('One-time setup - logo training, press monitoring, verification', 15000, '');
+      document.getElementById('addonRows').innerHTML = '';
       setPricingCurrency('NOK', document.querySelector('.pricing-currency-select button'));
       updatePricingTotal();
     }
@@ -5767,9 +5791,14 @@
       // Pricing
       if (d.pricing && d.pricing.length > 0) {
         document.getElementById('pricingRows').innerHTML = d.pricing.map(p =>
-          buildPricingRowHtml(p.description, p.qty || 1, p.unit_price || p.amount || 0, p.months || 1, p.amount || 0, p.note || '')
+          buildPricingRowHtml(p.description, p.amount || 0, p.note || '')
         ).join('');
         updatePricingTotal();
+      }
+      if (d.addons && d.addons.length > 0) {
+        document.getElementById('addonRows').innerHTML = d.addons.map(a =>
+          buildAddonRowHtml(a.description, a.price)
+        ).join('');
       }
       if (d.currency) {
         setPricingCurrency(d.currency, document.querySelector(`.pricing-currency-select button:${d.currency === 'EUR' ? 'last-child' : 'first-child'}`));
@@ -5906,42 +5935,45 @@
       updatePricingTotal();
     }
 
-    function buildPricingRowHtml(desc, qty, unitPrice, months, amount, note) {
-      const lineTotal = amount || (qty * unitPrice * months);
+    function buildPricingRowHtml(desc, amount, note) {
       return `<div class="pricing-row-group">
-        <div class="pricing-desc-row">
-          <input type="text" class="form-input" value="${escapeHtml(desc || '')}" data-pricing-desc placeholder="Beskrivelse">
-          <button class="btn btn-ghost" onclick="removePricingRow(this)">&times;</button>
-        </div>
-        <div class="pricing-nums-row">
-          <div class="pricing-num-field"><label>Antall</label><input type="number" class="form-input" value="${qty || 1}" min="1" data-pricing-qty onchange="updatePricingTotal()"></div>
-          <div class="pricing-num-field"><label>Enhetspris</label><input type="number" class="form-input" value="${unitPrice || 0}" placeholder="0" data-pricing-unit onchange="updatePricingTotal()"></div>
-          <div class="pricing-num-field"><label>Måneder</label><input type="number" class="form-input" value="${months || 1}" min="1" data-pricing-months onchange="updatePricingTotal()"></div>
-          <div class="pricing-num-field pricing-linjesum"><label>Linjesum</label><div class="linjesum-value" data-pricing-linetotal>${formatCurrency(lineTotal)}</div></div>
-        </div>
-        <input type="text" class="pricing-note-input" value="${escapeHtml(note || '')}" placeholder="Legg til notat (f.eks. engangskostnad, inkl. periode...)" data-pricing-note>
+        <input type="text" class="form-input pricing-desc" value="${escapeHtml(desc || '')}" data-pricing-desc placeholder="Beskrivelse">
+        <input type="number" class="form-input pricing-amount" value="${amount || 0}" data-pricing-amount placeholder="0" onchange="updatePricingTotal()">
+        <button class="btn btn-ghost" onclick="removePricingRow(this)">&times;</button>
+      </div>
+      <div class="pricing-note-row">
+        <input type="text" class="pricing-note-input" value="${escapeHtml(note || '')}" placeholder="Notat (f.eks. inkludert ved signering, engangskostnad...)" data-pricing-note>
+      </div>`;
+    }
+
+    function buildAddonRowHtml(desc, price) {
+      return `<div class="addon-row">
+        <input type="text" class="form-input addon-desc" value="${escapeHtml(desc || '')}" data-addon-desc placeholder="Beskrivelse">
+        <input type="text" class="form-input addon-price" value="${escapeHtml(price || '')}" data-addon-price placeholder="Pris (f.eks. €1,100/rapport)">
+        <button class="btn btn-ghost" onclick="this.closest('.addon-row').remove()">&times;</button>
       </div>`;
     }
 
     function addPricingRow() {
-      document.getElementById('pricingRows').insertAdjacentHTML('beforeend', buildPricingRowHtml('', 1, 0, 1, 0, ''));
+      document.getElementById('pricingRows').insertAdjacentHTML('beforeend', buildPricingRowHtml('', 0, ''));
+    }
+
+    function addAddonRow() {
+      document.getElementById('addonRows').insertAdjacentHTML('beforeend', buildAddonRowHtml('', ''));
     }
 
     function removePricingRow(btn) {
-      btn.closest('.pricing-row-group').remove();
+      const group = btn.closest('.pricing-row-group');
+      const noteRow = group.nextElementSibling;
+      if (noteRow && noteRow.classList.contains('pricing-note-row')) noteRow.remove();
+      group.remove();
       updatePricingTotal();
     }
 
     function updatePricingTotal() {
       let grandTotal = 0;
       document.querySelectorAll('.pricing-row-group').forEach(group => {
-        const qty = parseFloat(group.querySelector('[data-pricing-qty]')?.value) || 1;
-        const unit = parseFloat(group.querySelector('[data-pricing-unit]')?.value) || 0;
-        const months = parseFloat(group.querySelector('[data-pricing-months]')?.value) || 1;
-        const lineTotal = qty * unit * months;
-        const lineTotalEl = group.querySelector('[data-pricing-linetotal]');
-        if (lineTotalEl) lineTotalEl.textContent = formatCurrency(lineTotal);
-        grandTotal += lineTotal;
+        grandTotal += parseFloat(group.querySelector('[data-pricing-amount]')?.value) || 0;
       });
       document.getElementById('pricingTotal').textContent = formatCurrency(grandTotal) + ' ' + pricingCurrency;
     }
@@ -5951,19 +5983,19 @@
       const getCheckedValues = (selector) => [...document.querySelectorAll(selector)].filter(cb => cb.checked).map(cb => cb.value);
 
       const pricing = [...document.querySelectorAll('.pricing-row-group')].map(group => {
-        const noteEl = group.querySelector('[data-pricing-note]');
-        const qty = parseFloat(group.querySelector('[data-pricing-qty]')?.value) || 1;
-        const unitPrice = parseFloat(group.querySelector('[data-pricing-unit]')?.value) || 0;
-        const months = parseFloat(group.querySelector('[data-pricing-months]')?.value) || 1;
+        const noteRow = group.nextElementSibling;
+        const noteEl = noteRow && noteRow.classList.contains('pricing-note-row') ? noteRow.querySelector('[data-pricing-note]') : null;
         return {
           description: group.querySelector('[data-pricing-desc]')?.value || '',
-          qty,
-          unit_price: unitPrice,
-          months,
-          amount: qty * unitPrice * months,
+          amount: parseFloat(group.querySelector('[data-pricing-amount]')?.value) || 0,
           note: noteEl ? noteEl.value : ''
         };
       }).filter(p => p.description);
+
+      const addons = [...document.querySelectorAll('.addon-row')].map(row => ({
+        description: row.querySelector('[data-addon-desc]')?.value || '',
+        price: row.querySelector('[data-addon-price]')?.value || ''
+      })).filter(a => a.description);
 
       return {
         intro_text: document.getElementById('contractIntroText').value,
@@ -5982,6 +6014,7 @@
         support_hours_per_quarter: parseInt(document.getElementById('contractSupportHours').value) || 0,
         strategy_days: parseInt(document.getElementById('contractStrategyDays').value) || 0,
         pricing,
+        addons,
         payment_days: parseInt(document.getElementById('contractPaymentDays').value) || 10,
         price_adjustment: document.getElementById('contractPriceAdjustment').value,
         start_date: document.getElementById('contractStartDate').value,
@@ -6082,9 +6115,9 @@
       html += `
         <h2>3. ${t('pricing')}</h2>
         <table>
-          <tr><th>${t('description')}</th><th style="text-align:right;">${t('qty')}</th><th style="text-align:right;">${t('unit_price')}</th><th style="text-align:right;">${t('months')}</th><th style="text-align:right;">${t('total_excl')}</th></tr>
-          ${d.pricing.map(p => `<tr><td>${escapeHtml(p.description)}${p.note ? `<br><span style="font-size:11px;font-style:italic;color:#888;">${escapeHtml(p.note)}</span>` : ''}</td><td style="text-align:right;font-family:monospace;">${p.qty || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.unit_price || p.amount)} NOK</td><td style="text-align:right;font-family:monospace;">${p.months || 1}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.amount)} NOK</td></tr>`).join('')}
-          <tr style="font-weight:bold;"><td colspan="4">${isService ? t('total_first_year') : t('total_label')}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(totalAmount)} NOK</td></tr>
+          <tr><th>${t('description')}</th><th style="text-align:right;">${t('total_excl')}</th></tr>
+          ${d.pricing.map(p => `<tr><td>${escapeHtml(p.description)}${p.note ? `<br><span style="font-size:11px;font-style:italic;color:#888;">${escapeHtml(p.note)}</span>` : ''}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(p.amount)} ${d.currency || 'NOK'}</td></tr>`).join('')}
+          <tr style="font-weight:bold;"><td>${isService ? t('total_first_year') : t('total_label')}</td><td style="text-align:right;font-family:monospace;">${formatCurrency(totalAmount)} ${d.currency || 'NOK'}</td></tr>
         </table>
         <ul>
           <li>${t('invoice_signing')}</li>
@@ -6093,6 +6126,12 @@
           <li>${t('excl_vat')}</li>
           <li>${t('price_adjust').replace('{method}', adjustmentText)}</li>
         </ul>
+        ${d.addons && d.addons.length > 0 ? `
+        <h3>${contractLang === 'en' ? 'Optional add-ons' : 'Valgfrie tillegg'}</h3>
+        <p style="font-size:12px;color:#888;">${contractLang === 'en' ? 'Can be added at signing or at any point during the contract period.' : 'Kan legges til ved signering eller underveis i avtaleperioden.'}</p>
+        <table>
+          ${d.addons.map(a => `<tr><td>${escapeHtml(a.description)}</td><td style="text-align:right;font-family:monospace;white-space:nowrap;">${escapeHtml(a.price)}</td></tr>`).join('')}
+        </table>` : ''}
 
         <h2>4. ${t('period')}</h2>
         <ul>
