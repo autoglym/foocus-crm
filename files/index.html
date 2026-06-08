@@ -3838,13 +3838,23 @@
     });
 
     // Function to update the client's auth headers
-    function updateClientAuth(accessToken) {
+    async function updateClientAuth(accessToken) {
       sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
         auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
         global: {
           headers: accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {}
         }
       });
+      // Also set session in the SDK so PostgREST uses the token
+      if (accessToken) {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        try {
+          await Promise.race([
+            sb.auth.setSession({ access_token: accessToken, refresh_token: stored.refresh_token || '' }),
+            new Promise(resolve => setTimeout(resolve, 3000)) // don't hang
+          ]);
+        } catch(e) { console.warn('[auth] setSession failed, using header fallback'); }
+      }
     }
 
     // Login via REST API (bypasses SDK auth module entirely)
@@ -3893,7 +3903,7 @@
         const fresh = await res.json();
         if (fresh.access_token) {
           saveSession(fresh);
-          updateClientAuth(fresh.access_token);
+          await updateClientAuth(fresh.access_token);
           console.log('[refresh] Token refreshed');
           return true;
         }
@@ -4046,7 +4056,7 @@
 
         currentUser = sessionData.user;
         saveSession(sessionData);
-        updateClientAuth(sessionData.access_token);
+        await updateClientAuth(sessionData.access_token);
         setupAutoRefresh(sessionData);
         await initApp();
       } catch (error) {
@@ -4089,7 +4099,7 @@
         if (data.session) {
           currentUser = data.user;
           saveSession(data.session);
-          updateClientAuth(data.session.access_token);
+          await updateClientAuth(data.session.access_token);
           setupAutoRefresh(data.session);
           await initApp();
         }
@@ -4421,9 +4431,10 @@
       }
 
       // Recover session from our own storage — no SDK auth calls needed
-      if (_storedSession && _storedSession.user && !isPasswordRecovery) {
+      if (_storedSession && _storedSession.access_token && _storedSession.user && !isPasswordRecovery) {
         console.log('[init] Session found for:', _storedSession.user.email);
         currentUser = _storedSession.user;
+        await updateClientAuth(_storedSession.access_token);
         setupAutoRefresh(_storedSession);
         await initApp();
       }
