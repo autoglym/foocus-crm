@@ -2613,7 +2613,7 @@
     <div class="signing-container">
       <div class="signing-header">
         <h1>Foocus</h1>
-        <p>Kontraktsignering</p>
+        <p id="signingHeaderSubtitle">Contract Signing</p>
       </div>
       <div id="signingContent"></div>
     </div>
@@ -4139,6 +4139,7 @@
         const d = contract.contract_data || {};
         // Set contract language for signing page
         if (d.lang) contractLang = d.lang;
+        document.getElementById('signingHeaderSubtitle').textContent = contractLang === 'en' ? 'Contract Signing' : 'Kontraktsignering';
         const totalAmount = (d.pricing || []).reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
         const currency = d.currency || 'NOK';
 
@@ -4243,34 +4244,36 @@
             <div style="background:var(--bg-card);border:1px solid var(--client);border-radius:var(--radius);padding:24px;">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="width:20px;height:20px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <h3 style="margin:0;color:var(--client);">Signert av leverandør</h3>
+                <h3 style="margin:0;color:var(--client);">${contractLang === 'en' ? 'Signed by Supplier' : 'Signert av leverandør'}</h3>
               </div>
               <p style="font-size:14px;font-weight:600;margin-bottom:4px;">${escapeHtml(d.sender_signed_by || 'Glenn Myklebust, CEO')}</p>
               <p style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">${escapeHtml(d.sender_signed_org || 'Foocus AS')}</p>
-              <p style="font-size:12px;color:var(--text-muted);">${d.sender_signed_at ? new Date(d.sender_signed_at).toLocaleDateString('nb-NO', {day:'numeric',month:'long',year:'numeric'}) : ''}</p>
+              <p style="font-size:12px;color:var(--text-muted);">${d.sender_signed_at ? new Date(d.sender_signed_at).toLocaleDateString(contractLang === 'en' ? 'en-GB' : 'nb-NO', {day:'numeric',month:'long',year:'numeric'}) : ''}</p>
             </div>
             <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="width:20px;height:20px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                <h3 style="margin:0;">Venter på din signatur</h3>
+                <h3 style="margin:0;">${contractLang === 'en' ? 'Awaiting Your Signature' : 'Venter på din signatur'}</h3>
               </div>
-              <p style="font-size:13px;color:var(--text-muted);">Vennligst les gjennom kontrakten og signer nedenfor.</p>
+              <p style="font-size:13px;color:var(--text-muted);">${contractLang === 'en' ? 'Please review the agreement above and sign below.' : 'Vennligst les gjennom kontrakten og signer nedenfor.'}</p>
             </div>
           </div>
 
           <div class="signing-form" id="signingForm">
-            <h3>Signer denne kontrakten</h3>
+            <h3>${contractLang === 'en' ? 'Sign this Agreement' : 'Signer denne kontrakten'}</h3>
             <div class="form-group">
-              <label class="form-label">Fullt navn</label>
-              <input type="text" class="form-input" id="signerName" placeholder="Skriv inn fullt navn">
+              <label class="form-label">${contractLang === 'en' ? 'Full Name' : 'Fullt navn'}</label>
+              <input type="text" class="form-input" id="signerName" placeholder="${contractLang === 'en' ? 'Enter your full name' : 'Skriv inn fullt navn'}">
             </div>
             <label class="signing-checkbox">
               <input type="checkbox" id="signerAgree">
-              Jeg har lest og godtar vilkårene i denne kontrakten på vegne av <strong>${escapeHtml(d.client_name || 'min organisasjon')}</strong>.
+              ${contractLang === 'en'
+                ? `I have read and agree to the terms of this agreement on behalf of <strong>${escapeHtml(d.client_name || 'my organization')}</strong>.`
+                : `Jeg har lest og godtar vilkårene i denne kontrakten på vegne av <strong>${escapeHtml(d.client_name || 'min organisasjon')}</strong>.`}
             </label>
             <button class="btn btn-primary" onclick="submitSignature('${contractId}')" style="width:100%;padding:14px;font-size:15px;background:#10b981;">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="m5 12 5 5L20 7"/></svg>
-              Signer kontrakt
+              ${contractLang === 'en' ? 'Sign Agreement' : 'Signer kontrakt'}
             </button>
           </div>`;
       } catch (error) {
