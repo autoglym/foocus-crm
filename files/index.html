@@ -7039,28 +7039,37 @@
       const monthlyRevTotal = monthlyRevExisting + nearClosing.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + inNegotiation.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + leads.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0);
       const monthlyCosts = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
       const netMonthly = monthlyRevExisting - monthlyCosts;
-      const runway = monthlyCosts > 0 ? Math.floor((financials.cash_balance || 0) / monthlyCosts) : 999;
+      // Runway = months until cash runs out, considering net cash flow
+      // If net positive, runway is infinite. If negative, cash / monthly burn.
+      const monthlyBurn = monthlyCosts - monthlyRevExisting; // positive = burning cash
+      const cashAtHand = financials.cash_balance || 0;
+      const runway = monthlyBurn > 0 ? Math.floor(cashAtHand / monthlyBurn) : 999;
 
       document.getElementById('forecastKPIs').innerHTML = `
-        <div class="forecast-kpi green">
-          <div class="forecast-kpi-label">MRR (existing)</div>
-          <div class="forecast-kpi-value">${formatCurrency(monthlyRevExisting)}</div>
-          <div class="forecast-kpi-sub">NOK / month</div>
-        </div>
         <div class="forecast-kpi blue">
-          <div class="forecast-kpi-label">MRR (weighted total)</div>
-          <div class="forecast-kpi-value">${formatCurrency(monthlyRevTotal)}</div>
-          <div class="forecast-kpi-sub">incl. pipeline</div>
+          <div class="forecast-kpi-label">Cash at hand</div>
+          <div class="forecast-kpi-value">${formatCurrency(cashAtHand)}</div>
+          <div class="forecast-kpi-sub">Bankbalanse nå</div>
+        </div>
+        <div class="forecast-kpi green">
+          <div class="forecast-kpi-label">MRR (sikre kunder)</div>
+          <div class="forecast-kpi-value">${formatCurrency(monthlyRevExisting)}</div>
+          <div class="forecast-kpi-sub">NOK / måned</div>
         </div>
         <div class="forecast-kpi red">
-          <div class="forecast-kpi-label">Fixed Expenses</div>
+          <div class="forecast-kpi-label">Faste kostnader</div>
           <div class="forecast-kpi-value">${formatCurrency(monthlyCosts)}</div>
-          <div class="forecast-kpi-sub">NOK / month</div>
+          <div class="forecast-kpi-sub">NOK / måned</div>
         </div>
         <div class="forecast-kpi ${netMonthly >= 0 ? 'green' : 'amber'}">
           <div class="forecast-kpi-label">Netto cashflow</div>
           <div class="forecast-kpi-value">${netMonthly >= 0 ? '+' : ''}${formatCurrency(netMonthly)}</div>
-          <div class="forecast-kpi-sub">NOK / måned (inkl. MVA)</div>
+          <div class="forecast-kpi-sub">NOK / måned</div>
+        </div>
+        <div class="forecast-kpi ${runway > 12 ? 'green' : runway > 3 ? 'amber' : 'red'}">
+          <div class="forecast-kpi-label">Runway</div>
+          <div class="forecast-kpi-value">${runway > 99 ? '∞' : runway + ' mnd'}</div>
+          <div class="forecast-kpi-sub">${monthlyBurn > 0 ? 'Cash / netto burn' : 'Netto positiv'}</div>
         </div>
         ${(() => {
           // Find next upcoming MVA payment
@@ -7081,22 +7090,24 @@
         })()}`;
 
       // Quick stats
+      const pendingIncome = incomeEntries.filter(i => i.status === 'pending').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+      const overdueIncome = incomeEntries.filter(i => i.status === 'overdue').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       document.getElementById('cashflowQuickStats').innerHTML = `
         <div>
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Runway</div>
-          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${runway > 99 ? '99+' : runway} mnd</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Ventende innbetalinger</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${formatCurrency(pendingIncome)}</div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Total Expenses</div>
-          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${costs.length}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Forfalt (ikke betalt)</div>
+          <div style="font-size:20px;font-weight:700;color:${overdueIncome > 0 ? 'var(--urgent)' : 'var(--text-primary)'};">${formatCurrency(overdueIncome)}</div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Pending Income</div>
-          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${formatCurrency(incomeEntries.filter(i => i.status === 'pending').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0))}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Faste kostnader</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${costs.length} poster</div>
         </div>
         <div>
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">View</div>
-          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${{day:'Daily',week:'Weekly',month:'Monthly',quarter:'Kvartal',year:'Arlig'}[forecastGranularity]}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Visning</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${{day:'Dag',week:'Uke',month:'Måned',quarter:'Kvartal',year:'År'}[forecastGranularity]}</div>
         </div>`;
 
       // Store raw data for toggle recalculation
