@@ -3200,6 +3200,12 @@
                 </div>
               </div>
 
+              <div class="wizard-section">
+                <h3>Custom clauses</h3>
+                <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Additional terms or conditions appended after the deliverables section. Leave empty if not needed.</p>
+                <textarea class="form-input" id="contractCustomClauses" rows="4" placeholder="e.g. All channels — web, social media (including TikTok), and LinkedIn — are included at no additional cost..." style="resize:vertical;"></textarea>
+              </div>
+
               <div class="wizard-footer">
                 <button class="btn btn-secondary" onclick="wizardPrev()">Back</button>
                 <button class="btn btn-primary" onclick="wizardNext()">Next</button>
@@ -4184,6 +4190,10 @@
         } else {
           contractHtml += `<h4>${t('project_desc_title')}</h4><p>${escapeHtml(d.project_scope || t('not_specified'))}</p>`;
           if ((d.deliverables || []).length > 0) contractHtml += `<p><strong>${t('deliverables')}</strong></p><ul>${d.deliverables.map(dl => '<li>' + getDL(dl) + '</li>').join('')}</ul>`;
+        }
+
+        if (d.custom_clauses) {
+          contractHtml += d.custom_clauses.split(/\n/).filter(l => l.trim()).map(p => '<p style="margin:0 0 10px 0;line-height:1.7;">' + escapeHtml(p) + '</p>').join('');
         }
 
         contractHtml += `
@@ -5767,6 +5777,7 @@
       document.getElementById('contractFoocusContact').value = FOOCUS_INFO.contact;
       document.getElementById('contractFoocusEmail').value = FOOCUS_INFO.email;
       document.getElementById('contractProjectScope').value = '';
+      document.getElementById('contractCustomClauses').value = '';
       wizardPartners = [];
       renderPartnerTags();
 
@@ -5811,6 +5822,7 @@
       document.getElementById('contractFoocusContact').value = d.foocus_contact || FOOCUS_INFO.contact;
       document.getElementById('contractFoocusEmail').value = d.foocus_email || FOOCUS_INFO.email;
       document.getElementById('contractProjectScope').value = d.project_scope || '';
+      document.getElementById('contractCustomClauses').value = d.custom_clauses || '';
 
       // Restore language (default to 'no' for old contracts without lang)
       setContractLang(d.lang || 'no');
@@ -6022,6 +6034,7 @@
         foocus_contact: document.getElementById('contractFoocusContact').value,
         foocus_email: document.getElementById('contractFoocusEmail').value,
         project_scope: document.getElementById('contractProjectScope').value,
+        custom_clauses: document.getElementById('contractCustomClauses').value,
         currency: pricingCurrency,
         lang: contractLang
       };
@@ -6107,6 +6120,10 @@
         if (d.deliverables.length > 0) {
           html += `<p><strong>${t('deliverables')}</strong></p><ul>${d.deliverables.map(dl => `<li>${getDL(dl)}</li>`).join('')}</ul>`;
         }
+      }
+
+      if (d.custom_clauses) {
+        html += d.custom_clauses.split('\n').filter(l => l.trim()).map(p => `<p>${escapeHtml(p)}</p>`).join('');
       }
 
       const previewDateLocale = contractLang === 'no' ? 'nb-NO' : 'en-GB';
