@@ -7555,9 +7555,15 @@
     }
 
     function renderBreakEven() {
+      // Auto-calculate from costs table: recurring × 12 + one-time
+      const annualFromCosts = costs.reduce((sum, c) => {
+        const amt = parseFloat(c.amount) || 0;
+        return sum + (c.cost_type === 'recurring' ? amt * 12 : amt);
+      }, 0);
+      // Use costs table if available, otherwise fall back to manual input
       const savedCost = localStorage.getItem('focusCrmOperatingCost');
-      const operatingCost = parseFloat(savedCost) || 0;
-      document.getElementById('operatingCost').value = savedCost || '';
+      const operatingCost = annualFromCosts > 0 ? annualFromCosts : (parseFloat(savedCost) || 0);
+      document.getElementById('operatingCost').value = Math.round(operatingCost) || '';
       
       // Calculate ARR Secured (clients only)
       const clientsList = clients.filter(c => c.category === 'high_value_client');
