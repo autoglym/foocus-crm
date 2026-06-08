@@ -3989,13 +3989,24 @@
       btn.textContent = 'Updating...';
 
       try {
-        const { error } = await sb.auth.updateUser({ password: pw });
-        if (error) throw error;
-        successEl.textContent = 'Password updated! Signing in...';
+        if (!window._recoveryAccessToken) throw new Error('Recovery token missing. Please use the link from your email.');
+        // Use REST API to update password (bypasses SDK auth lock)
+        const res = await fetch(SUPABASE_URL + '/auth/v1/user', {
+          method: 'PUT',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + window._recoveryAccessToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ password: pw })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.msg || result.error_description || 'Could not update password');
+        successEl.textContent = 'Passord oppdatert! Logger inn...';
         successEl.classList.add('show');
         setTimeout(() => { window.location.href = window.location.origin; }, 1500);
       } catch (error) {
-        errorEl.textContent = error.message || 'Could not update password.';
+        errorEl.textContent = error.message || 'Kunne ikke oppdatere passord.';
         errorEl.classList.add('show');
       } finally {
         btn.disabled = false;
@@ -4063,8 +4074,10 @@
         }
         
         if (data.session) {
-          // Success - manually trigger app init
           currentUser = data.user;
+          saveSession(data.session);
+          updateClientAuth(data.session.access_token);
+          setupAutoRefresh(data.session);
           await initApp();
         }
       } catch (error) {
@@ -4150,20 +4163,23 @@
 
         if (contract.status === 'signed') {
           const cd = contract.contract_data || {};
+          const signLang = cd.lang || 'no';
+          const signLocale = signLang === 'en' ? 'en-GB' : 'nb-NO';
+          document.getElementById('signingHeaderSubtitle').textContent = signLang === 'en' ? 'Contract Signing' : 'Kontraktsignering';
           document.getElementById('signingContent').innerHTML = `
             <div class="signing-success">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              <h2>Kontrakten er signert</h2>
+              <h2>${signLang === 'en' ? 'Contract Signed' : 'Kontrakten er signert'}</h2>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px;text-align:left;">
                 <div style="padding:16px;border:1px solid var(--client);border-radius:8px;">
-                  <p style="font-size:11px;color:var(--client);font-weight:600;text-transform:uppercase;margin-bottom:8px;">Leverandør</p>
+                  <p style="font-size:11px;color:var(--client);font-weight:600;text-transform:uppercase;margin-bottom:8px;">${signLang === 'en' ? 'Supplier' : 'Leverandør'}</p>
                   <p style="font-weight:600;">${escapeHtml(cd.sender_signed_by || 'N/A')}</p>
-                  <p style="font-size:12px;color:var(--text-muted);">${cd.sender_signed_at ? new Date(cd.sender_signed_at).toLocaleDateString('nb-NO', {day:'numeric',month:'long',year:'numeric'}) : ''}</p>
+                  <p style="font-size:12px;color:var(--text-muted);">${cd.sender_signed_at ? new Date(cd.sender_signed_at).toLocaleDateString(signLocale, {day:'numeric',month:'long',year:'numeric'}) : ''}</p>
                 </div>
                 <div style="padding:16px;border:1px solid var(--client);border-radius:8px;">
-                  <p style="font-size:11px;color:var(--client);font-weight:600;text-transform:uppercase;margin-bottom:8px;">Kunde</p>
+                  <p style="font-size:11px;color:var(--client);font-weight:600;text-transform:uppercase;margin-bottom:8px;">${signLang === 'en' ? 'Client' : 'Kunde'}</p>
                   <p style="font-weight:600;">${escapeHtml(cd.signed_by || 'N/A')}${cd.signed_title ? ', ' + escapeHtml(cd.signed_title) : ''}</p>
-                  <p style="font-size:12px;color:var(--text-muted);">${cd.signed_at ? new Date(cd.signed_at).toLocaleDateString('nb-NO', {day:'numeric',month:'long',year:'numeric'}) : ''}</p>
+                  <p style="font-size:12px;color:var(--text-muted);">${cd.signed_at ? new Date(cd.signed_at).toLocaleDateString(signLocale, {day:'numeric',month:'long',year:'numeric'}) : ''}</p>
                 </div>
               </div>
             </div>`;
@@ -4180,7 +4196,7 @@
         // Render full contract (matches preview) and signing form
         const isService = contract.template_type === 'service';
         const adjustmentText = d.price_adjustment === '7-15' ? t('adjust_7_15') : d.price_adjustment === 'kpi' ? t('adjust_kpi') : t('adjust_none');
-        const previewDateLocale = 'nb-NO';
+        const previewDateLocale = contractLang === 'en' ? 'en-GB' : 'nb-NO';
 
         let contractHtml = `
           <div style="font-size:12px;color:#999;margin-bottom:8px;">FOOCUS.AI &bull; ${escapeHtml(d.title || '')}</div>
@@ -4340,10 +4356,11 @@
           signed_ip: 'browser'
         };
 
-        await sb.from('contracts').update({
+        const { error: updateError } = await sb.from('contracts').update({
           status: 'signed',
           contract_data: updatedData
         }).eq('id', contractId);
+        if (updateError) throw new Error('Could not save signature: ' + updateError.message);
 
         // Notify Foocus that contract was signed
         try {
@@ -4381,10 +4398,13 @@
       const isSigning = await checkSigningMode();
       if (isSigning) return;
 
-      // Check if this is a password recovery link
+      // Check if this is a password recovery link — extract token from URL hash
       const hash = window.location.hash;
       if (hash && hash.includes('type=recovery')) {
         isPasswordRecovery = true;
+        // Extract access_token from hash fragment
+        const hashParams = new URLSearchParams(hash.substring(1));
+        window._recoveryAccessToken = hashParams.get('access_token');
       }
 
       // Recover session from our own storage — no SDK auth calls needed
@@ -6900,7 +6920,7 @@
       const inNegotiation = clients.filter(c => c.stage === 'negotiation' && c.category === 'high_value_target');
       const leads = clients.filter(c => c.stage === 'lead' && c.category === 'high_value_target');
 
-      const dataExisting = periods.map(p => getPipelineRevenueForPeriod(existingClients, p.start, p.end, false));
+      const dataExistingRaw = periods.map(p => getPipelineRevenueForPeriod(existingClients, p.start, p.end, false));
       const dataNearClosing = periods.map(p => getPipelineRevenueForPeriod(nearClosing, p.start, p.end));
       const dataNegotiation = periods.map(p => getPipelineRevenueForPeriod(inNegotiation, p.start, p.end));
       const dataLeads = periods.map(p => getPipelineRevenueForPeriod(leads, p.start, p.end));
@@ -6908,8 +6928,21 @@
       // Costs from the costs table
       const costData = periods.map(p => getCostsForPeriod(p.start, p.end));
 
-      // Income entries
+      // Income entries (actual invoices)
       const incomeData = periods.map(p => getIncomeForPeriod(p.start, p.end));
+
+      // Fix double-counting: reduce pipeline by income entries linked to existing clients
+      // Income entries represent actual invoices that REPLACE the pipeline projection
+      const incomeFromExistingClients = periods.map((p, i) => {
+        const pStart = p.start.toISOString().slice(0, 10);
+        const pEnd = p.end.toISOString().slice(0, 10);
+        const existingClientIds = new Set(existingClients.map(c => c.id));
+        return incomeEntries.filter(inc => {
+          const dStr = (inc.due_date || '').slice(0, 10);
+          return dStr >= pStart && dStr <= pEnd && existingClientIds.has(inc.client_id);
+        }).reduce((s, inc) => s + (parseFloat(inc.amount) || 0), 0);
+      });
+      const dataExisting = dataExistingRaw.map((val, i) => Math.max(0, val - incomeFromExistingClients[i]));
 
       // MVA calculation — Norwegian bimonthly terms
       // Terms: jan-feb (due 10 apr), mar-apr (due 10 jun), may-jun (due 31 aug),
@@ -7011,40 +7044,31 @@
       // KPIs
       const monthlyRevExisting = existingClients.reduce((s, c) => s + getMonthlyRevenue(c), 0);
       const monthlyRevTotal = monthlyRevExisting + nearClosing.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + inNegotiation.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + leads.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0);
-      const monthlyCosts = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
+      const monthlyCostsRecurring = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
+      // Include upcoming one-time costs (next 12 months) spread monthly
+      const oneTimeCosts12m = costs.filter(c => {
+        if (c.cost_type !== 'one_time' || !c.one_time_date) return false;
+        const d = new Date(c.one_time_date);
+        const in12m = new Date(now.getFullYear(), now.getMonth() + 12, now.getDate());
+        return d >= now && d <= in12m;
+      }).reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
+      const monthlyCosts = monthlyCostsRecurring + (oneTimeCosts12m / 12);
       const netMonthly = monthlyRevExisting - monthlyCosts;
-      // Runway = months until cash runs out, considering net cash flow
-      // If net positive, runway is infinite. If negative, cash / monthly burn.
-      const monthlyBurn = monthlyCosts - monthlyRevExisting; // positive = burning cash
+      const monthlyBurn = monthlyCosts - monthlyRevExisting;
       const cashAtHand = financials.cash_balance || 0;
       const runway = monthlyBurn > 0 ? Math.floor(cashAtHand / monthlyBurn) : 999;
 
-      // 3-month gap: cash at hand + confirmed income - costs - MVA for next 3 months
+      // 3-month gap: cash at hand + confirmed income - costs for next 3 months
+      // Reuse getCostsForPeriod which correctly handles month_overrides
       const now = new Date();
       const threeMonthsOut = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
       const income3m = incomeEntries.filter(i => {
-        const d = new Date(i.due_date);
-        return d >= now && d <= threeMonthsOut && i.status !== 'paid';
+        const dStr = (i.due_date || '').slice(0, 10);
+        const nowStr = now.toISOString().slice(0, 10);
+        const endStr = threeMonthsOut.toISOString().slice(0, 10);
+        return dStr >= nowStr && dStr <= endStr && i.status !== 'paid';
       }).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
-      const costs3m = (() => {
-        let total = 0;
-        costs.forEach(c => {
-          const amt = parseFloat(c.amount) || 0;
-          if (c.cost_type === 'one_time') {
-            const d = new Date(c.one_time_date);
-            if (d >= now && d <= threeMonthsOut) total += amt;
-          } else {
-            const cStart = c.start_date ? new Date(c.start_date) : new Date('2020-01-01');
-            const cEnd = c.end_date ? new Date(c.end_date) : new Date('2099-12-31');
-            let checkDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            for (let m = 0; m < 3; m++) {
-              const mDate = new Date(checkDate.getFullYear(), checkDate.getMonth() + m, parseInt(c.day_of_month) || 1);
-              if (mDate >= now && mDate <= threeMonthsOut && mDate >= cStart && mDate <= cEnd) total += amt;
-            }
-          }
-        });
-        return total;
-      })();
+      const costs3m = getCostsForPeriod(now, threeMonthsOut);
       // Pipeline revenue for next 3 months (confirmed clients only)
       const pipeline3m = (() => {
         let total = 0;
@@ -7604,9 +7628,14 @@
 
     function renderBreakEven() {
       // Auto-calculate from costs table: recurring × 12 + one-time
+      // Only count recurring costs × 12 + future one-time costs (not historical)
+      const nowStr = new Date().toISOString().slice(0, 10);
       const annualFromCosts = costs.reduce((sum, c) => {
         const amt = parseFloat(c.amount) || 0;
-        return sum + (c.cost_type === 'recurring' ? amt * 12 : amt);
+        if (c.cost_type === 'recurring') return sum + amt * 12;
+        // One-time: only if in the future
+        if (c.one_time_date && c.one_time_date.slice(0, 10) >= nowStr) return sum + amt;
+        return sum;
       }, 0);
       // Use costs table if available, otherwise fall back to manual input
       const savedCost = localStorage.getItem('focusCrmOperatingCost');
