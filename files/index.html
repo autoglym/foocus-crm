@@ -7618,21 +7618,22 @@
     }
 
     function renderBreakEven() {
-      // Use manual input if saved, otherwise auto-calculate from costs table
+      // Auto-calculate annual operating cost for current year
+      // Recurring × 12 + ALL one-time costs in current calendar year
+      const currentYear = new Date().getFullYear();
+      const annualFromCosts = costs.reduce((sum, c) => {
+        const amt = parseFloat(c.amount) || 0;
+        if (c.cost_type === 'recurring') return sum + amt * 12;
+        // One-time: include if in current year
+        if (c.one_time_date) {
+          const y = new Date(c.one_time_date + 'T00:00:00').getFullYear();
+          if (y === currentYear) return sum + amt;
+        }
+        return sum;
+      }, 0);
+      // Manual override takes priority if set
       const savedCost = localStorage.getItem('focusCrmOperatingCost');
-      let operatingCost;
-      if (savedCost && parseFloat(savedCost) > 0) {
-        operatingCost = parseFloat(savedCost);
-      } else {
-        // Auto-calculate: recurring × 12 + future one-time costs
-        const nowStr = new Date().toISOString().slice(0, 10);
-        operatingCost = costs.reduce((sum, c) => {
-          const amt = parseFloat(c.amount) || 0;
-          if (c.cost_type === 'recurring') return sum + amt * 12;
-          if (c.one_time_date && c.one_time_date.slice(0, 10) >= nowStr) return sum + amt;
-          return sum;
-        }, 0);
-      }
+      const operatingCost = (savedCost && parseFloat(savedCost) > 0) ? parseFloat(savedCost) : annualFromCosts;
       document.getElementById('operatingCost').value = Math.round(operatingCost) || '';
       
       // Calculate ARR Secured (clients only)
