@@ -7244,24 +7244,37 @@
       const in3m = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
       const in12m = new Date(now.getFullYear(), now.getMonth() + 12, now.getDate());
       const pp = fd.pipelinePayments;
-      // Existing clients are already covered by income_entries (actual invoices)
-      // Only add pipeline payments for non-client stages to avoid double-counting
-      let activePayments = [];
-      if (t.nearClosing) activePayments.push(...pp.nearClosing);
-      if (t.negotiation) activePayments.push(...pp.negotiation);
-      if (t.leads) activePayments.push(...pp.leads);
+      // Pipeline payments for non-client stages (additive to baseline)
+      let pipelinePayments3m = [];
+      let pipelinePayments12m = [];
+      if (t.nearClosing) { pipelinePayments3m.push(...pp.nearClosing); pipelinePayments12m.push(...pp.nearClosing); }
+      if (t.negotiation) { pipelinePayments3m.push(...pp.negotiation); pipelinePayments12m.push(...pp.negotiation); }
+      if (t.leads) { pipelinePayments3m.push(...pp.leads); pipelinePayments12m.push(...pp.leads); }
 
-      const pipeline3m = activePayments
+      const pipelineExtra3m = pipelinePayments3m
         .filter(p => p.date >= now && p.date <= in3m)
         .reduce((s, p) => s + p.amount * p.prob, 0);
-      const pipeline12m = activePayments
+      const pipelineExtra12m = pipelinePayments12m
         .filter(p => p.date >= now && p.date <= in12m)
         .reduce((s, p) => s + p.amount * p.prob, 0);
-      const monthlyRev = pipeline12m / 12;
+
+      // Existing clients: when toggled, use projected billing payments instead of income_entries
+      // This gives a forward-looking view vs the baseline of actual invoices
+      let income3mAdjusted = fd.income3m;
+      let income12mForMrr = fd.income3m * 4; // rough annual from invoices
+      if (t.existing) {
+        const existing3m = pp.existing.filter(p => p.date >= now && p.date <= in3m).reduce((s, p) => s + p.amount * p.prob, 0);
+        const existing12m = pp.existing.filter(p => p.date >= now && p.date <= in12m).reduce((s, p) => s + p.amount * p.prob, 0);
+        income3mAdjusted = existing3m;
+        income12mForMrr = existing12m;
+      }
+
+      const totalRev12m = income12mForMrr + pipelineExtra12m;
+      const monthlyRev = totalRev12m / 12;
       const netMonthly = monthlyRev - fd.monthlyCosts;
       const monthlyBurn = fd.monthlyCosts - monthlyRev;
       const runway = monthlyBurn > 0 ? Math.floor(fd.cashAtHand / monthlyBurn) : 999;
-      const gap3m = fd.cashAtHand + fd.income3m + pipeline3m - fd.costs3m;
+      const gap3m = fd.cashAtHand + income3mAdjusted + pipelineExtra3m - fd.costs3m;
       const hasToggles = t.existing || t.nearClosing || t.negotiation || t.leads;
       const mrrLabel = hasToggles ? 'Snitt/mnd (m/pipeline)' : 'MRR (sikre kunder)';
 
