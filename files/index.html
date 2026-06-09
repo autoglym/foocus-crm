@@ -3823,7 +3823,7 @@
     }
 
     // Clear ALL old SDK tokens to prevent Web Lock deadlock
-    Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token')).forEach(k => localStorage.removeItem(k));
+    // Don't clear SDK tokens — the SDK needs them for auth on page reload
     Object.keys(localStorage).filter(k => k === 'foocus-auth').forEach(k => localStorage.removeItem(k));
 
     // Get stored session BEFORE any SDK interaction
@@ -4422,12 +4422,29 @@
       }
 
       // Recover session from our own storage — no SDK auth calls needed
-      if (_storedSession && _storedSession.access_token && _storedSession.user && !isPasswordRecovery) {
-        console.log('[init] Session found for:', _storedSession.user.email);
-        currentUser = _storedSession.user;
-        await updateClientAuth(_storedSession.access_token);
-        setupAutoRefresh(_storedSession);
-        await initApp();
+      // Try SDK's own session first (persistSession=true stores it)
+      try {
+        const { data: { session } } = await Promise.race([
+          sb.auth.getSession(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        ]);
+        if (session && !isPasswordRecovery) {
+          currentUser = session.user;
+          saveSession(session);
+          setupAutoRefresh(session);
+          console.log('[init] SDK session found for:', currentUser.email);
+          await initApp();
+        }
+      } catch(e) {
+        console.warn('[init] SDK getSession failed:', e.message);
+        // Fall back to our own stored session
+        if (_storedSession && _storedSession.access_token && _storedSession.user && !isPasswordRecovery) {
+          console.log('[init] Fallback session for:', _storedSession.user.email);
+          currentUser = _storedSession.user;
+          await updateClientAuth(_storedSession.access_token);
+          setupAutoRefresh(_storedSession);
+          await initApp();
+        }
       }
     });
 
