@@ -4494,6 +4494,10 @@
         setupDetailTabs();
         setupFileInputs();
         renderDashboard();
+
+        // Re-render current page after ALL data is loaded (costs/income load last)
+        const activePage = document.querySelector('.nav-item.active');
+        if (activePage) navigateTo(activePage.dataset.page);
       } catch (error) {
         console.error('Init error:', error);
         updateStatus('disconnected', 'Error');
