@@ -4574,16 +4574,22 @@
 
       // Load costs
       try {
-        const { data: costsData, error: costsErr } = await withTimeout(sb.from('costs').select('*').order('name'), 10000);
-        if (costsErr) console.error('Costs error:', costsErr);
-        if (costsData) costs = costsData;
-      } catch(e) { costs = []; console.error('Load costs error:', e); }
+        console.log('[load] Loading costs...');
+        const costsResult = await withTimeout(sb.from('costs').select('*').order('name'), 10000);
+        console.log('[load] Costs result:', costsResult.data?.length, 'error:', costsResult.error);
+        if (costsResult.error) console.error('Costs error:', costsResult.error);
+        if (costsResult.data) costs = costsResult.data;
+      } catch(e) { costs = []; console.error('[load] Load costs CATCH:', e.message); }
 
       // Load income entries
       try {
-        const { data: incData } = await sb.from('income_entries').select('*').order('due_date');
-        if (incData) incomeEntries = incData;
-      } catch(e) { incomeEntries = []; console.error('Load income error:', e); }
+        console.log('[load] Loading income...');
+        const incResult = await withTimeout(sb.from('income_entries').select('*').order('due_date'), 10000);
+        console.log('[load] Income result:', incResult.data?.length, 'error:', incResult.error);
+        if (incResult.data) incomeEntries = incResult.data;
+      } catch(e) { incomeEntries = []; console.error('[load] Load income CATCH:', e.message); }
+
+      console.log(`[load] Final: ${costs.length} costs, ${incomeEntries.length} income entries`);
     }
 
     // ===== NAVIGATION =====
