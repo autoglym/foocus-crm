@@ -7100,6 +7100,7 @@
       // MRR KPIs shown gross (inkl. MVA) — what actually comes in
       const monthlyRevExisting = existingClients.reduce((s, c) => s + getMonthlyRevenue(c), 0);
       const monthlyRevTotal = monthlyRevExisting + nearClosing.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + inNegotiation.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + leads.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0);
+      const now = new Date();
       const monthlyCostsRecurring = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
       // Include upcoming one-time costs (next 12 months) spread monthly
       const oneTimeCosts12m = costs.filter(c => {
@@ -7116,7 +7117,6 @@
 
       // 3-month gap: cash at hand + confirmed income - costs for next 3 months
       // Reuse getCostsForPeriod which correctly handles month_overrides
-      const now = new Date();
       const threeMonthsOut = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
       const income3m = incomeEntries.filter(i => {
         const dStr = (i.due_date || '').slice(0, 10);
