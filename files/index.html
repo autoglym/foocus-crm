@@ -7244,8 +7244,9 @@
       const in3m = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
       const in12m = new Date(now.getFullYear(), now.getMonth() + 12, now.getDate());
       const pp = fd.pipelinePayments;
+      // Existing clients are already covered by income_entries (actual invoices)
+      // Only add pipeline payments for non-client stages to avoid double-counting
       let activePayments = [];
-      if (t.existing) activePayments.push(...pp.existing);
       if (t.nearClosing) activePayments.push(...pp.nearClosing);
       if (t.negotiation) activePayments.push(...pp.negotiation);
       if (t.leads) activePayments.push(...pp.leads);
