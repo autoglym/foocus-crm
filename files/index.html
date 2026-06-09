@@ -3829,45 +3829,21 @@
     // Get stored session BEFORE any SDK interaction
     const _storedSession = getStoredSession();
 
-    // Create Supabase client with auth DISABLED — we manage auth headers ourselves
-    let sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-      global: {
-        headers: _storedSession ? { 'Authorization': 'Bearer ' + _storedSession.access_token } : {}
-      }
-    });
+    // Create Supabase client — SDK manages auth internally
+    let sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Function to update the client with a valid auth session
+    // Set auth session on the SDK client
     async function updateClientAuth(accessToken) {
+      if (!accessToken) return;
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      const refreshToken = stored.refresh_token || '';
-      // Create a fresh client with persistence enabled — SDK handles auth headers
-      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
-      });
-      if (accessToken) {
-        try {
-          await Promise.race([
-            sb.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('setSession timeout')), 5000))
-          ]);
-          console.log('[auth] Session set successfully');
-        } catch(e) {
-          console.warn('[auth] setSession failed, trying direct fetch workaround');
-          // Fallback: patch the internal fetch to add auth header
-          const origFetch = window.fetch;
-          window.fetch = function(url, opts = {}) {
-            if (typeof url === 'string' && url.includes(SUPABASE_URL) && accessToken) {
-              opts.headers = opts.headers || {};
-              if (typeof opts.headers.set === 'function') {
-                opts.headers.set('Authorization', 'Bearer ' + accessToken);
-              } else {
-                opts.headers['Authorization'] = 'Bearer ' + accessToken;
-              }
-            }
-            return origFetch.call(this, url, opts);
-          };
-        }
+      try {
+        await sb.auth.setSession({
+          access_token: accessToken,
+          refresh_token: stored.refresh_token || ''
+        });
+        console.log('[auth] Session set successfully');
+      } catch(e) {
+        console.error('[auth] setSession failed:', e);
       }
     }
 
@@ -4065,13 +4041,14 @@
       
       try {
         console.log('Attempting login for:', email);
-        const sessionData = await loginWithPassword(email, password);
-        console.log('Login success:', sessionData.user?.email);
+        // Use SDK signInWithPassword — it sets auth headers automatically
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        console.log('Login success:', data.user?.email);
 
-        currentUser = sessionData.user;
-        saveSession(sessionData);
-        await updateClientAuth(sessionData.access_token);
-        setupAutoRefresh(sessionData);
+        currentUser = data.user;
+        saveSession(data.session);
+        setupAutoRefresh(data.session);
         await initApp();
       } catch (error) {
         console.error('Login error:', error);
