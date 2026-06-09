@@ -16,6 +16,34 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script>
+    Chart.register({
+      id: 'zeroLinePlugin',
+      afterDatasetsDraw(chart) {
+        if (!chart.options.plugins.zeroLinePlugin) return;
+        const y2 = chart.scales.y2;
+        if (!y2) return;
+        const yPixel = y2.getPixelForValue(0);
+        if (yPixel < y2.top - 1 || yPixel > y2.bottom + 1) return;
+        const { left, right } = chart.chartArea;
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(left, yPixel);
+        ctx.lineTo(right, yPixel);
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#3b82f6';
+        ctx.setLineDash([8, 5]);
+        ctx.stroke();
+        // Label
+        ctx.fillStyle = '#3b82f6';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('0', right + 30, yPixel + 4);
+        ctx.restore();
+      }
+    });
+  </script>
   <style>
     :root, [data-theme="dark"] {
       --bg-primary: #0a0a0b;
@@ -2961,6 +2989,11 @@
                 <button class="cashflow-tab" onclick="switchCashflowTab('pipeline')">Pipeline</button>
               </div>
 
+              <!-- Month filter -->
+              <div style="margin-bottom:12px;">
+                <select id="cashflowMonthFilter" onchange="setCashflowMonthFilter(this.value)" style="padding:6px 12px;font-size:12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;"></select>
+              </div>
+
               <!-- Costs Section -->
               <div class="cashflow-section active" id="cashflowCosts">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -3520,9 +3553,15 @@
               <input type="date" class="form-input" id="clientCloseDate">
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Billing start-dato</label>
-            <input type="date" class="form-input" id="clientBillingStart">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Første fakturadato</label>
+              <input type="date" class="form-input" id="clientBillingStart">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Betalingsfrist (dager)</label>
+              <input type="number" class="form-input" id="clientPaymentTerms" value="14" min="0" max="90" placeholder="14">
+            </div>
           </div>
           <div class="form-group">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
@@ -4623,7 +4662,7 @@
         case 'documents': renderAllDocuments(); break;
         case 'contracts': renderContracts(); break;
         case 'contract-wizard': break;
-        case 'forecast': setupGranularityToggle(); renderForecast(); renderCostsTable(); renderIncomeTable(); break;
+        case 'forecast': setupGranularityToggle(); renderForecast(); renderMonthFilter(); renderCostsTable(); renderIncomeTable(); break;
         case 'breakeven': renderBreakEven(); break;
       }
     }
@@ -5126,6 +5165,7 @@
       document.getElementById('clientBillingFreq').value = 'annual';
       document.getElementById('clientCloseDate').value = '';
       document.getElementById('clientBillingStart').value = '';
+      document.getElementById('clientPaymentTerms').value = '14';
       document.getElementById('clientHasMva').checked = true;
       openModal('clientModal');
     }
@@ -5143,6 +5183,7 @@
       document.getElementById('clientBillingFreq').value = client.billing_frequency || 'annual';
       document.getElementById('clientCloseDate').value = client.estimated_close_date || '';
       document.getElementById('clientBillingStart').value = client.billing_start_date || '';
+      document.getElementById('clientPaymentTerms').value = client.payment_terms ?? 14;
       document.getElementById('clientHasMva').checked = client.has_mva !== false;
       document.getElementById('clientNotes').value = client.notes || '';
       openModal('clientModal');
@@ -5196,6 +5237,7 @@
           billing_frequency: document.getElementById('clientBillingFreq').value || 'annual',
           estimated_close_date: document.getElementById('clientCloseDate').value || null,
           billing_start_date: document.getElementById('clientBillingStart').value || null,
+          payment_terms: parseInt(document.getElementById('clientPaymentTerms').value) || 14,
           has_mva: document.getElementById('clientHasMva').checked,
           notes: document.getElementById('clientNotes').value
         };
@@ -6797,8 +6839,8 @@
 
     function getMonthlyRevenue(client, inclMva = true) {
       const dealVal = parseFloat(client.deal_value) || 0;
-      const freq = client.billing_frequency || 'annual';
-      const monthly = dealVal / (FREQ_DIVISORS[freq] || 12);
+      // deal_value is ALWAYS annual (ARR) — MRR is ARR / 12
+      const monthly = dealVal / 12;
       // deal_value is eks. MVA — add 25% for Norwegian clients (actual cash received)
       if (inclMva && client.has_mva !== false) return monthly * 1.25;
       return monthly;
@@ -6946,21 +6988,39 @@
     }
 
     // --- Calculate pipeline revenue for a period ---
+    function getClientPaymentDates(c, rangeEnd) {
+      const dealVal = parseFloat(c.deal_value) || 0;
+      const freq = c.billing_frequency || 'annual';
+      const freqMonths = { monthly: 1, quarterly: 3, semi_annual: 6, annual: 12 }[freq] || 12;
+      const invoiceAmount = dealVal / (12 / freqMonths);
+      const mva = c.has_mva !== false ? 1.25 : 1;
+      const amount = invoiceAmount * mva;
+      const terms = c.payment_terms ?? 14;
+
+      const billingStart = c.billing_start_date ? new Date(c.billing_start_date + 'T00:00:00') : null;
+      const closeDate = c.estimated_close_date ? new Date(c.estimated_close_date + 'T00:00:00') : null;
+      const firstBilling = billingStart || closeDate;
+      if (!firstBilling) return [];
+
+      const payments = [];
+      let billDate = new Date(firstBilling);
+      while (billDate <= rangeEnd) {
+        const payDate = new Date(billDate);
+        payDate.setDate(payDate.getDate() + terms);
+        payments.push({ date: payDate, amount });
+        billDate = new Date(billDate.getFullYear(), billDate.getMonth() + freqMonths, billDate.getDate());
+      }
+      return payments;
+    }
+
     function getPipelineRevenueForPeriod(clientList, periodStart, periodEnd, weighted = true) {
-      const daysInPeriod = Math.max(1, Math.round((periodEnd - periodStart) / 86400000) + 1);
       return clientList.reduce((sum, c) => {
-        const dailyRev = getMonthlyRevenue(c) / 30.44; // avg days per month
         const prob = weighted ? ((c.probability ?? 50) / 100) : 1;
-        const billingStart = c.billing_start_date ? new Date(c.billing_start_date) : null;
-        const closeDate = c.estimated_close_date ? new Date(c.estimated_close_date) : null;
-        const effectiveStart = billingStart || closeDate;
-        if (effectiveStart && effectiveStart > periodEnd) return sum;
-        // Partial period: if billing starts mid-period
-        let activeDays = daysInPeriod;
-        if (effectiveStart && effectiveStart > periodStart) {
-          activeDays = Math.round((periodEnd - effectiveStart) / 86400000) + 1;
-        }
-        return sum + (dailyRev * activeDays * prob);
+        const payments = getClientPaymentDates(c, periodEnd);
+        const periodTotal = payments
+          .filter(p => p.date >= periodStart && p.date <= periodEnd)
+          .reduce((s, p) => s + p.amount, 0);
+        return sum + (periodTotal * prob);
       }, 0);
     }
 
@@ -7097,12 +7157,8 @@
       }
 
       // KPIs
-      // MRR KPIs shown gross (inkl. MVA) — what actually comes in
-      const monthlyRevExisting = existingClients.reduce((s, c) => s + getMonthlyRevenue(c), 0);
-      const monthlyRevTotal = monthlyRevExisting + nearClosing.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + inNegotiation.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0) + leads.reduce((s, c) => s + getMonthlyRevenue(c) * ((c.probability ?? 50) / 100), 0);
       const now = new Date();
       const monthlyCostsRecurring = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
-      // Include upcoming one-time costs (next 12 months) spread monthly
       const oneTimeCosts12m = costs.filter(c => {
         if (c.cost_type !== 'one_time' || !c.one_time_date) return false;
         const d = new Date(c.one_time_date);
@@ -7110,13 +7166,7 @@
         return d >= now && d <= in12m;
       }).reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
       const monthlyCosts = monthlyCostsRecurring + (oneTimeCosts12m / 12);
-      const netMonthly = monthlyRevExisting - monthlyCosts;
-      const monthlyBurn = monthlyCosts - monthlyRevExisting;
       const cashAtHand = financials.cash_balance || 0;
-      const runway = monthlyBurn > 0 ? Math.floor(cashAtHand / monthlyBurn) : 999;
-
-      // 3-month gap: cash at hand + confirmed income - costs for next 3 months
-      // Reuse getCostsForPeriod which correctly handles month_overrides
       const threeMonthsOut = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
       const income3m = incomeEntries.filter(i => {
         const dStr = (i.due_date || '').slice(0, 10);
@@ -7125,58 +7175,19 @@
         return dStr >= nowStr && dStr <= endStr && i.status !== 'paid';
       }).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
       const costs3m = getCostsForPeriod(now, threeMonthsOut);
-      // 3-month gap based ONLY on actual invoices — no pipeline projections
-      // Pipeline would inflate this with spread MRR that doesn't match real cash timing
-      const gap3m = cashAtHand + income3m - costs3m;
 
-      document.getElementById('forecastKPIs').innerHTML = `
-        <div class="forecast-kpi ${gap3m >= 0 ? 'green' : 'red'}" style="border:2px solid ${gap3m >= 0 ? 'var(--client)' : 'var(--urgent)'};">
-          <div class="forecast-kpi-label">3-måneders gap</div>
-          <div class="forecast-kpi-value">${gap3m >= 0 ? '+' : ''}${formatCurrency(gap3m)}</div>
-          <div class="forecast-kpi-sub">${gap3m >= 0 ? 'Du er dekket ✓' : 'Mangler — må hentes inn'}</div>
-        </div>
-        <div class="forecast-kpi blue">
-          <div class="forecast-kpi-label">Cash at hand</div>
-          <div class="forecast-kpi-value">${formatCurrency(cashAtHand)}</div>
-          <div class="forecast-kpi-sub">Bankbalanse nå</div>
-        </div>
-        <div class="forecast-kpi green">
-          <div class="forecast-kpi-label">MRR (sikre kunder)</div>
-          <div class="forecast-kpi-value">${formatCurrency(monthlyRevExisting)}</div>
-          <div class="forecast-kpi-sub">NOK / måned</div>
-        </div>
-        <div class="forecast-kpi red">
-          <div class="forecast-kpi-label">Faste kostnader</div>
-          <div class="forecast-kpi-value">${formatCurrency(monthlyCosts)}</div>
-          <div class="forecast-kpi-sub">NOK / måned</div>
-        </div>
-        <div class="forecast-kpi ${netMonthly >= 0 ? 'green' : 'amber'}">
-          <div class="forecast-kpi-label">Netto cashflow</div>
-          <div class="forecast-kpi-value">${netMonthly >= 0 ? '+' : ''}${formatCurrency(netMonthly)}</div>
-          <div class="forecast-kpi-sub">NOK / måned</div>
-        </div>
-        <div class="forecast-kpi ${runway > 12 ? 'green' : runway > 3 ? 'amber' : 'red'}">
-          <div class="forecast-kpi-label">Runway</div>
-          <div class="forecast-kpi-value">${runway > 99 ? '∞' : runway + ' mnd'}</div>
-          <div class="forecast-kpi-sub">${monthlyBurn > 0 ? 'Cash / netto burn' : 'Netto positiv'}</div>
-        </div>
-        ${(() => {
-          // Find next upcoming MVA payment
-          const now = new Date();
-          const upcoming = Object.entries(mvaTermAccumulator)
-            .map(([k, v]) => ({ ...v, net: v.outgoing - v.incoming }))
-            .filter(t => t.net > 0 && t.dueDate >= now)
-            .sort((a, b) => a.dueDate - b.dueDate);
-          if (upcoming.length > 0) {
-            const next = upcoming[0];
-            return `<div class="forecast-kpi amber">
-              <div class="forecast-kpi-label">Neste MVA-oppgjør</div>
-              <div class="forecast-kpi-value">${formatCurrency(Math.round(next.net))}</div>
-              <div class="forecast-kpi-sub">Frist: ${next.dueDate.toLocaleDateString('nb-NO', {day:'numeric',month:'short',year:'numeric'})}</div>
-            </div>`;
-          }
-          return '';
-        })()}`;
+      // Store raw data for toggle recalculation — MUST be before updateForecastKPIs
+      const forecastRangeEnd = periods[periods.length - 1]?.end || new Date();
+      const pipelinePayments = {
+        existing: existingClients.flatMap(c => getClientPaymentDates(c, forecastRangeEnd).map(p => ({ ...p, prob: 1 }))),
+        nearClosing: nearClosing.flatMap(c => getClientPaymentDates(c, forecastRangeEnd).map(p => ({ ...p, prob: (c.probability ?? 50) / 100 }))),
+        negotiation: inNegotiation.flatMap(c => getClientPaymentDates(c, forecastRangeEnd).map(p => ({ ...p, prob: (c.probability ?? 50) / 100 }))),
+        leads: leads.flatMap(c => getClientPaymentDates(c, forecastRangeEnd).map(p => ({ ...p, prob: (c.probability ?? 50) / 100 })))
+      };
+      window._fcData = { periods, dataExisting, dataNearClosing, dataNegotiation, dataLeads, incomeData, costData, mvaPayments, cashBalance: financials.cash_balance || 0, pipelinePayments, monthlyCosts, income3m, costs3m, cashAtHand, mvaTermAccumulator };
+      if (!window._fcToggles) window._fcToggles = { existing: false, nearClosing: false, negotiation: false, leads: false };
+
+      updateForecastKPIs();
 
       // Quick stats
       const pendingIncome = incomeEntries.filter(i => i.status === 'pending').reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
@@ -7199,37 +7210,116 @@
           <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${{day:'Dag',week:'Uke',month:'Måned',quarter:'Kvartal',year:'År'}[forecastGranularity]}</div>
         </div>`;
 
-      // Store raw data for toggle recalculation
-      window._fcData = { periods, dataExisting, dataNearClosing, dataNegotiation, dataLeads, incomeData, costData, mvaPayments, cashBalance: financials.cash_balance || 0 };
-      if (!window._fcToggles) window._fcToggles = { existing: false, nearClosing: false, negotiation: false, leads: false };
-
       // Legend with toggles — baseline is ONLY actual invoices + costs
       // Pipeline stages are all toggleable "what-if" scenarios
       function renderForecastLegend() {
         const t = window._fcToggles;
-        document.getElementById('forecastLegend').innerHTML = `
+        const el = document.getElementById('forecastLegend');
+        el.innerHTML = `
           <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#22d3ee;"></div> Fakturaer</div>
           <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#ef4444;"></div> Kostnader</div>
           <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#f97316;"></div> MVA</div>
-          <div class="forecast-legend-item toggleable ${t.existing ? '' : 'off'}" onclick="toggleForecastLayer('existing')"><div class="forecast-legend-dot" style="background:#10b981;"></div> Sikre kunder (MRR)</div>
-          <div class="forecast-legend-item toggleable ${t.nearClosing ? '' : 'off'}" onclick="toggleForecastLayer('nearClosing')"><div class="forecast-legend-dot" style="background:#34d399;"></div> Nær landing</div>
-          <div class="forecast-legend-item toggleable ${t.negotiation ? '' : 'off'}" onclick="toggleForecastLayer('negotiation')"><div class="forecast-legend-dot" style="background:#f59e0b;"></div> I forhandling</div>
-          <div class="forecast-legend-item toggleable ${t.leads ? '' : 'off'}" onclick="toggleForecastLayer('leads')"><div class="forecast-legend-dot" style="background:#c084fc;"></div> Leads</div>
+          <div class="forecast-legend-item toggleable ${t.existing ? '' : 'off'}" data-layer="existing"><div class="forecast-legend-dot" style="background:#10b981;"></div> Sikre kunder (MRR)</div>
+          <div class="forecast-legend-item toggleable ${t.nearClosing ? '' : 'off'}" data-layer="nearClosing"><div class="forecast-legend-dot" style="background:#34d399;"></div> Nær landing</div>
+          <div class="forecast-legend-item toggleable ${t.negotiation ? '' : 'off'}" data-layer="negotiation"><div class="forecast-legend-dot" style="background:#f59e0b;"></div> I forhandling</div>
+          <div class="forecast-legend-item toggleable ${t.leads ? '' : 'off'}" data-layer="leads"><div class="forecast-legend-dot" style="background:#c084fc;"></div> Leads</div>
           <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#3b82f6;border-radius:50%;"></div> Cash</div>`;
+        el.querySelectorAll('[data-layer]').forEach(item => {
+          item.addEventListener('click', function() {
+            toggleForecastLayer(this.dataset.layer);
+          });
+        });
       }
       renderForecastLegend();
 
       updateForecastChart();
     }
 
+    function updateForecastKPIs() {
+      try {
+      const fd = window._fcData;
+      if (!fd) { console.error('updateForecastKPIs: no _fcData'); return; }
+      const t = window._fcToggles || {};
+      const now = new Date();
+      const in3m = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
+      const in12m = new Date(now.getFullYear(), now.getMonth() + 12, now.getDate());
+      const pp = fd.pipelinePayments;
+      let activePayments = [];
+      if (t.existing) activePayments.push(...pp.existing);
+      if (t.nearClosing) activePayments.push(...pp.nearClosing);
+      if (t.negotiation) activePayments.push(...pp.negotiation);
+      if (t.leads) activePayments.push(...pp.leads);
+
+      const pipeline3m = activePayments
+        .filter(p => p.date >= now && p.date <= in3m)
+        .reduce((s, p) => s + p.amount * p.prob, 0);
+      const pipeline12m = activePayments
+        .filter(p => p.date >= now && p.date <= in12m)
+        .reduce((s, p) => s + p.amount * p.prob, 0);
+      const monthlyRev = pipeline12m / 12;
+      const netMonthly = monthlyRev - fd.monthlyCosts;
+      const monthlyBurn = fd.monthlyCosts - monthlyRev;
+      const runway = monthlyBurn > 0 ? Math.floor(fd.cashAtHand / monthlyBurn) : 999;
+      const gap3m = fd.cashAtHand + fd.income3m + pipeline3m - fd.costs3m;
+      const hasToggles = t.existing || t.nearClosing || t.negotiation || t.leads;
+      const mrrLabel = hasToggles ? 'Snitt/mnd (m/pipeline)' : 'MRR (sikre kunder)';
+
+      let mvaHtml = '';
+      const upcoming = Object.entries(fd.mvaTermAccumulator)
+        .map(([k, v]) => ({ ...v, net: v.outgoing - v.incoming }))
+        .filter(e => e.net > 0 && e.dueDate >= now)
+        .sort((a, b) => a.dueDate - b.dueDate);
+      if (upcoming.length > 0) {
+        const next = upcoming[0];
+        mvaHtml = `<div class="forecast-kpi amber">
+          <div class="forecast-kpi-label">Neste MVA-oppgjør</div>
+          <div class="forecast-kpi-value">${formatCurrency(Math.round(next.net))}</div>
+          <div class="forecast-kpi-sub">Frist: ${next.dueDate.toLocaleDateString('nb-NO', {day:'numeric',month:'short',year:'numeric'})}</div>
+        </div>`;
+      }
+
+      document.getElementById('forecastKPIs').innerHTML = `
+        <div class="forecast-kpi ${gap3m >= 0 ? 'green' : 'red'}" style="border:2px solid ${gap3m >= 0 ? 'var(--client)' : 'var(--urgent)'};">
+          <div class="forecast-kpi-label">3-måneders gap</div>
+          <div class="forecast-kpi-value">${gap3m >= 0 ? '+' : ''}${formatCurrency(gap3m)}</div>
+          <div class="forecast-kpi-sub">${gap3m >= 0 ? 'Du er dekket ✓' : 'Mangler — må hentes inn'}</div>
+        </div>
+        <div class="forecast-kpi blue">
+          <div class="forecast-kpi-label">Cash at hand</div>
+          <div class="forecast-kpi-value">${formatCurrency(fd.cashAtHand)}</div>
+          <div class="forecast-kpi-sub">Bankbalanse nå</div>
+        </div>
+        <div class="forecast-kpi green">
+          <div class="forecast-kpi-label">${mrrLabel}</div>
+          <div class="forecast-kpi-value">${formatCurrency(monthlyRev)}</div>
+          <div class="forecast-kpi-sub">NOK / måned</div>
+        </div>
+        <div class="forecast-kpi red">
+          <div class="forecast-kpi-label">Faste kostnader</div>
+          <div class="forecast-kpi-value">${formatCurrency(fd.monthlyCosts)}</div>
+          <div class="forecast-kpi-sub">NOK / måned</div>
+        </div>
+        <div class="forecast-kpi ${netMonthly >= 0 ? 'green' : 'amber'}">
+          <div class="forecast-kpi-label">Netto cashflow</div>
+          <div class="forecast-kpi-value">${netMonthly >= 0 ? '+' : ''}${formatCurrency(netMonthly)}</div>
+          <div class="forecast-kpi-sub">NOK / måned</div>
+        </div>
+        <div class="forecast-kpi ${runway > 12 ? 'green' : runway > 3 ? 'amber' : 'red'}">
+          <div class="forecast-kpi-label">Runway</div>
+          <div class="forecast-kpi-value">${runway > 99 ? '∞' : runway + ' mnd'}</div>
+          <div class="forecast-kpi-sub">${monthlyBurn > 0 ? 'Cash / netto burn' : 'Netto positiv'}</div>
+        </div>
+        ${mvaHtml}`;
+      } catch(e) { console.error('updateForecastKPIs error:', e); document.getElementById('forecastKPIs').innerHTML = `<div style="color:red;padding:20px;">KPI error: ${e.message}</div>`; }
+    }
+
     function toggleForecastLayer(layer) {
       window._fcToggles[layer] = !window._fcToggles[layer];
-      const labels = { existing: 'Sikre', nearClosing: 'landing', negotiation: 'forhandling', leads: 'Leads' };
-      document.querySelectorAll('.forecast-legend-item.toggleable').forEach(el => {
-        if (el.textContent.trim().includes(labels[layer])) {
-          el.classList.toggle('off', !window._fcToggles[layer]);
-        }
+      // Update legend toggle visuals
+      document.querySelectorAll('[data-layer]').forEach(el => {
+        el.classList.toggle('off', !window._fcToggles[el.dataset.layer]);
       });
+      updateForecastKPIs();
       updateForecastChart();
     }
 
@@ -7289,7 +7379,8 @@
                   return ctx.dataset.label + ': ' + (val < 0 ? '-' : '') + formatCurrency(Math.abs(val)) + ' NOK';
                 }
               }
-            }
+            },
+            zeroLinePlugin: true
           },
           scales: {
             x: {
@@ -7311,6 +7402,7 @@
             },
             y2: {
               position: 'right',
+              beginAtZero: true,
               title: { display: true, text: 'Cash (NOK)', color: '#3b82f6', font: { size: 11 } },
               grid: { display: false },
               ticks: { color: '#3b82f6', font: { size: 11 }, callback: v => formatCurrency(v) }
@@ -7326,16 +7418,63 @@
 
     // --- Costs table ---
     let costCategoryFilter = 'all';
+    let cashflowMonthFilter = 'all';
+
+    function renderMonthFilter() {
+      const el = document.getElementById('cashflowMonthFilter');
+      if (!el) return;
+      const now = new Date();
+      let options = '<option value="all">Alle måneder</option>';
+      for (let i = -3; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        const label = d.toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' });
+        const sel = cashflowMonthFilter === val ? ' selected' : '';
+        options += `<option value="${val}"${sel}>${label.charAt(0).toUpperCase() + label.slice(1)}</option>`;
+      }
+      el.innerHTML = options;
+    }
+
+    function setCashflowMonthFilter(val) {
+      cashflowMonthFilter = val;
+      renderCostsTable();
+      renderIncomeTable();
+    }
+
+    function costInMonth(c, ym) {
+      if (ym === 'all') return true;
+      const [y, m] = ym.split('-').map(Number);
+      const monthStart = new Date(y, m - 1, 1);
+      const monthEnd = new Date(y, m, 0);
+      if (c.cost_type === 'recurring') {
+        const start = c.start_date ? new Date(c.start_date) : new Date(0);
+        const end = c.end_date ? new Date(c.end_date) : new Date(9999, 11, 31);
+        return start <= monthEnd && end >= monthStart;
+      } else {
+        if (!c.one_time_date) return false;
+        const d = new Date(c.one_time_date);
+        return d.getFullYear() === y && d.getMonth() === m - 1;
+      }
+    }
+
+    function incomeInMonth(inc, ym) {
+      if (ym === 'all') return true;
+      if (!inc.due_date) return false;
+      const [y, m] = ym.split('-').map(Number);
+      const d = new Date(inc.due_date);
+      return d.getFullYear() === y && d.getMonth() === m - 1;
+    }
 
     function renderCostCategoryFilters() {
-      const categories = [...new Set(costs.map(c => c.category || 'Ukategorisert').filter(Boolean))].sort();
+      const base = costs.filter(c => costInMonth(c, cashflowMonthFilter));
+      const categories = [...new Set(base.map(c => c.category || 'Ukategorisert').filter(Boolean))].sort();
       const filterEl = document.getElementById('costCategoryFilter');
       if (!filterEl || categories.length < 2) { if (filterEl) filterEl.innerHTML = ''; return; }
 
       filterEl.innerHTML = `
-        <button class="filter-tab ${costCategoryFilter === 'all' ? 'active' : ''}" onclick="setCostCategoryFilter('all')" style="padding:4px 12px;font-size:11px;border-radius:20px;border:1px solid var(--border);background:${costCategoryFilter === 'all' ? 'var(--accent)' : 'transparent'};color:${costCategoryFilter === 'all' ? '#fff' : 'var(--text-muted)'};cursor:pointer;">Alle (${costs.length})</button>
+        <button class="filter-tab ${costCategoryFilter === 'all' ? 'active' : ''}" onclick="setCostCategoryFilter('all')" style="padding:4px 12px;font-size:11px;border-radius:20px;border:1px solid var(--border);background:${costCategoryFilter === 'all' ? 'var(--accent)' : 'transparent'};color:${costCategoryFilter === 'all' ? '#fff' : 'var(--text-muted)'};cursor:pointer;">Alle (${base.length})</button>
         ${categories.map(cat => {
-          const count = costs.filter(c => (c.category || 'Ukategorisert') === cat).length;
+          const count = base.filter(c => (c.category || 'Ukategorisert') === cat).length;
           const isActive = costCategoryFilter === cat;
           return `<button class="filter-tab ${isActive ? 'active' : ''}" onclick="setCostCategoryFilter('${escapeHtml(cat)}')" style="padding:4px 12px;font-size:11px;border-radius:20px;border:1px solid var(--border);background:${isActive ? 'var(--accent)' : 'transparent'};color:${isActive ? '#fff' : 'var(--text-muted)'};cursor:pointer;">${escapeHtml(cat)} (${count})</button>`;
         }).join('')}`;
@@ -7350,12 +7489,13 @@
     function renderCostsTable() {
       renderCostCategoryFilters();
       const container = document.getElementById('costsTableContainer');
-      if (costs.length === 0) {
-        container.innerHTML = '<div class="empty-costs">Ingen kostnader lagt til ennå.</div>';
+      const monthFiltered = costs.filter(c => costInMonth(c, cashflowMonthFilter));
+      if (monthFiltered.length === 0) {
+        container.innerHTML = `<div class="empty-costs">${costs.length === 0 ? 'Ingen kostnader lagt til ennå.' : 'Ingen kostnader denne måneden.'}</div>`;
         return;
       }
-      const filtered = costCategoryFilter === 'all' ? costs : costs.filter(c => (c.category || 'Ukategorisert') === costCategoryFilter);
-      const totalMonthly = costs.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
+      const filtered = costCategoryFilter === 'all' ? monthFiltered : monthFiltered.filter(c => (c.category || 'Ukategorisert') === costCategoryFilter);
+      const totalMonthly = monthFiltered.filter(c => c.cost_type === 'recurring').reduce((s, c) => s + (parseFloat(c.amount) || 0), 0);
       const filteredTotal = filtered.reduce((s, c) => s + (parseFloat(c.amount) || 0) * (c.cost_type === 'recurring' ? 1 : 1), 0);
       container.innerHTML = `
         <table class="costs-table">
@@ -7399,12 +7539,17 @@
         return;
       }
       const statusLabels = { pending: 'Pending', paid: 'Paid', overdue: 'Overdue' };
+      const incFiltered = incomeEntries.filter(inc => incomeInMonth(inc, cashflowMonthFilter));
+      if (incFiltered.length === 0 && cashflowMonthFilter !== 'all') {
+        container.innerHTML = '<div class="empty-costs">Ingen inntekter denne måneden.</div>';
+        return;
+      }
       container.innerHTML = `
         <table class="costs-table">
           <thead><tr>
             <th>Description</th><th>Amount</th><th>Due date</th><th>Status</th><th>Type</th><th></th>
           </tr></thead>
-          <tbody>${incomeEntries.map(inc => {
+          <tbody>${incFiltered.map(inc => {
             const client = clients.find(c => c.id === inc.client_id);
             return `<tr>
               <td><strong>${escapeHtml(inc.description)}</strong>${client ? `<br><span style="font-size:11px;color:var(--text-muted);">${escapeHtml(client.name)}</span>` : ''}</td>
@@ -7447,8 +7592,8 @@
               <div class="contract-item-meta">
                 <span class="stage-badge ${c.stage || 'lead'}">${c.stageLabel}</span>
                 <span>${prob}% probability</span>
-                <span style="font-family:'JetBrains Mono',monospace;">${formatCurrency(c.deal_value)} NOK/${freqLabels[freq]}</span>
-                <span style="font-family:'JetBrains Mono',monospace;">${formatCurrency(c.monthlyRev)}/mnd</span>
+                <span style="font-family:'JetBrains Mono',monospace;">${formatCurrency(c.deal_value)} NOK/år</span>
+                <span style="font-family:'JetBrains Mono',monospace;">${formatCurrency(c.deal_value / ({monthly:12,quarterly:4,semi_annual:2,annual:1}[freq]||1))} NOK/${freqLabels[freq]}</span>
                 ${closeStr ? `<span>Close: ${closeStr}</span>` : ''}
               </div>
             </div>
