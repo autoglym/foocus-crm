@@ -6485,9 +6485,6 @@
       doc.setFillColor(...accent);
       doc.rect(0, 0, pageW, 3, 'F');
 
-      // Owl icon top-left
-      drawOwlIcon(mL, 12, 18);
-
       // Title block
       y = 55;
       doc.setFontSize(28);
@@ -6803,10 +6800,6 @@
         doc.text('Foocus AS  ·  ' + FOOCUS_INFO.org_nr + '  ·  foocus.ai', mL, pageH - 13);
         doc.text(t('page_of').replace('{page}', i).replace('{total}', totalPages), pageW - mR, pageH - 13, { align: 'right' });
 
-        // Owl icon bottom-right on last page
-        if (i === totalPages) {
-          drawOwlIcon(pageW - mR - 16, pageH - 30, 14);
-        }
       }
 
       // Save PDF as base64 and store
