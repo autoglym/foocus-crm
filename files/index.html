@@ -3315,6 +3315,10 @@
                     </select>
                   </div>
                 </div>
+                <div class="form-group" style="margin-top:12px;">
+                  <label class="form-label">Spesielle faktureringsvilkår</label>
+                  <textarea class="form-input" id="contractBillingNotes" rows="3" placeholder="F.eks. 60% ved signering, 40% innen oktober 2026"></textarea>
+                </div>
               </div>
 
               <div class="wizard-footer">
@@ -4312,6 +4316,7 @@
             <li>${isService ? t('invoice_advance') : t('invoice_advance_project')}</li>
             <li>${t('payment_due').replace('{days}', d.payment_days || 10)}</li>
             <li>${t('excl_vat')}</li>
+            ${d.billing_notes ? `<li style="font-weight:600;">${escapeHtml(d.billing_notes)}</li>` : ''}
           </ul>
 
           ${(d.addons && d.addons.length > 0) ? `
@@ -5922,6 +5927,7 @@
       document.getElementById('contractStrategyDays').value = '1';
       document.getElementById('contractPaymentDays').value = '10';
       document.getElementById('contractPriceAdjustment').value = '7-15';
+      document.getElementById('contractBillingNotes').value = '';
       document.getElementById('contractDuration').value = '12';
       document.getElementById('contractAutoRenewal').value = 'yes';
       document.getElementById('contractNoticeDays').value = '90';
@@ -5966,6 +5972,7 @@
       document.getElementById('contractStrategyDays').value = d.strategy_days ?? 1;
       document.getElementById('contractPaymentDays').value = d.payment_days ?? 10;
       document.getElementById('contractPriceAdjustment').value = d.price_adjustment || '7-15';
+      document.getElementById('contractBillingNotes').value = d.billing_notes || '';
       document.getElementById('contractDuration').value = d.period_months ?? 12;
       document.getElementById('contractAutoRenewal').value = d.auto_renewal ? 'yes' : 'no';
       document.getElementById('contractNoticeDays').value = d.notice_days ?? 90;
@@ -6178,6 +6185,7 @@
         addons,
         payment_days: parseInt(document.getElementById('contractPaymentDays').value) || 10,
         price_adjustment: document.getElementById('contractPriceAdjustment').value,
+        billing_notes: document.getElementById('contractBillingNotes').value.trim(),
         start_date: document.getElementById('contractStartDate').value,
         period_months: parseInt(document.getElementById('contractDuration').value) || 12,
         auto_renewal: document.getElementById('contractAutoRenewal').value === 'yes',
@@ -6291,6 +6299,7 @@
           <li>${t('payment_due').replace('{days}', d.payment_days)}</li>
           <li>${t('excl_vat')}</li>
           <li>${t('price_adjust').replace('{method}', adjustmentText)}</li>
+          ${d.billing_notes ? `<li style="font-weight:600;">${escapeHtml(d.billing_notes)}</li>` : ''}
         </ul>
         ${d.addons && d.addons.length > 0 ? `
         <h3>${contractLang === 'en' ? 'Optional add-ons' : 'Valgfrie tillegg'}</h3>
@@ -6677,6 +6686,7 @@
       bullet(t('payment_due').replace('{days}', d.payment_days));
       bullet(t('excl_vat'));
       bullet(t('price_adjust').replace('{method}', adjustText));
+      if (d.billing_notes) { bullet(d.billing_notes); }
       if (d.billing_email) { note(t('billing_address') + ': ' + d.billing_email); }
       y += 4;
 
