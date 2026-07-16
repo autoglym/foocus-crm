@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Dungeon Horde</title>
-<meta name="description" content="Et Gauntlet-inspirert arkade-eventyr for mobil. Fire helter, hundrevis av monstre, én utgang.">
+<title>Harrow</title>
+<meta name="description" content="Harrow — et Gauntlet-inspirert arkade-eventyr for mobil. Fire helter, hundrevis av monstre, én utgang.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -118,7 +118,7 @@
 
   <!-- meny -->
   <div class="ovl show" id="menu">
-    <h1 class="title">DUNGEON HORDE</h1>
+    <h1 class="title">HARROW</h1>
     <div class="sub">ET GAUNTLET-INSPIRERT ARKADE-EVENTYR · 2026</div>
     <div id="heroes"></div>
     <button class="bigBtn" id="startB">START EVENTYRET</button>
@@ -150,7 +150,7 @@
 <script>
 'use strict';
 /* =========================================================================
-   DUNGEON HORDE — et Gauntlet-inspirert arkade-eventyr (2026)
+   HARROW — et Gauntlet-inspirert arkade-eventyr (2026)
    Én fil. Ingen avhengigheter. Laget for mobil (PWA) og desktop.
    ========================================================================= */
 
@@ -589,8 +589,8 @@ const G={
   time:0, drain:0, lowWarned:false, spawnItv:3.2, maxEnemies:16,
   cam:{x:0,y:0}
 };
-const bestGet=()=>{try{return JSON.parse(localStorage.getItem('dh_best'))||null}catch(e){return null}};
-const bestSet=v=>{try{localStorage.setItem('dh_best',JSON.stringify(v))}catch(e){}};
+const bestGet=()=>{try{return JSON.parse(localStorage.getItem('harrow_best'))||null}catch(e){return null}};
+const bestSet=v=>{try{localStorage.setItem('harrow_best',JSON.stringify(v))}catch(e){}};
 
 function tileAt(x,y){ const m=G.map,tx=(x/TS)|0,ty=(y/TS)|0;
   if(tx<0||ty<0||tx>=m.w||ty>=m.h)return 1; return m.t[ty*m.w+tx]; }
@@ -1081,7 +1081,7 @@ function renderMenu(){
     const labels=['STYRKE','FART','RUSTNING'], cols=['#e8574a','#5fd068','#4fa3e8'];
     d.insertAdjacentHTML('beforeend','<div class="hn">'+c.nm+'</div><div class="hd">'+c.desc+'</div>'+
       '<div class="bars">'+c.stats.map((v,i)=>'<div class="blab">'+labels[i]+'</div><div class="bar"><i style="width:'+(v*100)+'%;background:'+cols[i]+'"></i></div>').join('')+'</div>');
-    d.addEventListener('click',()=>{ G.cls=key; try{localStorage.setItem('dh_cls',key)}catch(e){}
+    d.addEventListener('click',()=>{ G.cls=key; try{localStorage.setItem('harrow_cls',key)}catch(e){}
       document.querySelectorAll('.hero').forEach(h=>h.classList.remove('sel')); d.classList.add('sel'); SND.ensure(); SND.coin(); });
     box.appendChild(d);
   }
@@ -1113,12 +1113,12 @@ function frame(ts){
 
 //#region ---------- oppstart ----------
 buildSprites(); resize(); renderMenu(); renderBest();
-try{ const saved=localStorage.getItem('dh_cls'); if(saved&&CLASSES[saved])G.cls=saved; renderMenu(); }catch(e){}
+try{ const saved=localStorage.getItem('harrow_cls'); if(saved&&CLASSES[saved])G.cls=saved; renderMenu(); }catch(e){}
 requestAnimationFrame(frame);
 if('serviceWorker' in navigator&&location.protocol==='https:')
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 // test-kroker (brukes av automatiske tester; ufarlige i produksjon)
-window.__DH={G,IN,CLASSES,startGame,loadLevel,validate:__validateLevels,genLevel,parseMap};
+window.__HW={G,IN,CLASSES,startGame,loadLevel,validate:__validateLevels,genLevel,parseMap};
 //#endregion
 </script>
 </body>

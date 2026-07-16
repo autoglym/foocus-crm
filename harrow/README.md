@@ -1,4 +1,4 @@
-# ⚔️ Dungeon Horde
+# ⚔️ Harrow
 
 Et **Gauntlet-inspirert** arkade-eventyr (2026-utgave) — laget for mobil, fungerer også på desktop.
 Én HTML-fil, null avhengigheter, null byggesteg.

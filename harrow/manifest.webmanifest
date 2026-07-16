@@ -1,7 +1,7 @@
 {
-  "name": "Dungeon Horde",
-  "short_name": "Dungeon Horde",
-  "description": "Et Gauntlet-inspirert arkade-eventyr for mobil",
+  "name": "Harrow",
+  "short_name": "Harrow",
+  "description": "Harrow — et Gauntlet-inspirert arkade-eventyr for mobil",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
