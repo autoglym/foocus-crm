@@ -31,6 +31,9 @@ Skuddene har diskré siktehjelp som snapper mot nærmeste fiende.
 - **Våpenruner** gir deg 25 sekunder med trippelskudd 🔱, kjedelyn ⚡ eller hurtigild 🔥.
   Godsaker: fartsstøvler 👢, skjold 🛡️ og magnet 🧲. Kister skjuler av og til en rune.
 - **Portalstormer** ⛈️ — med jevne mellomrom går generatorene amok. Overlev.
+- **Tyven** 🦝 rapper nøkler, drikker og gull og spurter av gårde — fell ham før han slipper unna!
+- **Lobberen** 🪨 kaster steiner i bue *over* veggene. Ingen steder å gjemme seg.
+- Mellom nivåene velger du én av tre **velsignelser** (mer skade, fart, rustning, livskraft …) som varer hele runden.
 - **Døden** 💀 kan ikke skytes. Løp. (Eller ofre en trylledrikk. Skjold hjelper ikke.)
 - Finn den grønne portalen for å nå neste nivå. Nivå 1–4 er håndlaget, deretter genereres grottene prosedyrelt — i det uendelige.
 

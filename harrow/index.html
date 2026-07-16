@@ -97,6 +97,13 @@
   #goStats b{color:var(--gold);font-size:22px}
   #lvlSplash{background:transparent;pointer-events:none}
   #lvlSplash .msg.big{font-size:26px;padding:14px 34px}
+  #upcards{display:grid;grid-template-columns:repeat(3,minmax(98px,150px));gap:12px;margin-top:8px}
+  .upcard{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:16px 10px;
+          text-align:center;cursor:pointer;transition:transform .12s,border-color .12s}
+  .upcard:hover,.upcard:active{border-color:var(--gold);transform:scale(1.05)}
+  .upcard .ui{font-size:30px;margin-bottom:8px}
+  .upcard .un{font-weight:700;font-size:13px;color:var(--gold);margin-bottom:4px}
+  .upcard .ud{font-size:10px;color:#9a94b8;line-height:1.5}
   @media (min-width:700px){ #heroes{grid-template-columns:repeat(4,150px)} }
 </style>
 </head>
@@ -155,6 +162,13 @@
     <h1 class="title" style="font-size:34px">PAUSE</h1>
     <button class="bigBtn" id="resumeB">FORTSETT</button>
     <button class="ghostBtn" id="quitB">Avslutt runden</button>
+  </div>
+
+  <!-- velsignelse mellom nivåer -->
+  <div class="ovl" id="lvlup">
+    <h1 class="title" style="font-size:clamp(22px,6vw,34px)">VELG EN VELSIGNELSE</h1>
+    <div class="sub">Nivå <span id="lvlupN">2</span> venter der nede …</div>
+    <div id="upcards"></div>
   </div>
 
   <div class="ovl show" id="lvlSplash" style="display:none"></div>
@@ -235,6 +249,8 @@ const ENEMY_DEF={
   ghost:{hp:1, sp:66, dmg:7,  score:10, r:11},
   grunt:{hp:2, sp:52, dmg:5,  score:20, r:11},
   demon:{hp:2, sp:42, dmg:8,  score:30, r:11},
+  lobber:{hp:3, sp:36, dmg:10, score:40, r:11},
+  thief:{hp:2, sp:98, dmg:0,  score:100, r:10},
   death:{hp:9999, sp:34, dmg:0, score:250, r:12}
 };
 //#endregion
@@ -474,6 +490,64 @@ function drawDeath(f){
   g.quadraticCurveTo(cx+10,cy-32,cx+22,cy-22);g.closePath();g.fill();
   return c;
 }
+// tyven: slank, hette, sekk over skulderen — rask og lur
+function drawThief(f){
+  const c=spc(),g=c.getContext('2d'),cx=48,gy=76,sw=Math.sin(f/4*Math.PI*2);
+  g.lineJoin='round';g.lineCap='round';
+  // bein i full sprint
+  g.fillStyle='#242e20';
+  rr(g,cx-11,gy-16+(sw>0?-5*sw:0),9,16+(sw>0?4*sw:0),4);g.fill();
+  rr(g,cx+2,gy-16+(sw<0?5*sw:0),9,16+(sw<0?-4*sw:0),4);g.fill();
+  // sekken med byttet
+  g.beginPath();g.arc(cx-16,gy-42,11,0,7);
+  g.fillStyle=grad(g,cx-24,gy-52,cx-8,gy-32,[[0,'#8a6238'],[1,'#5a3d22']]);g.fill();outline(g);
+  g.strokeStyle='#3a2a14';g.lineWidth=2;
+  g.beginPath();g.moveTo(cx-9,gy-50);g.lineTo(cx-2,gy-44);g.stroke();
+  // slank kropp, framoverlent
+  g.save();g.translate(cx,gy-30);g.rotate(.14);
+  rr(g,-11,-16,22,28,[9,9,6,6]);
+  g.fillStyle=grad(g,0,-16,0,12,[[0,'#4a5a40'],[1,'#2c3626']]);g.fill();outline(g);
+  g.fillStyle='#242e20';rr(g,-11,2,22,4,2);g.fill();
+  g.restore();
+  // hette med gule øyne i mørket
+  g.beginPath();g.arc(cx+3,gy-52,12,0,7);
+  g.fillStyle=grad(g,0,gy-64,0,gy-42,[[0,'#4a5a40'],[1,'#303c2a']]);g.fill();outline(g);
+  g.fillStyle='#10160c';g.beginPath();g.ellipse(cx+6,gy-51,8,7,0,0,7);g.fill();
+  for(const s of [-1,1]){ g.fillStyle=rgrad(g,cx+6+s*3.5,gy-52,.5,3.5,[[0,'#ffe89a'],[.6,'#ffd23e'],[1,'rgba(255,180,40,0)']]);
+    g.beginPath();g.arc(cx+6+s*3.5,gy-52,3.5,0,7);g.fill(); }
+  return c;
+}
+// lobberen: lut trollkastare med stein i neven
+function drawLobber(f){
+  const c=spc(),g=c.getContext('2d'),cx=48,gy=78,ph=Math.sin(f/4*Math.PI*2);
+  g.lineJoin='round';g.lineCap='round';
+  // korte bein
+  g.fillStyle='#1e3a30';
+  rr(g,cx-14,gy-11,11,11,4);g.fill();
+  rr(g,cx+4,gy-11,11,11,4);g.fill();
+  // diger mage
+  g.beginPath();g.ellipse(cx,gy-30,21,20,0,0,7);
+  g.fillStyle=rgrad(g,cx-8,gy-38,4,32,[[0,'#5aa286'],[.7,'#3c7a62'],[1,'#26543f']]);g.fill();outline(g);
+  g.fillStyle='#2c6450';g.beginPath();g.ellipse(cx,gy-24,13,9,0,0,7);g.fill();
+  // venstre arm henger
+  g.fillStyle='#3c7a62';rr(g,cx-26,gy-38,9,20,5);g.fill();outline(g);
+  // høyre arm løftet med stein — pumper når den skal kaste
+  g.save();g.translate(cx+18,gy-42);g.rotate(-.5-ph*.25);
+  g.fillStyle='#3c7a62';rr(g,-4,-16,9,20,5);g.fill();outline(g);
+  g.fillStyle=rgrad(g,-2,-22,1,9,[[0,'#a8aeba'],[1,'#666c78']]);
+  g.beginPath();g.arc(0,-21,8,0,7);g.fill();outline(g);
+  g.restore();
+  // hode med tung panne
+  g.beginPath();g.arc(cx-2,gy-52,11,0,7);
+  g.fillStyle=grad(g,0,gy-63,0,gy-42,[[0,'#5aa286'],[1,'#37705a']]);g.fill();outline(g);
+  g.fillStyle='#26543f';rr(g,cx-12,gy-58,20,5,2);g.fill();   // panne
+  g.fillStyle='#ff8a5a';
+  g.beginPath();g.arc(cx-7,gy-52,2.2,0,7);g.fill();
+  g.beginPath();g.arc(cx+2,gy-52,2.2,0,7);g.fill();
+  g.fillStyle='#f0ead8'; // undertann
+  g.beginPath();g.moveTo(cx-6,gy-45);g.lineTo(cx-4,gy-49);g.lineTo(cx-2,gy-45);g.fill();
+  return c;
+}
 // gjenstander
 function drawFood(){ const c=spc(),g=c.getContext('2d'),cx=48,cy=48;
   g.save();g.translate(cx,cy);g.rotate(-.6);
@@ -566,6 +640,8 @@ function buildAssets(){
   ASSETS.enemy.grunt=[0,1,2,3].map(f=>drawGrunt(f));
   ASSETS.enemy.demon=[0,1,2,3].map(f=>drawDemon(f));
   ASSETS.enemy.death=[0,1,2,3].map(f=>drawDeath(f));
+  ASSETS.enemy.thief=[0,1,2,3].map(f=>drawThief(f));
+  ASSETS.enemy.lobber=[0,1,2,3].map(f=>drawLobber(f));
   Object.assign(ASSETS.item,{food:drawFood(),key:drawKey(),potion:drawPotion(),chest:drawChest()});
   const sh=document.createElement('canvas');sh.width=64;sh.height=32;const sg=sh.getContext('2d');
   sg.fillStyle=rgrad(sg,32,16,2,16,[[0,'rgba(0,0,0,.4)'],[1,'rgba(0,0,0,0)']]);
@@ -605,13 +681,13 @@ const LEVELS=[
 '#...#..#####..#.G..#....#',
 '#.P.#..#...#..#....#.##.#',
 '#...D..#.M.#..##.###.#..#',
-'#...#..#...#.........#..#',
+'#...#..#...#....l....#..#',
 '##.##..##.##..#####..#..#',
 '#..#...#....h.....#..#..#',
 '#..#.G.#..######..#..#..#',
 '#..#...#..#....#..#.....#',
 '#..##.##..#.f!.#..#####.#',
-'#..#......#....D........#',
+'#..#..T...#....D........#',
 '#..#..#####....#..#####.#',
 '#...?.#...######..#...#.#',
 '#..#..#.R......#..#.k.#.#',
@@ -629,13 +705,13 @@ const LEVELS=[
 '#.#..#..##.####..#..#...#',
 '#.#..#....h......#..##..#',
 '#.#..#####.#####.#......#',
-'#.#......#.#...#.####..##',
+'#.#..T...#.#...#.####..##',
 '#.#####..#.#.X.#........#',
 '#.....#..#.#...#..#####.#',
 '#..f..#..#.##.##..#.?.#.#',
 '#..!..#..#..h.....#.f.#.#',
 '#..#..#..########..#..#.#',
-'#..#..R....j.......#..#.#',
+'#..#..R....j..l....#..#.#',
 '#..####..#####..##.#..#.#',
 '#k......t#...t..#....#.E#',
 '#########################'],
@@ -649,10 +725,10 @@ const LEVELS=[
 '#..#..#....XX....#......#',
 '#..#..#....j.....#..###.#',
 '#..#..####..######..#...#',
-'#..#......h....h....#.G.#',
+'#..#....l.h....h....#.G.#',
 '#..######..######...#...#',
 '#.......#..#....#...##.##',
-'#..t.t..#..#.f..#....#..#',
+'#..t.t..#..#.f..#.T..#..#',
 '#..t.t..D..#....#..R.#..#',
 '#..t.t..#..#!...#....#..#',
 '#..#....#..#....#..#.#..#',
@@ -693,6 +769,8 @@ function genLevel(n){
     put(genTypes[(rnd()*genTypes.length)|0],r); }
   for(const r of rooms){ if(r===start)continue;   // flokker vokter rommene
     const roll=rnd(); if(roll<.45)put('h',r); else if(roll<.65)put('j',r); }
+  if(n>=3&&rnd()<.6)put('T');
+  if(n>=4)for(let i=0;i<Math.min(1+(((n-4)/3)|0),3);i++)put('l');
   for(let i=0;i<3;i++)put('f');
   put('?'); if(rnd()<.45)put('?');
   if(rnd()<.8)put('!');
@@ -726,6 +804,8 @@ function parseMap(rows){
       case 'g': m.mobs.push(['ghost',wx,wy]); break;
       case 'r': m.mobs.push(['grunt',wx,wy]); break;
       case 'm': m.mobs.push(['demon',wx,wy]); break;
+      case 'T': m.mobs.push(['thief',wx,wy]); break;
+      case 'l': m.mobs.push(['lobber',wx,wy]); break;
       case 'X': m.mobs.push(['death',wx,wy]); break;
       case 'h': pack('ghost',wx,wy,7); break;
       case 'j': pack('grunt',wx,wy,4); break;
@@ -767,6 +847,7 @@ const G={
   combo:0, comboT:0, stepT:0,
   power:{type:null,t:0},                     // aktivt våpen (rune)
   buffs:{boots:0,shield:0,magnet:0},         // aktive godsaker
+  up:{dmg:0,rate:1,speed:1,hp:0,armor:1,pot:0,drain:1,pierce:0},  // velsignelser
   stormT:40, stormActive:0,                  // portalstorm
   time:0, drain:0, lowWarned:false, spawnItv:2.2, maxEnemies:34,
   cam:{x:0,y:0}
@@ -780,6 +861,30 @@ const POWDEF={
   magnet:{nm:'Magnet',        icon:'🧲', dur:20, col:'#d29aff'}
 };
 const POWTYPES=Object.keys(POWDEF);
+// varige velsignelser (velges mellom nivåer, gjelder hele runden)
+const UPGRADES=[
+  {id:'dmg',   icon:'⚔️', nm:'Skarpere stål',  ds:'+1 skade på alle skudd'},
+  {id:'rate',  icon:'⏩', nm:'Raske hender',   ds:'15 % raskere skuddtakt'},
+  {id:'speed', icon:'🏃', nm:'Lette føtter',   ds:'12 % raskere løping'},
+  {id:'hp',    icon:'❤️', nm:'Livskraft',      ds:'+150 helse, høyere makstak'},
+  {id:'armor', icon:'🛡️', nm:'Tykk hud',       ds:'15 % mindre skade'},
+  {id:'pot',   icon:'⚗️', nm:'Sterk brygg',    ds:'Kraftigere trylledrikker'},
+  {id:'drain', icon:'⏳', nm:'Seig livsgnist', ds:'Helsen tappes 25 % saktere'},
+  {id:'pierce',icon:'🏹', nm:'Gjennomboring',  ds:'Skudd går gjennom +1 fiende'}
+];
+function applyUp(id){
+  const u=G.up;
+  switch(id){
+    case 'dmg': u.dmg++; break;
+    case 'rate': u.rate*=.85; break;
+    case 'speed': u.speed*=1.12; break;
+    case 'hp': u.hp+=150; G.maxHp=999+u.hp; G.hp=Math.min(G.maxHp,G.hp+150); break;
+    case 'armor': u.armor*=.85; break;
+    case 'pot': u.pot++; break;
+    case 'drain': u.drain*=1.25; break;
+    case 'pierce': u.pierce++; break;
+  }
+}
 const bestGet=()=>{try{return JSON.parse(localStorage.getItem('harrow_best'))||null}catch(e){return null}};
 const bestSet=v=>{try{localStorage.setItem('harrow_best',JSON.stringify(v))}catch(e){}};
 
@@ -834,7 +939,14 @@ function killFx(e,d){
 //#region ---------- fiender ----------
 function spawnEnemy(kind,x,y){
   const d=ENEMY_DEF[kind];
-  G.enemies.push({kind,x,y,hp:d.hp,cd:Math.random()*.5,drained:0,fl:1,hit:0,ph:Math.random()*10});
+  G.enemies.push({kind,x,y,hp:d.hp,cd:Math.random()*.5,drained:0,fl:1,hit:0,ph:Math.random()*10,
+    state:'hunt',fleeT:0,loot:null});
+}
+function dropLoot(e){ if(!e.loot)return;
+  if(e.loot==='gold'){ G.score+=100; pop(e.x,e.y-14,'+100','#ffd23e'); }
+  else G.map.items.push({type:e.loot,x:e.x,y:e.y});
+  say('Tyven felt – byttet er tilbake! 💰');
+  e.loot=null; redrawMini=true;
 }
 const ACT2=(TS*15)*(TS*15);   // aktiveringsradius: fjern horde sover
 function updateEnemies(dt){
@@ -851,9 +963,25 @@ function updateEnemies(dt){
     if(dd2>ACT2)continue;                    // sover til du nærmer deg
     const dd=Math.sqrt(dd2)||1;
     let sp=d.sp*(1+Math.min(P.level,10)*.03);
+    let mvx=dx/dd, mvy=dy/dd;
     if(e.kind==='demon'&&dd<TS*3.5)sp=0;
-    moveCirc(e,dx/dd*sp*dt,dy/dd*sp*dt,d.r);
-    if(dx)e.fl=dx<0?-1:1;
+    if(e.kind==='lobber'){ // holder avstand og kaster over veggene
+      if(dd<TS*5){ mvx=-mvx; mvy=-mvy; }
+      else if(dd<TS*8){ sp*=.35; const t=Math.sin(G.time*.8+e.ph);
+        mvx=-dy/dd*t; mvy=dx/dd*t; }
+    }
+    if(e.kind==='thief'){ // sikksakk-spurt: inn for å rappe, ut med byttet
+      if(e.state==='flee'){ mvx=-mvx; mvy=-mvy;
+        e.fleeT-=dt;
+        if(e.fleeT<=0){ puff(e.x,e.y,'#4a5a40',10);
+          if(e.loot)say('Tyven slapp unna med byttet! 🦝');
+          list.splice(i,1); continue; } }
+      const zig=Math.sin(G.time*6+e.ph)*.8;
+      const ox=-mvy*zig, oy=mvx*zig;
+      mvx+=ox; mvy+=oy; const n=Math.hypot(mvx,mvy)||1; mvx/=n; mvy/=n;
+    }
+    moveCirc(e,mvx*sp*dt,mvy*sp*dt,d.r);
+    if(mvx)e.fl=mvx<0?-1:1;
     // separasjon via rutenett (dytter aldri gjennom vegger)
     for(let gx=-1;gx<=1;gx++)for(let gy=-1;gy<=1;gy++){
       const b=grid.get(bkey(e.x+gx*64,e.y+gy*64)); if(!b)continue;
@@ -865,6 +993,15 @@ function updateEnemies(dt){
           if(!solid(e.x,ny))e.y=ny; } } }
     // kontakt med spilleren
     if(dd<d.r+11){
+      if(e.kind==='thief'&&e.state!=='flee'){ // rappet!
+        let loot='gold';
+        if(G.potions>0){ G.potions--; loot='potion'; }
+        else if(G.keys>0){ G.keys--; loot='key'; }
+        else G.score=Math.max(0,G.score-100);
+        e.loot=loot; e.state='flee'; e.fleeT=6.5;
+        say('EN TYV! 🦝 '+(loot==='potion'?'Han rappet trylledrikken din!':loot==='key'?'Han rappet nøkkelen din!':'Han rappet gullet ditt!'),'big','Tyv! Stopp han!');
+        SND.coin(); vib([40,40,40]);
+      }
       if(e.kind==='ghost'){ damagePlayer(d.dmg); puff(e.x,e.y,'#cfe4ff',10); list.splice(i,1); continue; }
       if(e.kind==='grunt'){ if(e.cd<=0){ damagePlayer(d.dmg); e.cd=.6;
         const kb=14, pp={x:P.px,y:P.py}; moveCirc(pp,dx/dd*kb,dy/dd*kb,10);
@@ -877,6 +1014,12 @@ function updateEnemies(dt){
     if(e.kind==='demon'&&e.cd<=0&&dd<TS*8){
       e.cd=1.7; G.shots.push({x:e.x,y:e.y,vx:dx/dd*170,vy:dy/dd*170,foe:true,dmg:d.dmg,col:'#ff7a3a',r:5,pierce:0});
       SND.shoot(120);
+    }
+    if(e.kind==='lobber'&&e.cd<=0&&dd>TS*2.5&&dd<TS*10){ // steinkast i bue — over vegger!
+      e.cd=2.3;
+      G.shots.push({lob:true,sx:e.x,sy:e.y,x:e.x,y:e.y,tx:P.px,ty:P.py,t:0,T:1.0,
+        foe:true,dmg:d.dmg,col:'#8a8f9a',r:5,pierce:0});
+      SND.tone(160,.15,'triangle',.1,-60);
     }
   }
   // generatorer: spawner i puljer når du er i nærheten (amok under portalstorm)
@@ -897,7 +1040,7 @@ function updateEnemies(dt){
 }
 function damagePlayer(dmg){
   if(G.buffs.shield>0){ ring(G.px,G.py,20,'#8ecdff',2); return; }  // skjoldet tar støyten
-  const c=CLASSES[G.cls]; G.hp-=dmg*c.armor; G.hurtFx=.25; G.shake=Math.min(G.shake+4,10);
+  const c=CLASSES[G.cls]; G.hp-=dmg*c.armor*G.up.armor; G.hurtFx=.25; G.shake=Math.min(G.shake+4,10);
   SND.hurt();
 }
 //#endregion
@@ -914,7 +1057,7 @@ function assist(dx,dy){
 function fire(){
   const c=CLASSES[G.cls];
   const rapid=G.power.type==='wrapid';
-  if(G.fireCd>0)return; G.fireCd=c.rate*(rapid?.55:1);
+  if(G.fireCd>0)return; G.fireCd=c.rate*G.up.rate*(rapid?.55:1);
   let dx,dy;
   if(IN.aiming&&(IN.ax||IN.ay)){ dx=IN.ax; dy=IN.ay; }
   else { dx=G.dirX; dy=G.dirY; if(!dx&&!dy)dy=1; }
@@ -926,7 +1069,7 @@ function fire(){
   const mk=(ang)=>{ const ca=Math.cos(ang),sa=Math.sin(ang);
     const rx=dx*ca-dy*sa, ry=dx*sa+dy*ca;
     G.shots.push({x:G.px+rx*10,y:G.py+ry*10,vx:rx*420,vy:ry*420,
-      foe:false,dmg:c.dmg,col,r:rapid?5:4,pierce:c.pierce,zap}); };
+      foe:false,dmg:c.dmg+G.up.dmg,col,r:rapid?5:4,pierce:c.pierce+G.up.pierce,zap}); };
   if(G.power.type==='wtriple'){ mk(-.26); mk(0); mk(.26); }
   else mk(0);
   SND.shoot(c.shootF);
@@ -942,20 +1085,22 @@ function chainLightning(src,dmg){
     hitSet.add(nb); pts.push([nb.x,nb.y]);
     nb.hp-=Math.max(1,dmg-1); nb.hit=.12;
     if(nb.hp<=0){ const idx=G.enemies.indexOf(nb);
-      if(idx>=0){ killFx(nb,ENEMY_DEF[nb.kind]); G.enemies.splice(idx,1); } }
+      if(idx>=0){ killFx(nb,ENEMY_DEF[nb.kind]); if(nb.kind==='thief')dropLoot(nb); G.enemies.splice(idx,1); } }
     cur=nb;
   }
   if(pts.length>1){ G.bolts.push({pts,life:.16}); SND.zap(); }
 }
 function smartBomb(cx,cy){
-  const c=CLASSES[G.cls], R=TS*(7+c.potPow*2), R2=R*R;
+  const c=CLASSES[G.cls], pow=c.potPow+G.up.pot, R=TS*(7+pow*2), R2=R*R;
   SND.boom(); G.shake=12; G.freeze=.09;
   puff(cx,cy,'#3fd1ff',40,180); puff(cx,cy,'#ffffff',20,120);
   ring(cx,cy,R,'#8ecdff',5); ring(cx,cy,R*.6,'#ffffff',3);
   let n=0;
   for(let i=G.enemies.length-1;i>=0;i--){ const e=G.enemies[i];
-    if(dist2(e.x,e.y,cx,cy)<R2){ G.score+=ENEMY_DEF[e.kind].score; puff(e.x,e.y,'#8ecdff',8); G.enemies.splice(i,1); n++; } }
-  for(const s of G.map.spawners){ if(!s.dead&&dist2(s.x,s.y,cx,cy)<R2){ s.hp-=2*c.potPow;
+    if(dist2(e.x,e.y,cx,cy)<R2){ G.score+=ENEMY_DEF[e.kind].score;
+      if(e.kind==='thief')dropLoot(e);
+      puff(e.x,e.y,'#8ecdff',8); G.enemies.splice(i,1); n++; } }
+  for(const s of G.map.spawners){ if(!s.dead&&dist2(s.x,s.y,cx,cy)<R2){ s.hp-=2*pow;
     if(s.hp<=0){s.dead=true;G.score+=50;puff(s.x,s.y,'#ff7a3a',14)} } }
   say(n>3?'KABOOM! '+n+' fiender svidd! ⚡':'Trylledrikk! ⚡','big');
   redrawMini=true;
@@ -963,6 +1108,13 @@ function smartBomb(cx,cy){
 function updateShots(dt){
   const list=G.shots;
   for(let i=list.length-1;i>=0;i--){ const s=list[i];
+    if(s.lob){ // steinen flyr i bue — bryr seg ikke om vegger
+      s.t+=dt; const k=Math.min(1,s.t/s.T);
+      s.x=s.sx+(s.tx-s.sx)*k; s.y=s.sy+(s.ty-s.sy)*k;
+      if(k>=1){ puff(s.x,s.y,'#8a8f9a',9,70); ring(s.x,s.y,16,'#a8aeba',2);
+        if(dist2(s.x,s.y,G.px,G.py)<18*18)damagePlayer(s.dmg);
+        SND.hit(); G.shake=Math.min(G.shake+1.5,10); list.splice(i,1); }
+      continue; }
     s.px=s.x; s.py=s.y;
     s.x+=s.vx*dt; s.y+=s.vy*dt;
     if(solid(s.x,s.y)){ puff(s.x,s.y,s.col,4,40); list.splice(i,1); continue; }
@@ -974,7 +1126,7 @@ function updateShots(dt){
         if(e.kind==='death'){ puff(s.x,s.y,'#a06ce8',3); dead=true; break; }
         e.hp-=s.dmg; e.hit=.12; SND.hit();
         if(s.zap)chainLightning(e,s.dmg);
-        if(e.hp<=0&&G.enemies[j]===e){ killFx(e,d); G.enemies.splice(j,1); }
+        if(e.hp<=0&&G.enemies[j]===e){ killFx(e,d); if(e.kind==='thief')dropLoot(e); G.enemies.splice(j,1); }
         if(s.pierce>0){s.pierce--}else{dead=true} break; } }
     if(dead){ list.splice(i,1); continue; }
     for(const sp of G.map.spawners){ if(sp.dead)continue;
@@ -1004,7 +1156,7 @@ function updatePlayer(dt){
   G.moving=il>.25;
   if(G.moving){ ix/=il; iy/=il;
     const resp=clamp((il-.25)/.3,0,1);       // full fart allerede ved 55 % utslag
-    const spd=c.speed*(G.buffs.boots>0?1.42:1)*(.4+.6*resp);
+    const spd=c.speed*G.up.speed*(G.buffs.boots>0?1.42:1)*(.4+.6*resp);
     G.dirX=Math.abs(ix)>.4?Math.sign(ix):0; G.dirY=Math.abs(iy)>.4?Math.sign(iy):0;
     const p={x:G.px,y:G.py};
     moveCirc(p,ix*spd*dt,iy*spd*dt,10);
@@ -1039,7 +1191,8 @@ function updatePlayer(dt){
   if(G.comboT>0){ G.comboT-=dt; if(G.comboT<=0)G.combo=0; }
   // helse tikker ned — klassisk!
   G.drain+=dt;
-  if(G.drain>.8){ G.drain-=.8; G.hp-=1; }
+  const drainItv=.8*G.up.drain;
+  if(G.drain>drainItv){ G.drain-=drainItv; G.hp-=1; }
   if(G.hp<200&&!G.lowWarned){ G.lowWarned=true;
     say(c.nm+' trenger mat – sårt! 🍗','big',c.nm+' trenger mat. Sårt!'); }
   if(G.hp>=250)G.lowWarned=false;
@@ -1102,11 +1255,24 @@ function loadLevel(n){
 function levelClear(){
   G.score+=150; SND.fanfare(); vib([30,50,30]);
   G.level++;
+  G.state='lvlup';
+  document.getElementById('lvlupN').textContent=G.level;
+  const picks=[...UPGRADES].sort(()=>Math.random()-.5).slice(0,3);
+  const box=document.getElementById('upcards'); box.innerHTML='';
+  picks.forEach(u=>{ const d=document.createElement('div'); d.className='upcard';
+    d.innerHTML='<div class="ui">'+u.icon+'</div><div class="un">'+u.nm+'</div><div class="ud">'+u.ds+'</div>';
+    d.addEventListener('click',()=>{ if(G.state!=='lvlup')return;
+      applyUp(u.id); SND.power(); vib(20); hideOvls(); startLevelSplash(); });
+    box.appendChild(d); });
+  showOvl('lvlup'); syncCtl();
+  speak('Velg en velsignelse!');
+}
+function startLevelSplash(){
   const sp=document.getElementById('lvlSplash');
   sp.innerHTML='<div class="msg big">🏰 NIVÅ '+G.level+'</div>';
   sp.style.display='flex';
-  G.state='splash';
-  setTimeout(()=>{ sp.style.display='none'; loadLevel(G.level); G.state='play'; },1300);
+  G.state='splash'; syncCtl();
+  setTimeout(()=>{ sp.style.display='none'; loadLevel(G.level); G.state='play'; },1200);
   speak('Nivå '+G.level+'!');
 }
 function gameOver(){
@@ -1125,6 +1291,7 @@ function gameOver(){
 function startGame(){
   G.level=1; G.score=0; G.hp=600; G.keys=0; G.potions=0; G.hurtFx=0; G.shake=0; G.time=0; G.freeze=0;
   G.power={type:null,t:0}; G.buffs={boots:0,shield:0,magnet:0}; G.stormT=40; G.stormActive=0;
+  G.up={dmg:0,rate:1,speed:1,hp:0,armor:1,pot:0,drain:1,pierce:0}; G.maxHp=999;
   loadLevel(1); G.state='play';
   hideOvls(); syncCtl();
   SND.ensure(); SND.startMusic();
@@ -1450,6 +1617,14 @@ function drawWorld(){
         cx.restore(); } } }
   // skudd med glød og hale
   for(const s of G.shots){
+    if(s.lob){ // stein i bue: skygge på bakken, stein i lufta
+      const k=Math.min(1,s.t/s.T), h=42*4*k*(1-k);
+      cx.fillStyle='rgba(0,0,0,.35)';
+      cx.beginPath();cx.ellipse(s.x,s.y+2,6-3*4*k*(1-k)*.5,3,0,0,7);cx.fill();
+      cx.fillStyle=rgrad(cx,s.x-2,s.y-h-2,1,6,[[0,'#b8bec8'],[1,'#666c78']]);
+      cx.beginPath();cx.arc(s.x,s.y-h,5,0,7);cx.fill();
+      cx.strokeStyle='rgba(10,6,18,.5)';cx.lineWidth=1.5;cx.stroke();
+      continue; }
     cx.save(); cx.globalCompositeOperation='lighter';
     cx.strokeStyle=s.col; cx.lineWidth=3; cx.lineCap='round'; cx.globalAlpha=.55;
     cx.beginPath(); cx.moveTo(s.x-s.vx*.03,s.y-s.vy*.03); cx.lineTo(s.x,s.y); cx.stroke();
@@ -1504,7 +1679,7 @@ function drawWorld(){
   for(const s of m.spawners){ if(s.dead)continue;
     const col=s.kind==='ghost'?'rgba(120,180,255,.5)':s.kind==='grunt'?'rgba(150,200,80,.5)':'rgba(255,130,60,.55)';
     drawLight(s.x,s.y,TS*3,[[0,col],[1,'rgba(0,0,0,0)']]); }
-  for(const s of G.shots)drawLight(s.x,s.y,TS*1.6,[[0,s.col.startsWith('#')?hexA(s.col,.55):s.col],[1,'rgba(0,0,0,0)']]);
+  for(const s of G.shots)if(!s.lob)drawLight(s.x,s.y,TS*1.6,[[0,s.col.startsWith('#')?hexA(s.col,.55):s.col],[1,'rgba(0,0,0,0)']]);
   cx.setTransform(1,0,0,1,0,0);
   cx.globalCompositeOperation='multiply';
   cx.imageSmoothingEnabled=true;
@@ -1547,8 +1722,8 @@ function drawMini(){
   miniCx.drawImage(miniBase,0,0,miniCv.width,miniCv.height);
   const sc=miniCv.width/m.w;
   miniCx.fillStyle='#fff'; miniCx.fillRect((G.px/TS)*sc-1,(G.py/TS)*sc-1,3,3);
-  miniCx.fillStyle='#e8574a';
-  for(const e of G.enemies)miniCx.fillRect((e.x/TS)*sc,(e.y/TS)*sc,2,2);
+  for(const e of G.enemies){ miniCx.fillStyle=e.kind==='thief'?'#ffd23e':'#e8574a';
+    miniCx.fillRect((e.x/TS)*sc,(e.y/TS)*sc,2,2); }
 }
 //#endregion
 
@@ -1633,7 +1808,7 @@ requestAnimationFrame(frame);
 if('serviceWorker' in navigator&&location.protocol==='https:')
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 // test-kroker (brukes av automatiske tester; ufarlige i produksjon)
-window.__HW={G,IN,CLASSES,startGame,loadLevel,validate:__validateLevels,genLevel,parseMap};
+window.__HW={G,IN,CLASSES,UPGRADES,applyUp,startGame,loadLevel,levelClear,validate:__validateLevels,genLevel,parseMap};
 //#endregion
 </script>
 </body>
