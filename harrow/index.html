@@ -1152,12 +1152,14 @@ function updatePlayer(dt){
   const c=CLASSES[G.cls];
   let ix=IN.x, iy=IN.y;
   const il=Math.hypot(ix,iy);
-  // dødsone + respons-kurve: du LØPER eller står — ingen svevende glidning
-  G.moving=il>.25;
-  if(G.moving){ ix/=il; iy/=il;
-    const resp=clamp((il-.25)/.3,0,1);       // full fart allerede ved 55 % utslag
-    const spd=c.speed*G.up.speed*(G.buffs.boots>0?1.42:1)*(.4+.6*resp);
-    G.dirX=Math.abs(ix)>.4?Math.sign(ix):0; G.dirY=Math.abs(iy)>.4?Math.sign(iy):0;
+  // 8-retningers arkade-styring som i 1985: full fart eller stillstand
+  G.moving=il>.28;
+  if(G.moving){
+    const snap=Math.round(Math.atan2(iy,ix)/(Math.PI/4))*(Math.PI/4);
+    ix=Math.cos(snap); iy=Math.sin(snap);
+    if(Math.abs(ix)<.01)ix=0; if(Math.abs(iy)<.01)iy=0;
+    const spd=c.speed*G.up.speed*(G.buffs.boots>0?1.42:1);
+    G.dirX=Math.sign(Math.round(ix)); G.dirY=Math.sign(Math.round(iy));
     const p={x:G.px,y:G.py};
     moveCirc(p,ix*spd*dt,iy*spd*dt,10);
     G.px=p.x; G.py=p.y;
@@ -1401,17 +1403,18 @@ let S=2.5, dpr=1;              // S = device-px pr. verdens-px
 function resize(){
   dpr=Math.min(devicePixelRatio||1,2);
   cv.width=innerWidth*dpr; cv.height=innerHeight*dpr;
-  S=clamp(Math.min(cv.width,cv.height)/(TS*14.5),1.5,3.4);
+  // arkade-utsnitt: ~9,5 ruter på korteste led — store, chunky figurer som i 1985
+  S=clamp(Math.min(cv.width,cv.height)/(TS*9.5),2,5);
 }
 addEventListener('resize',resize);
 
 // tema-paletter pr. nivå
 const THEMES=[
-  {wallT:'#6a739e',wallF:'#454b70',floor:'#221f2e',floorV:'#282436',amb:'rgb(105,107,132)',moss:'#4a5e7a'},
-  {wallT:'#6f8f62',wallF:'#48603e',floor:'#1d241b',floorV:'#232b20',amb:'rgb(100,116,96)',moss:'#5e8a4a'},
-  {wallT:'#9e6a66',wallF:'#6e4442',floor:'#281e1d',floorV:'#2f2422',amb:'rgb(122,100,98)',moss:'#a45e50'},
-  {wallT:'#948866',wallF:'#665c42',floor:'#242013',floorV:'#2b2618',amb:'rgb(118,110,90)',moss:'#8a7a3c'},
-  {wallT:'#66869e',wallF:'#42586e',floor:'#1c222b',floorV:'#212832',amb:'rgb(98,110,126)',moss:'#4a7a8a'}];
+  {wallT:'#6a739e',wallF:'#454b70',floor:'#2b2839',floorV:'#322e42',amb:'rgb(176,178,198)',moss:'#4a5e7a'},
+  {wallT:'#6f8f62',wallF:'#48603e',floor:'#252d23',floorV:'#2b342a',amb:'rgb(170,184,166)',moss:'#5e8a4a'},
+  {wallT:'#9e6a66',wallF:'#6e4442',floor:'#322625',floorV:'#392c2a',amb:'rgb(192,172,170)',moss:'#a45e50'},
+  {wallT:'#948866',wallF:'#665c42',floor:'#2e2919',floorV:'#352f20',amb:'rgb(188,180,158)',moss:'#8a7a3c'},
+  {wallT:'#66869e',wallF:'#42586e',floor:'#242b36',floorV:'#2a323e',amb:'rgb(168,182,196)',moss:'#4a7a8a'}];
 function theme(){return THEMES[(G.level-1)%THEMES.length]}
 
 // hele kartet pre-rendres til ett canvas (2x verdensoppløsning)
@@ -1517,15 +1520,14 @@ function drawWorld(){
   const m=G.map,t=theme();
   // zoom inn hvis kartet er mindre enn skjermen (unngå brede svarte bånd)
   const S0=S, fitH=cv.height/(m.h*TS), fitW=cv.width/(m.w*TS);
-  const Sv=clamp(Math.min(Math.max(fitH,fitW),S0*1.7),S0,3.4);
+  const Sv=clamp(Math.min(Math.max(fitH,fitW),S0*1.7),S0,5.5);
   const sw2=cv.width/Sv, sh2=cv.height/Sv;
-  // kamera med myk følging
+  // kamera LÅST til spilleren — arkadefølelse, ingen gliding
   const tx0=m.w*TS<sw2 ? (m.w*TS-sw2)/2 : clamp(G.px-sw2/2,0,m.w*TS-sw2);
   const ty0=m.h*TS<sh2 ? (m.h*TS-sh2)/2 : clamp(G.py-sh2/2,0,m.h*TS-sh2);
-  G.cam.x=lerp(G.cam.x,tx0,Math.min(1,8*(1/60)));
-  G.cam.y=lerp(G.cam.y,ty0,Math.min(1,8*(1/60)));
+  G.cam.x=tx0; G.cam.y=ty0;
   const shx=(Math.random()-.5)*G.shake, shy=(Math.random()-.5)*G.shake;
-  const camX=G.cam.x+shx, camY=G.cam.y+shy;
+  const camX=Math.round((G.cam.x+shx)*Sv)/Sv, camY=Math.round((G.cam.y+shy)*Sv)/Sv;
   cx.setTransform(1,0,0,1,0,0);
   cx.fillStyle='#0b0a14'; cx.fillRect(0,0,cv.width,cv.height);
   SV=Sv;
@@ -1564,7 +1566,7 @@ function drawWorld(){
       cx.save();cx.globalCompositeOperation='lighter';cx.globalAlpha=.4+Math.sin(G.time*5)*.15;
       cx.drawImage(glowSprite(gc),it.x-16,it.y-16+bob,32,32);
       cx.restore(); }
-    cx.drawImage(ASSETS.item[it.type],it.x-15,it.y-17+bob,30,30);
+    cx.drawImage(ASSETS.item[it.type],it.x-17,it.y-19+bob,34,34);
   }
   // generatorer (mørke portaler med kretsende kuler)
   for(const s of m.spawners){ if(s.dead)continue;
@@ -1589,11 +1591,11 @@ function drawWorld(){
     const f=frames[((G.time*7+e.ph)|0)%4];
     const float=e.kind==='ghost'||e.kind==='death';
     const bob=float?Math.sin(G.time*4+e.ph)*3:0;
-    if(!float)cx.drawImage(ASSETS.shadow,e.x-13,e.y+5,26,10);
-    else { cx.globalAlpha=.5; cx.drawImage(ASSETS.shadow,e.x-10,e.y+8,20,8); cx.globalAlpha=1; }
+    if(!float)cx.drawImage(ASSETS.shadow,e.x-15,e.y+5,30,12);
+    else { cx.globalAlpha=.5; cx.drawImage(ASSETS.shadow,e.x-11,e.y+9,22,9); cx.globalAlpha=1; }
     cx.save(); cx.translate(e.x,e.y+bob);
     if(e.fl<0)cx.scale(-1,1);
-    const sz=e.kind==='death'?38:32;
+    const sz=e.kind==='death'?44:38;
     cx.drawImage(f,-sz/2,-sz*.66,sz,sz);
     if(e.hit>0){ cx.globalAlpha=.75; cx.globalCompositeOperation='lighter'; cx.drawImage(f,-sz/2,-sz*.66,sz,sz); }
     cx.restore();
@@ -1601,10 +1603,10 @@ function drawWorld(){
   // spilleren
   { const frames=ASSETS.hero[G.cls];
     const f=G.moving?frames[((G.time*9)|0)%4]:frames[0];
-    cx.drawImage(ASSETS.shadow,G.px-13,G.py+5,26,10);
+    cx.drawImage(ASSETS.shadow,G.px-15,G.py+5,30,12);
     cx.save(); cx.translate(G.px,G.py);
     if(G.dirX<0)cx.scale(-1,1);
-    cx.drawImage(f,-17,-24,34,34);
+    cx.drawImage(f,-20,-28,40,40);
     if(G.hurtFx>0){ cx.globalAlpha=Math.min(.8,G.hurtFx*3); cx.globalCompositeOperation='lighter';
       cx.fillStyle='#ff3020'; cx.fillRect(-17,-24,34,34); }
     cx.restore();
@@ -1672,7 +1674,7 @@ function drawWorld(){
   lightG.fillStyle=t.amb; lightG.fillRect(0,0,lw,lh);
   lightG.globalCompositeOperation='lighter';
   LCX=camX; LCY=camY;
-  drawLight(G.px,G.py,TS*8,[[0,'rgba(255,242,214,.95)'],[.5,'rgba(255,230,190,.45)'],[1,'rgba(0,0,0,0)']]);
+  drawLight(G.px,G.py,TS*11,[[0,'rgba(255,242,214,.7)'],[.5,'rgba(255,230,190,.3)'],[1,'rgba(0,0,0,0)']]);
   for(const to of G.torches){ const fl=Math.sin(G.time*11+to.ph)*.5+.5;
     drawLight(to.x,to.y-4,TS*(3+fl*.6),[[0,'rgba(255,180,90,.85)'],[1,'rgba(0,0,0,0)']]); }
   for(const [ex,ey] of G.exits)drawLight(ex,ey,TS*4,[[0,'rgba(120,255,150,.8)'],[1,'rgba(0,0,0,0)']]);
