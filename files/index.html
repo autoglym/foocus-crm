@@ -2093,12 +2093,35 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .inv-card-type.vc { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .inv-card-type.fund { background: rgba(59,130,246,0.15); color: var(--accent); }
     .inv-card-type.angel { background: rgba(139,92,246,0.15); color: var(--important); }
-    .inv-card-type.family_office { background: rgba(16,185,129,0.15); color: var(--client); }
+    .inv-card-type.syndicate { background: rgba(16,185,129,0.15); color: var(--client); }
     .inv-card-type.strategic { background: rgba(245,158,11,0.15); color: var(--target); }
     .inv-card-type.grant { background: rgba(6,182,212,0.15); color: #06b6d4; }
     .inv-card-contact { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+
+    /* Momentum: direction of travel, not a guessed percentage */
+    .inv-mom { font-size: 10px; margin-left: 4px; vertical-align: middle; }
+    .inv-mom.warming { color: var(--client); }
+    .inv-mom.steady  { color: var(--accent); }
+    .inv-mom.cooling { color: var(--target); }
+    .inv-mom.dead    { color: var(--text-muted); }
+    .inv-fast { font-size: 10px; margin-left: 2px; }
+
+    .inv-card-cash {
+      font-size: 11px;
+      color: var(--client);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .inv-card-cash span { color: var(--text-muted); font-weight: 400; margin-left: 4px; }
+    .inv-card-intro {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 8px;
+    }
+    .inv-kpi.cash90 { border-top-color: #06b6d4; }
     .inv-card-amount {
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
@@ -3822,70 +3845,87 @@
         <input type="hidden" id="investorId">
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Navn på fond / investor</label>
-            <input type="text" class="form-input" id="investorName" placeholder="f.eks. Northzone" spellcheck="false" autocorrect="off">
+            <label class="form-label">Navn</label>
+            <input type="text" class="form-input" id="investorName" placeholder="Person eller fond" spellcheck="false" autocorrect="off">
           </div>
           <div class="form-group">
-            <label class="form-label">Type</label>
-            <select class="form-input form-select" id="investorType">
-              <option value="vc">VC</option>
-              <option value="angel">Angel</option>
-              <option value="family_office">Family office</option>
-              <option value="strategic">Strategisk</option>
-              <option value="grant">Tilskudd / Innovasjon Norge</option>
-              <option value="bank">Bank / lån</option>
-            </select>
+            <label class="form-label">Tilknytning</label>
+            <input type="text" class="form-input" id="investorEntity" placeholder="f.eks. LIWLIG exit" spellcheck="false" autocorrect="off">
           </div>
         </div>
         <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Type</label>
+            <select class="form-input form-select" id="investorKind">
+              <option value="fund">Fond</option>
+              <option value="angel">Angel</option>
+              <option value="syndicate">Syndikat</option>
+              <option value="strategic">Strategisk</option>
+              <option value="grant">Tilskudd</option>
+              <option value="bank">Bank / lån</option>
+            </select>
+          </div>
           <div class="form-group">
             <label class="form-label">Stadium</label>
             <select class="form-input form-select" id="investorStage"></select>
           </div>
-          <div class="form-group">
-            <label class="form-label">Sannsynlighet (%)</label>
-            <input type="number" class="form-input" id="investorProbability" min="0" max="100" value="20">
-          </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Ticket-størrelse</label>
-            <input type="number" class="form-input" id="investorTicket" placeholder="5000000" style="font-family:'JetBrains Mono',monospace;">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Valuta</label>
-            <select class="form-input form-select" id="investorCurrency">
-              <option value="NOK">NOK</option>
-              <option value="EUR">EUR</option>
-              <option value="USD">USD</option>
+            <label class="form-label">Momentum</label>
+            <select class="form-input form-select" id="investorMomentum">
+              <option value="warming">▲ Varmer</option>
+              <option value="steady">▶ Stabil</option>
+              <option value="cooling">▼ Kjølner</option>
+              <option value="dead">✕ Død</option>
             </select>
           </div>
-        </div>
-        <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Kontaktperson</label>
-            <input type="text" class="form-input" id="investorContactName" placeholder="Fornavn Etternavn" spellcheck="false" autocorrect="off">
+            <label class="form-label">Warm intro via</label>
+            <input type="text" class="form-input" id="investorIntroVia" placeholder="Hvem introduserte?" spellcheck="false" autocorrect="off">
           </div>
+        </div>
+
+        <div class="form-group" style="background:var(--bg-tertiary);padding:14px;border-radius:var(--radius-sm);">
+          <label class="form-label">Ticket-størrelse (fra – til)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 90px;gap:8px;margin-bottom:12px;">
+            <input type="number" class="form-input" id="investorTicketMin" placeholder="Fra" style="font-family:'JetBrains Mono',monospace;margin:0;">
+            <input type="number" class="form-input" id="investorTicketMax" placeholder="Til" style="font-family:'JetBrains Mono',monospace;margin:0;">
+            <select class="form-input form-select" id="investorCurrency" style="margin:0;">
+              <option value="NOK">NOK</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="USD">USD</option>
+              <option value="SEK">SEK</option>
+              <option value="DKK">DKK</option>
+            </select>
+          </div>
+          <label class="form-label">Tidligst penger på konto</label>
+          <input type="date" class="form-input" id="investorEarliestCash" style="margin-bottom:10px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="investorCanMoveFast">
+            <span class="form-label" style="margin:0;">⚡ Kan flytte raskt</span>
+          </label>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Huk av hvis de kan beslutte og betale uten lang prosess</p>
+        </div>
+
+        <div class="form-group" style="background:var(--bg-tertiary);padding:14px;border-radius:var(--radius-sm);">
+          <label class="form-label">Neste steg</label>
+          <input type="text" class="form-input" id="investorNextStep" placeholder="f.eks. Prep call, deretter IC" spellcheck="false" autocorrect="off" style="margin-bottom:10px;">
+          <label class="form-label">Frist for neste steg</label>
+          <input type="date" class="form-input" id="investorNextStepDate">
+        </div>
+
+        <div class="form-row">
           <div class="form-group">
             <label class="form-label">E-post</label>
             <input type="email" class="form-input" id="investorContactEmail" placeholder="navn@fond.com" spellcheck="false" autocorrect="off">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Warm intro via</label>
-            <input type="text" class="form-input" id="investorIntroVia" placeholder="Hvem kan introdusere?" spellcheck="false" autocorrect="off">
+            <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Brukes til å koble Gmail-tråder i FounderOS</p>
           </div>
           <div class="form-group">
             <label class="form-label">Sist kontakt</label>
             <input type="date" class="form-input" id="investorLastContact">
           </div>
-        </div>
-        <div class="form-group" style="background:var(--bg-tertiary);padding:14px;border-radius:var(--radius-sm);">
-          <label class="form-label">Neste steg</label>
-          <input type="text" class="form-input" id="investorNextStep" placeholder="f.eks. Sende deck og book møte" spellcheck="false" autocorrect="off" style="margin-bottom:10px;">
-          <label class="form-label">Frist / dato for neste steg</label>
-          <input type="date" class="form-input" id="investorNextStepDate">
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -3898,16 +3938,12 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Fokusområder</label>
-          <input type="text" class="form-input" id="investorFocus" placeholder="f.eks. B2B SaaS, sportsteknologi, seed–series A" spellcheck="false" autocorrect="off">
-        </div>
-        <div class="form-group">
           <label class="form-label">Notater</label>
-          <textarea class="form-input" id="investorNotes" placeholder="Møtenotater, feedback, innvendinger..." spellcheck="false"></textarea>
+          <textarea class="form-input" id="investorNotes" placeholder="Møtenotater, innvendinger, hva de bryr seg om..." spellcheck="false"></textarea>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost delete" onclick="deleteInvestorFromModal()" id="investorDeleteBtn" style="margin-right:auto;color:var(--urgent);display:none;">Slett</button>
+        <button class="btn btn-ghost" onclick="deleteInvestorFromModal()" id="investorDeleteBtn" style="margin-right:auto;color:var(--urgent);display:none;">Slett</button>
         <button class="btn btn-secondary" onclick="closeModal('investorModal')">Avbryt</button>
         <button class="btn btn-primary" id="saveInvestorBtn" onclick="saveInvestor()">Lagre</button>
       </div>
@@ -4965,9 +5001,10 @@
         if (incResult.data) incomeEntries = incResult.data;
       } catch(e) { incomeEntries = []; console.error('[load] Load income CATCH:', e.message); }
 
-      // Load investors
+      // Load investors — these live in the FounderOS project, not this one
       try {
-        const invResult = await withTimeout(sb.from('investors').select('*').order('sort_order').order('created_at'), 10000);
+        const invResult = await withTimeout(
+          sbFounder.from('investors').select('*').order('updated_at', { ascending: false }), 10000);
         if (invResult.error) console.error('Investors error:', invResult.error);
         if (invResult.data) investors = invResult.data;
       } catch(e) { investors = []; console.error('[load] Load investors CATCH:', e.message); }
@@ -5840,48 +5877,83 @@
     }
 
     // ===== INVESTOR PIPELINE =====
+    // Investors live in the FounderOS Supabase project, not this one — they sit
+    // next to messages/email_scope/meetings so FounderOS can cross-reference
+    // pipeline state against Gmail. This app writes; FounderOS reads.
+    const FOUNDEROS_URL = 'https://sjlgcszidjasgljmkfen.supabase.co';
+    const FOUNDEROS_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqbGdjc3ppZGphc2dsam1rZmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MzEwNjUsImV4cCI6MjEwMDQwNzA2NX0.9Rx3ZHzAcHIXR_RQBzHqPAFLeG03zO68WJpGrNhuK_Q';
+
+    // Session persistence off so this client never collides with the main one.
+    const sbFounder = window.supabase.createClient(FOUNDEROS_URL, FOUNDEROS_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+
+    // Stages match the vocabulary already in the FounderOS data.
+    // 'research' and 'committed' are added as the two ends of the funnel.
     const INVESTOR_STAGES = [
-      { key: 'research',    label: 'Research' },
-      { key: 'intro',       label: 'Warm intro søkes' },
-      { key: 'contacted',   label: 'Kontaktet' },
-      { key: 'meeting_1',   label: 'Første møte' },
-      { key: 'meeting_2',   label: 'Andre møte' },
-      { key: 'dd',          label: 'Due diligence' },
-      { key: 'term_sheet',  label: 'Term sheet' },
-      { key: 'committed',   label: 'Committed' },
-      { key: 'passed',      label: 'Passed' }
+      { key: 'research',  label: 'Research' },
+      { key: 'contacted', label: 'Kontaktet' },
+      { key: 'meeting',   label: 'Møte' },
+      { key: 'indicated', label: 'Indikert interesse' },
+      { key: 'committee', label: 'Investeringskomité' },
+      { key: 'committed', label: 'Committed' },
+      { key: 'stalled',   label: 'Stoppet opp' },
+      { key: 'passed',    label: 'Passed' }
     ];
 
-    const INVESTOR_TYPE_LABELS = {
-      vc: 'VC', angel: 'Angel', family_office: 'Family office',
+    const INVESTOR_KINDS = {
+      fund: 'Fond', angel: 'Angel', syndicate: 'Syndikat',
       strategic: 'Strategisk', grant: 'Tilskudd', bank: 'Bank'
     };
 
-    // Default probability per stage — used as a suggestion when stage changes
-    const STAGE_DEFAULT_PROBABILITY = {
-      research: 5, intro: 10, contacted: 15, meeting_1: 25,
-      meeting_2: 40, dd: 60, term_sheet: 80, committed: 100, passed: 0
+    const MOMENTUM = {
+      warming: { label: 'Varmer',  icon: '▲', cls: 'warming' },
+      steady:  { label: 'Stabil',  icon: '▶', cls: 'steady'  },
+      cooling: { label: 'Kjølner', icon: '▼', cls: 'cooling' },
+      dead:    { label: 'Død',     icon: '✕', cls: 'dead'    }
     };
 
+    // Likelihood by stage, used only for the weighted-pipeline figure.
+    const STAGE_WEIGHT = {
+      research: 0.05, contacted: 0.10, meeting: 0.25, indicated: 0.50,
+      committee: 0.65, committed: 1.0, stalled: 0.05, passed: 0
+    };
+
+    // Approximate rates, for totalling a multi-currency pipeline in NOK only.
+    // Converted figures are shown with a ≈ prefix. Update when rates move.
+    const FX_TO_NOK = { NOK: 1, EUR: 11.7, GBP: 13.5, USD: 10.5, SEK: 1.05, DKK: 1.57 };
+
     function investorStageLabel(key) {
-      return (INVESTOR_STAGES.find(s => s.key === key) || {}).label || key;
+      return (INVESTOR_STAGES.find(s => s.key === key) || {}).label || key || '—';
     }
 
-    // Days until a date string (negative = overdue). Compares date-only, no timezone drift.
+    // Days until a date (negative = overdue). Compares date-only strings so the
+    // result never shifts by a day across timezones.
     function daysUntil(dateStr) {
       if (!dateStr) return null;
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-      const a = new Date(todayStr + 'T00:00:00');
-      const b = new Date(dateStr.slice(0,10) + 'T00:00:00');
-      return Math.round((b - a) / 86400000);
+      const t = new Date();
+      const todayStr = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+      return Math.round((new Date(dateStr.slice(0,10) + 'T00:00:00') - new Date(todayStr + 'T00:00:00')) / 86400000);
     }
 
-    function formatInvestorAmount(inv) {
-      const amount = parseFloat(inv.ticket_size) || 0;
-      if (!amount) return '—';
-      return formatCurrency(amount) + ' ' + (inv.currency || 'NOK');
+    // Midpoint of the ticket range, converted to NOK. Used for all totals.
+    function investorTicketNok(inv) {
+      const min = parseFloat(inv.ticket_min) || 0;
+      const max = parseFloat(inv.ticket_max) || 0;
+      const mid = (min && max) ? (min + max) / 2 : (max || min);
+      return mid * (FX_TO_NOK[inv.currency] || 1);
     }
+
+    function investorTicketLabel(inv) {
+      const min = parseFloat(inv.ticket_min) || 0;
+      const max = parseFloat(inv.ticket_max) || 0;
+      const cur = inv.currency || 'NOK';
+      if (!min && !max) return null;
+      if (min && max && min !== max) return `${formatCurrency(min)}–${formatCurrency(max)} ${cur}`;
+      return `${formatCurrency(max || min)} ${cur}`;
+    }
+
+    function isForeignCurrency(inv) { return (inv.currency || 'NOK') !== 'NOK'; }
 
     function renderInvestors() {
       renderInvestorKpis();
@@ -5890,35 +5962,51 @@
     }
 
     function renderInvestorKpis() {
-      const active = investors.filter(i => i.stage !== 'passed');
+      // Money and actions filter differently on purpose:
+      // stalled deals shouldn't count toward pipeline value, but they still
+      // need decisions — so their overdue next steps must stay visible.
+      const active = investors.filter(i => !['passed', 'stalled'].includes(i.stage));
+      const actionable = investors.filter(i => i.stage !== 'passed');
       const committed = investors.filter(i => i.stage === 'committed');
 
-      const committedSum = committed.reduce((s, i) => s + (parseFloat(i.ticket_size) || 0), 0);
-      const totalPipeline = active.reduce((s, i) => s + (parseFloat(i.ticket_size) || 0), 0);
-      const weighted = active.reduce((s, i) => {
-        const prob = (i.probability ?? STAGE_DEFAULT_PROBABILITY[i.stage] ?? 20) / 100;
-        return s + (parseFloat(i.ticket_size) || 0) * prob;
-      }, 0);
-      const overdue = active.filter(i => {
+      const committedSum = committed.reduce((s, i) => s + investorTicketNok(i), 0);
+      const totalPipeline = active.reduce((s, i) => s + investorTicketNok(i), 0);
+      const weighted = active.reduce((s, i) => s + investorTicketNok(i) * (STAGE_WEIGHT[i.stage] ?? 0.1), 0);
+      const anyForeign = active.some(isForeignCurrency);
+      const approx = anyForeign ? '≈' : '';
+
+      const overdue = actionable.filter(i => {
         const d = daysUntil(i.next_step_date);
         return d !== null && d < 0;
       });
 
+      // Money that could realistically land in the next 90 days
+      const soonCash = active.filter(i => {
+        const d = daysUntil(i.earliest_cash);
+        return d !== null && d >= 0 && d <= 90 && STAGE_WEIGHT[i.stage] >= 0.25;
+      });
+      const soonSum = soonCash.reduce((s, i) => s + investorTicketNok(i) * (STAGE_WEIGHT[i.stage] ?? 0), 0);
+
       document.getElementById('investorKpis').innerHTML = `
         <div class="inv-kpi committed">
           <div class="inv-kpi-label">Committed</div>
-          <div class="inv-kpi-value">${formatCurrency(committedSum)}<span>NOK</span></div>
+          <div class="inv-kpi-value">${approx}${formatCurrency(committedSum)}<span>NOK</span></div>
           <div class="inv-kpi-sub">${committed.length} investor${committed.length === 1 ? '' : 'er'}</div>
         </div>
         <div class="inv-kpi weighted">
           <div class="inv-kpi-label">Vektet pipeline</div>
-          <div class="inv-kpi-value">${formatCurrency(weighted)}<span>NOK</span></div>
-          <div class="inv-kpi-sub">Justert for sannsynlighet</div>
+          <div class="inv-kpi-value">${approx}${formatCurrency(weighted)}<span>NOK</span></div>
+          <div class="inv-kpi-sub">Justert for stadium</div>
         </div>
         <div class="inv-kpi total">
           <div class="inv-kpi-label">Total pipeline</div>
-          <div class="inv-kpi-value">${formatCurrency(totalPipeline)}<span>NOK</span></div>
+          <div class="inv-kpi-value">${approx}${formatCurrency(totalPipeline)}<span>NOK</span></div>
           <div class="inv-kpi-sub">${active.length} aktive samtaler</div>
+        </div>
+        <div class="inv-kpi cash90">
+          <div class="inv-kpi-label">Kan lande &lt; 90 dager</div>
+          <div class="inv-kpi-value">${approx}${formatCurrency(soonSum)}<span>NOK</span></div>
+          <div class="inv-kpi-sub">${soonCash.length} vektet på stadium</div>
         </div>
         <div class="inv-kpi ${overdue.length > 0 ? 'overdue' : ''}">
           <div class="inv-kpi-label">Forfalte neste steg</div>
@@ -5929,29 +6017,29 @@
 
     function renderInvestorTimeline() {
       const el = document.getElementById('investorTimeline');
-      const withSteps = investors
-        .filter(i => i.stage !== 'passed' && i.next_step && i.next_step_date)
+      const rows = investors
+        .filter(i => !['passed'].includes(i.stage) && i.next_step && i.next_step_date)
         .sort((a, b) => (a.next_step_date || '').localeCompare(b.next_step_date || ''))
-        .slice(0, 8);
+        .slice(0, 10);
 
-      if (withSteps.length === 0) {
-        el.innerHTML = `
-          <h3>Neste steg</h3>
-          <p class="inv-timeline-sub">Ingen planlagte neste steg. Legg til en dato på en investor for å se tidslinjen her.</p>`;
+      if (rows.length === 0) {
+        el.innerHTML = `<h3>Neste steg</h3>
+          <p class="inv-timeline-sub">Ingen planlagte neste steg med dato.</p>`;
         return;
       }
 
       el.innerHTML = `
         <h3>Neste steg</h3>
         <p class="inv-timeline-sub">Sortert på frist — de nærmeste først</p>
-        ${withSteps.map(i => {
+        ${rows.map(i => {
           const d = daysUntil(i.next_step_date);
           const cls = d < 0 ? 'overdue' : d <= 7 ? 'soon' : '';
           const rel = d < 0 ? `${Math.abs(d)} d forsinket` : d === 0 ? 'I dag' : d === 1 ? 'I morgen' : `Om ${d} d`;
+          const m = MOMENTUM[i.momentum];
           return `<div class="inv-tl-row" onclick="openInvestorModal('${i.id}')">
             <div class="inv-tl-date ${cls}">${rel}</div>
             <div class="inv-tl-body">
-              <div class="inv-tl-name">${escapeHtml(i.name)}</div>
+              <div class="inv-tl-name">${escapeHtml(i.name)}${m ? ` <span class="inv-mom ${m.cls}" title="${m.label}">${m.icon}</span>` : ''}</div>
               <div class="inv-tl-step">${escapeHtml(i.next_step)}</div>
             </div>
             <div class="inv-tl-stage">${investorStageLabel(i.stage)}</div>
@@ -5960,10 +6048,10 @@
     }
 
     function renderInvestorBoard() {
-      const board = document.getElementById('investorBoard');
-      board.innerHTML = INVESTOR_STAGES.map(stage => {
+      document.getElementById('investorBoard').innerHTML = INVESTOR_STAGES.map(stage => {
         const inStage = investors.filter(i => (i.stage || 'research') === stage.key);
-        const sum = inStage.reduce((s, i) => s + (parseFloat(i.ticket_size) || 0), 0);
+        const sum = inStage.reduce((s, i) => s + investorTicketNok(i), 0);
+        const approx = inStage.some(isForeignCurrency) ? '≈' : '';
         return `<div class="inv-col" data-stage="${stage.key}"
                      ondragover="investorDragOver(event)"
                      ondragleave="investorDragLeave(event)"
@@ -5972,10 +6060,8 @@
             <span class="inv-col-title">${stage.label}</span>
             <span class="inv-col-count">${inStage.length}</span>
           </div>
-          ${sum > 0 ? `<div class="inv-col-sum">${formatCurrency(sum)} NOK</div>` : ''}
-          ${inStage.length === 0
-            ? '<div class="inv-col-empty">Tom</div>'
-            : inStage.map(i => investorCardHtml(i)).join('')}
+          ${sum > 0 ? `<div class="inv-col-sum">${approx}${formatCurrency(sum)} NOK</div>` : ''}
+          ${inStage.length === 0 ? '<div class="inv-col-empty">Tom</div>' : inStage.map(investorCardHtml).join('')}
         </div>`;
       }).join('');
     }
@@ -5986,19 +6072,29 @@
       const dateLabel = d === null ? '' :
         d < 0 ? `${Math.abs(d)} dager forsinket` :
         d === 0 ? 'I dag' : d === 1 ? 'I morgen' : `Om ${d} dager`;
-      const prob = inv.probability ?? STAGE_DEFAULT_PROBABILITY[inv.stage] ?? 20;
+      const m = MOMENTUM[inv.momentum];
+      const ticket = investorTicketLabel(inv);
+      const cashDays = daysUntil(inv.earliest_cash);
 
-      return `<div class="inv-card" draggable="true"
-                   data-id="${inv.id}"
+      return `<div class="inv-card" draggable="true" data-id="${inv.id}"
                    ondragstart="investorDragStart(event, '${inv.id}')"
                    ondragend="investorDragEnd(event)"
                    onclick="openInvestorModal('${inv.id}')">
         <div class="inv-card-top">
-          <div class="inv-card-name">${escapeHtml(inv.name)}</div>
-          <span class="inv-card-type ${inv.investor_type || 'vc'}">${INVESTOR_TYPE_LABELS[inv.investor_type] || 'VC'}</span>
+          <div class="inv-card-name">
+            ${escapeHtml(inv.name)}
+            ${m ? `<span class="inv-mom ${m.cls}" title="Momentum: ${m.label}">${m.icon}</span>` : ''}
+            ${inv.can_move_fast ? '<span class="inv-fast" title="Kan flytte raskt">⚡</span>' : ''}
+          </div>
+          <span class="inv-card-type ${inv.kind || 'fund'}">${INVESTOR_KINDS[inv.kind] || 'Fond'}</span>
         </div>
-        ${inv.contact_name ? `<div class="inv-card-contact">${escapeHtml(inv.contact_name)}</div>` : ''}
-        ${parseFloat(inv.ticket_size) ? `<div class="inv-card-amount">${formatInvestorAmount(inv)}<span class="prob">${prob}%</span></div>` : ''}
+        ${inv.entity ? `<div class="inv-card-contact">${escapeHtml(inv.entity)}</div>` : ''}
+        ${ticket ? `<div class="inv-card-amount">${ticket}</div>` : ''}
+        ${inv.earliest_cash ? `<div class="inv-card-cash">
+          Tidligst penger: ${new Date(inv.earliest_cash + 'T00:00:00').toLocaleDateString('nb-NO', { day:'numeric', month:'short', year:'2-digit' })}
+          ${cashDays !== null && cashDays >= 0 ? `<span>om ${cashDays} d</span>` : ''}
+        </div>` : ''}
+        ${inv.intro_via && inv.intro_via !== '—' ? `<div class="inv-card-intro">via ${escapeHtml(inv.intro_via)}</div>` : ''}
         ${inv.next_step ? `<div class="inv-card-next ${nextCls}">
           ${escapeHtml(inv.next_step)}
           ${dateLabel ? `<span class="inv-card-next-date">${dateLabel}</span>` : ''}
@@ -6029,11 +6125,11 @@
     async function investorDrop(event, newStage) {
       event.preventDefault();
       event.currentTarget.classList.remove('drag-over');
-      if (!draggedInvestorId) return;
-
-      const inv = investors.find(i => i.id === draggedInvestorId);
       const movedId = draggedInvestorId;
       draggedInvestorId = null;
+      if (!movedId) return;
+
+      const inv = investors.find(i => i.id === movedId);
       if (!inv || inv.stage === newStage) return;
 
       const oldStage = inv.stage;
@@ -6041,23 +6137,21 @@
       renderInvestors(); // optimistic
 
       try {
-        const { error } = await sb.from('investors')
+        const { error } = await sbFounder.from('investors')
           .update({ stage: newStage, updated_at: new Date().toISOString() })
           .eq('id', movedId);
         if (error) throw error;
 
-        // Log the stage change so history is queryable later
-        await sb.from('investor_activities').insert({
+        // Record the move so FounderOS can answer "when did this change?"
+        await sbFounder.from('investor_activities').insert({
           investor_id: movedId,
           activity_type: 'stage_change',
           title: `${investorStageLabel(oldStage)} → ${investorStageLabel(newStage)}`,
           stage_from: oldStage,
-          stage_to: newStage
+          stage_to: newStage,
+          source: 'crm'
         });
       } catch(e) {
-        if (e.message && e.message.includes('JWT expired') && await refreshToken()) {
-          return investorDrop(event, newStage);
-        }
         inv.stage = oldStage; // roll back
         renderInvestors();
         alert('Kunne ikke flytte investor: ' + e.message);
@@ -6066,70 +6160,66 @@
 
     // --- Modal ---
     function openInvestorModal(id) {
-      const stageSelect = document.getElementById('investorStage');
-      stageSelect.innerHTML = INVESTOR_STAGES.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
+      document.getElementById('investorStage').innerHTML =
+        INVESTOR_STAGES.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
 
       const inv = id ? investors.find(i => i.id === id) : null;
       document.getElementById('investorModalTitle').textContent = inv ? 'Rediger investor' : 'Legg til investor';
       document.getElementById('investorDeleteBtn').style.display = inv ? 'block' : 'none';
 
-      document.getElementById('investorId').value = inv?.id || '';
-      document.getElementById('investorName').value = inv?.name || '';
-      document.getElementById('investorType').value = inv?.investor_type || 'vc';
-      document.getElementById('investorStage').value = inv?.stage || 'research';
-      document.getElementById('investorProbability').value = inv?.probability ?? 20;
-      document.getElementById('investorTicket').value = inv?.ticket_size || '';
-      document.getElementById('investorCurrency').value = inv?.currency || 'NOK';
-      document.getElementById('investorContactName').value = inv?.contact_name || '';
-      document.getElementById('investorContactEmail').value = inv?.contact_email || '';
-      document.getElementById('investorIntroVia').value = inv?.intro_via || '';
-      document.getElementById('investorLastContact').value = inv?.last_contact_date || '';
-      document.getElementById('investorNextStep').value = inv?.next_step || '';
-      document.getElementById('investorNextStepDate').value = inv?.next_step_date || '';
-      document.getElementById('investorWebsite').value = inv?.website || '';
-      document.getElementById('investorLocation').value = inv?.location || '';
-      document.getElementById('investorFocus').value = inv?.focus_areas || '';
-      document.getElementById('investorNotes').value = inv?.notes || '';
+      const set = (el, val) => document.getElementById(el).value = val ?? '';
+      set('investorId', inv?.id);
+      set('investorName', inv?.name);
+      set('investorEntity', inv?.entity);
+      set('investorKind', inv?.kind || 'fund');
+      set('investorStage', inv?.stage || 'research');
+      set('investorMomentum', inv?.momentum || 'steady');
+      set('investorTicketMin', inv?.ticket_min);
+      set('investorTicketMax', inv?.ticket_max);
+      set('investorCurrency', inv?.currency || 'NOK');
+      set('investorEarliestCash', inv?.earliest_cash);
+      set('investorIntroVia', inv?.intro_via === '—' ? '' : inv?.intro_via);
+      set('investorContactEmail', inv?.contact_email);
+      set('investorLastContact', inv?.last_contact_date);
+      set('investorNextStep', inv?.next_step);
+      set('investorNextStepDate', inv?.next_step_date);
+      set('investorWebsite', inv?.website);
+      set('investorLocation', inv?.location);
+      set('investorNotes', inv?.notes);
+      document.getElementById('investorCanMoveFast').checked = !!inv?.can_move_fast;
 
       openModal('investorModal');
     }
 
-    // When stage changes on a new investor, suggest the typical probability
-    document.addEventListener('DOMContentLoaded', () => {
-      const stageSel = document.getElementById('investorStage');
-      if (stageSel) {
-        stageSel.addEventListener('change', () => {
-          if (!document.getElementById('investorId').value) {
-            document.getElementById('investorProbability').value =
-              STAGE_DEFAULT_PROBABILITY[stageSel.value] ?? 20;
-          }
-        });
-      }
-    });
-
     async function saveInvestor() {
       const btn = document.getElementById('saveInvestorBtn');
       const id = document.getElementById('investorId').value;
-      const name = document.getElementById('investorName').value.trim();
+      const val = el => document.getElementById(el).value;
+      const name = val('investorName').trim();
       if (!name) return alert('Investoren må ha et navn.');
+
+      const num = el => { const n = parseFloat(val(el)); return isNaN(n) ? null : n; };
+      const txt = el => val(el).trim() || null;
 
       const record = {
         name,
-        investor_type: document.getElementById('investorType').value,
-        stage: document.getElementById('investorStage').value,
-        probability: parseInt(document.getElementById('investorProbability').value) || 0,
-        ticket_size: parseFloat(document.getElementById('investorTicket').value) || 0,
-        currency: document.getElementById('investorCurrency').value,
-        contact_name: document.getElementById('investorContactName').value || null,
-        contact_email: document.getElementById('investorContactEmail').value || null,
-        intro_via: document.getElementById('investorIntroVia').value || null,
-        last_contact_date: document.getElementById('investorLastContact').value || null,
-        next_step: document.getElementById('investorNextStep').value || null,
-        next_step_date: document.getElementById('investorNextStepDate').value || null,
-        website: document.getElementById('investorWebsite').value || null,
-        location: document.getElementById('investorLocation').value || null,
-        focus_areas: document.getElementById('investorFocus').value || null,
-        notes: document.getElementById('investorNotes').value || null,
+        entity: txt('investorEntity'),
+        kind: val('investorKind'),
+        stage: val('investorStage'),
+        momentum: val('investorMomentum'),
+        ticket_min: num('investorTicketMin'),
+        ticket_max: num('investorTicketMax'),
+        currency: val('investorCurrency'),
+        can_move_fast: document.getElementById('investorCanMoveFast').checked,
+        earliest_cash: txt('investorEarliestCash'),
+        intro_via: txt('investorIntroVia'),
+        contact_email: txt('investorContactEmail'),
+        last_contact_date: txt('investorLastContact'),
+        next_step: txt('investorNextStep'),
+        next_step_date: txt('investorNextStepDate'),
+        website: txt('investorWebsite'),
+        location: txt('investorLocation'),
+        notes: txt('investorNotes'),
         updated_at: new Date().toISOString()
       };
 
@@ -6137,22 +6227,21 @@
       btn.textContent = 'Lagrer...';
       try {
         if (id) {
-          const { error } = await sb.from('investors').update(record).eq('id', id);
+          const { error } = await sbFounder.from('investors').update(record).eq('id', id);
           if (error) throw error;
           const idx = investors.findIndex(i => i.id === id);
           if (idx !== -1) investors[idx] = { ...investors[idx], ...record };
         } else {
-          const { data, error } = await sb.from('investors').insert(record).select().single();
+          const { data, error } = await sbFounder.from('investors').insert(record).select().single();
           if (error) throw error;
           if (data) investors.push(data);
         }
         closeModal('investorModal');
         renderInvestors();
-      } catch(e) {
-        if (e.message && e.message.includes('JWT expired') && await refreshToken()) {
-          btn.disabled = false; btn.textContent = 'Lagre';
-          return saveInvestor();
+        if (typeof renderForecast === 'function' && !document.getElementById('page-forecast').classList.contains('hidden')) {
+          renderForecast();
         }
+      } catch(e) {
         alert('Kunne ikke lagre: ' + e.message);
       } finally {
         btn.disabled = false;
@@ -6166,7 +6255,7 @@
       const inv = investors.find(i => i.id === id);
       if (!confirm(`Slette ${inv?.name || 'denne investoren'}? Dette kan ikke angres.`)) return;
       try {
-        const { error } = await sb.from('investors').delete().eq('id', id);
+        const { error } = await sbFounder.from('investors').delete().eq('id', id);
         if (error) throw error;
         investors = investors.filter(i => i.id !== id);
         closeModal('investorModal');
@@ -7722,6 +7811,21 @@
       // Income entries (actual invoices)
       const incomeData = periods.map(p => getIncomeForPeriod(p.start, p.end));
 
+      // Fundraising: money that could land, placed on each investor's
+      // earliest_cash date and weighted by how far along the deal is.
+      // Off by default — this is a what-if layer, never baseline cash.
+      const dataFundraising = periods.map(p => {
+        const pStart = p.start.toISOString().slice(0, 10);
+        const pEnd = p.end.toISOString().slice(0, 10);
+        return (investors || [])
+          .filter(inv => {
+            if (!inv.earliest_cash || ['passed', 'stalled'].includes(inv.stage)) return false;
+            const d = inv.earliest_cash.slice(0, 10);
+            return d >= pStart && d <= pEnd;
+          })
+          .reduce((sum, inv) => sum + investorTicketNok(inv) * (STAGE_WEIGHT[inv.stage] ?? 0), 0);
+      });
+
       // Fix double-counting: reduce pipeline by income entries linked to existing clients
       // Income entries represent actual invoices that REPLACE the pipeline projection
       const incomeFromExistingClients = periods.map((p, i) => {
@@ -7860,8 +7964,8 @@
         negotiation: inNegotiation.flatMap(c => getClientPaymentDates(c, forecastRangeEnd).map(p => ({ ...p, prob: (c.probability ?? 50) / 100 }))),
         leads: leads.flatMap(c => getClientPaymentDates(c, forecastRangeEnd).map(p => ({ ...p, prob: (c.probability ?? 50) / 100 })))
       };
-      window._fcData = { periods, dataExisting, dataNearClosing, dataNegotiation, dataLeads, incomeData, costData, mvaPayments, cashBalance: financials.cash_balance || 0, pipelinePayments, monthlyCosts, income3m, costs3m, cashAtHand, mvaTermAccumulator };
-      if (!window._fcToggles) window._fcToggles = { existing: false, nearClosing: false, negotiation: false, leads: false };
+      window._fcData = { periods, dataExisting, dataNearClosing, dataNegotiation, dataLeads, dataFundraising, incomeData, costData, mvaPayments, cashBalance: financials.cash_balance || 0, pipelinePayments, monthlyCosts, income3m, costs3m, cashAtHand, mvaTermAccumulator };
+      if (!window._fcToggles) window._fcToggles = { existing: false, nearClosing: false, negotiation: false, leads: false, fundraising: false };
 
       updateForecastKPIs();
 
@@ -7899,6 +8003,7 @@
           <div class="forecast-legend-item toggleable ${t.nearClosing ? '' : 'off'}" data-layer="nearClosing"><div class="forecast-legend-dot" style="background:#34d399;"></div> Nær landing</div>
           <div class="forecast-legend-item toggleable ${t.negotiation ? '' : 'off'}" data-layer="negotiation"><div class="forecast-legend-dot" style="background:#f59e0b;"></div> I forhandling</div>
           <div class="forecast-legend-item toggleable ${t.leads ? '' : 'off'}" data-layer="leads"><div class="forecast-legend-dot" style="background:#c084fc;"></div> Leads</div>
+          <div class="forecast-legend-item toggleable ${t.fundraising ? '' : 'off'}" data-layer="fundraising"><div class="forecast-legend-dot" style="background:#ec4899;"></div> Fundraising</div>
           <div class="forecast-legend-item"><div class="forecast-legend-dot" style="background:#3b82f6;border-radius:50%;"></div> Cash</div>`;
         el.querySelectorAll('[data-layer]').forEach(item => {
           item.addEventListener('click', function() {
@@ -8028,6 +8133,7 @@
         if (t.nearClosing) totalIn += fd.dataNearClosing[i];
         if (t.negotiation) totalIn += fd.dataNegotiation[i];
         if (t.leads) totalIn += fd.dataLeads[i];
+        if (t.fundraising) totalIn += (fd.dataFundraising ? fd.dataFundraising[i] : 0);
         const totalOut = fd.costData[i] + fd.mvaPayments[i];
         runningCash = runningCash + totalIn - totalOut;
         cashData.push(runningCash);
@@ -8050,6 +8156,7 @@
             { label: 'Nær landing', data: t.nearClosing ? fd.dataNearClosing : zeroes, backgroundColor: '#34d399', stack: 'revenue', order: 5 },
             { label: 'I forhandling', data: t.negotiation ? fd.dataNegotiation : zeroes, backgroundColor: '#f59e0b', stack: 'revenue', order: 4 },
             { label: 'Leads', data: t.leads ? fd.dataLeads : zeroes, backgroundColor: '#c084fc', stack: 'revenue', order: 3 },
+            { label: 'Fundraising', data: t.fundraising ? (fd.dataFundraising || zeroes) : zeroes, backgroundColor: '#ec4899', stack: 'revenue', order: 2.5 },
             { label: 'Fakturaer', data: fd.incomeData, backgroundColor: '#22d3ee', stack: 'revenue', order: 2 },
             { label: 'Kostnader', data: fd.costData.map(v => -v), backgroundColor: 'rgba(239,68,68,0.7)', stack: 'costs', order: 1 },
             { label: 'MVA-oppgjør', data: fd.mvaPayments.map(v => -v), backgroundColor: 'rgba(249,115,22,0.7)', stack: 'costs', order: 1 },

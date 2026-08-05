@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="40" fill="#0a0a0b"/>
+  <g transform="translate(96,100) scale(0.7)">
+    <!-- Left owl eye -->
+    <circle cx="-42" cy="0" r="42" fill="#e2e2e8" stroke="none"/>
+    <circle cx="-42" cy="0" r="22" fill="#0a0a0b"/>
+    <!-- Right owl eye -->
+    <circle cx="42" cy="0" r="42" fill="#e2e2e8" stroke="none"/>
+    <circle cx="42" cy="0" r="22" fill="#0a0a0b"/>
+    <!-- Left ear -->
+    <polygon points="-84,-20 -68,-55 -42,-20" fill="#e2e2e8"/>
+    <!-- Right ear -->
+    <polygon points="84,-20 68,-55 42,-20" fill="#e2e2e8"/>
+  </g>
+</svg>
