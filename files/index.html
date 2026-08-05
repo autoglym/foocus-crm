@@ -1979,6 +1979,204 @@
       align-items: center;
     }
 
+    /* ===== INVESTOR PIPELINE ===== */
+    .inv-kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .inv-kpi {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      border-top: 3px solid var(--border);
+    }
+    .inv-kpi.committed { border-top-color: var(--client); }
+    .inv-kpi.weighted { border-top-color: var(--accent); }
+    .inv-kpi.total { border-top-color: var(--important); }
+    .inv-kpi.overdue { border-top-color: var(--urgent); }
+    .inv-kpi-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .inv-kpi-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.1;
+    }
+    .inv-kpi-value span { font-size: 12px; color: var(--text-muted); margin-left: 4px; }
+    .inv-kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    .inv-board {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 16px;
+      align-items: flex-start;
+    }
+    .inv-col {
+      flex: 0 0 260px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      min-height: 120px;
+      transition: var(--transition);
+    }
+    .inv-col.drag-over { border-color: var(--accent); background: var(--bg-tertiary); }
+    .inv-col-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border);
+    }
+    .inv-col-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-secondary);
+    }
+    .inv-col-count {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      background: var(--bg-tertiary);
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+    .inv-col-sum {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .inv-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: grab;
+      transition: var(--transition);
+    }
+    .inv-card:hover { border-color: var(--border-light); transform: translateY(-1px); }
+    .inv-card.dragging { opacity: 0.4; }
+    .inv-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .inv-card-name { font-size: 14px; font-weight: 600; line-height: 1.3; }
+    .inv-card-type {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg-tertiary);
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .inv-card-type.vc { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .inv-card-type.angel { background: rgba(139,92,246,0.15); color: var(--important); }
+    .inv-card-type.family_office { background: rgba(16,185,129,0.15); color: var(--client); }
+    .inv-card-type.strategic { background: rgba(245,158,11,0.15); color: var(--target); }
+    .inv-card-type.grant { background: rgba(6,182,212,0.15); color: #06b6d4; }
+    .inv-card-contact { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+    .inv-card-amount {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .inv-card-amount .prob { font-size: 10px; color: var(--text-muted); font-weight: 400; margin-left: 6px; }
+    .inv-card-next {
+      font-size: 11px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: var(--bg-tertiary);
+      border-left: 2px solid var(--border);
+      line-height: 1.4;
+    }
+    .inv-card-next.due-soon { border-left-color: var(--target); background: rgba(245,158,11,0.08); }
+    .inv-card-next.overdue { border-left-color: var(--urgent); background: rgba(239,68,68,0.08); }
+    .inv-card-next-date {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .inv-card-next.overdue .inv-card-next-date { color: var(--urgent); }
+    .inv-card-next.due-soon .inv-card-next-date { color: var(--target); }
+    .inv-col-empty {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 16px 8px;
+      font-style: italic;
+    }
+
+    .inv-timeline {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .inv-timeline h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .inv-timeline-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+    .inv-tl-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .inv-tl-row:last-child { border-bottom: none; }
+    .inv-tl-row:hover { background: var(--bg-hover); }
+    .inv-tl-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      width: 110px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .inv-tl-date.overdue { color: var(--urgent); }
+    .inv-tl-date.soon { color: var(--target); }
+    .inv-tl-body { flex: 1; min-width: 0; }
+    .inv-tl-name { font-size: 13px; font-weight: 600; }
+    .inv-tl-step { font-size: 12px; color: var(--text-secondary); }
+    .inv-tl-stage {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-muted);
+      background: var(--bg-tertiary);
+      padding: 3px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
     /* Contract Generator Wizard */
     .wizard-container {
       max-width: 900px;
@@ -2784,6 +2982,10 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
             High Value Targets
           </div>
+          <div class="nav-item" data-page="investors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+            Investorer
+          </div>
           <div class="nav-divider"></div>
           <div class="nav-item" data-page="documents">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
@@ -2930,6 +3132,26 @@
             </button>
           </div>
           <div class="cards-grid" id="targetsOnlyGrid"></div>
+        </div>
+
+        <!-- Investor Pipeline -->
+        <div class="page hidden" id="page-investors">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Investorer</h2>
+              <p class="page-subtitle">Fundraising-pipeline: hvem, hvilket stadium, neste steg</p>
+            </div>
+            <button class="btn btn-primary" onclick="openInvestorModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              Legg til investor
+            </button>
+          </div>
+
+          <div class="inv-kpis" id="investorKpis"></div>
+
+          <div class="inv-timeline" id="investorTimeline"></div>
+
+          <div class="inv-board" id="investorBoard"></div>
         </div>
 
         <!-- All Documents -->
@@ -3587,6 +3809,111 @@
     </div>
   </div>
 
+  <!-- Investor Modal -->
+  <div class="modal-overlay" id="investorModal">
+    <div class="modal" style="max-width:640px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="investorModalTitle">Legg til investor</h3>
+        <button class="modal-close" onclick="closeModal('investorModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="investorId">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Navn på fond / investor</label>
+            <input type="text" class="form-input" id="investorName" placeholder="f.eks. Northzone" spellcheck="false" autocorrect="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Type</label>
+            <select class="form-input form-select" id="investorType">
+              <option value="vc">VC</option>
+              <option value="angel">Angel</option>
+              <option value="family_office">Family office</option>
+              <option value="strategic">Strategisk</option>
+              <option value="grant">Tilskudd / Innovasjon Norge</option>
+              <option value="bank">Bank / lån</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Stadium</label>
+            <select class="form-input form-select" id="investorStage"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sannsynlighet (%)</label>
+            <input type="number" class="form-input" id="investorProbability" min="0" max="100" value="20">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Ticket-størrelse</label>
+            <input type="number" class="form-input" id="investorTicket" placeholder="5000000" style="font-family:'JetBrains Mono',monospace;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Valuta</label>
+            <select class="form-input form-select" id="investorCurrency">
+              <option value="NOK">NOK</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Kontaktperson</label>
+            <input type="text" class="form-input" id="investorContactName" placeholder="Fornavn Etternavn" spellcheck="false" autocorrect="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">E-post</label>
+            <input type="email" class="form-input" id="investorContactEmail" placeholder="navn@fond.com" spellcheck="false" autocorrect="off">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Warm intro via</label>
+            <input type="text" class="form-input" id="investorIntroVia" placeholder="Hvem kan introdusere?" spellcheck="false" autocorrect="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sist kontakt</label>
+            <input type="date" class="form-input" id="investorLastContact">
+          </div>
+        </div>
+        <div class="form-group" style="background:var(--bg-tertiary);padding:14px;border-radius:var(--radius-sm);">
+          <label class="form-label">Neste steg</label>
+          <input type="text" class="form-input" id="investorNextStep" placeholder="f.eks. Sende deck og book møte" spellcheck="false" autocorrect="off" style="margin-bottom:10px;">
+          <label class="form-label">Frist / dato for neste steg</label>
+          <input type="date" class="form-input" id="investorNextStepDate">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nettside</label>
+            <input type="text" class="form-input" id="investorWebsite" placeholder="fond.com" spellcheck="false" autocorrect="off">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Lokasjon</label>
+            <input type="text" class="form-input" id="investorLocation" placeholder="Oslo / London" spellcheck="false" autocorrect="off">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fokusområder</label>
+          <input type="text" class="form-input" id="investorFocus" placeholder="f.eks. B2B SaaS, sportsteknologi, seed–series A" spellcheck="false" autocorrect="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notater</label>
+          <textarea class="form-input" id="investorNotes" placeholder="Møtenotater, feedback, innvendinger..." spellcheck="false"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost delete" onclick="deleteInvestorFromModal()" id="investorDeleteBtn" style="margin-right:auto;color:var(--urgent);display:none;">Slett</button>
+        <button class="btn btn-secondary" onclick="closeModal('investorModal')">Avbryt</button>
+        <button class="btn btn-primary" id="saveInvestorBtn" onclick="saveInvestor()">Lagre</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Task Modal -->
   <div class="modal-overlay" id="taskModal">
     <div class="modal">
@@ -3910,6 +4237,7 @@
     let financials = { monthly_burn: 0, cash_balance: 0, month_overrides: {} };
     let costs = [];
     let incomeEntries = [];
+    let investors = [];
     let forecastChart = null;
     let forecastGranularity = 'month';
     let currentClientId = null;
@@ -4637,7 +4965,14 @@
         if (incResult.data) incomeEntries = incResult.data;
       } catch(e) { incomeEntries = []; console.error('[load] Load income CATCH:', e.message); }
 
-      console.log(`[load] Final: ${costs.length} costs, ${incomeEntries.length} income entries`);
+      // Load investors
+      try {
+        const invResult = await withTimeout(sb.from('investors').select('*').order('sort_order').order('created_at'), 10000);
+        if (invResult.error) console.error('Investors error:', invResult.error);
+        if (invResult.data) investors = invResult.data;
+      } catch(e) { investors = []; console.error('[load] Load investors CATCH:', e.message); }
+
+      console.log(`[load] Final: ${costs.length} costs, ${incomeEntries.length} income entries, ${investors.length} investors`);
     }
 
     // ===== NAVIGATION =====
@@ -4664,6 +4999,7 @@
         case 'matrix': renderMatrix(); break;
         case 'clients': renderClientsOnly(); break;
         case 'targets': renderTargetsOnly(); break;
+        case 'investors': renderInvestors(); break;
         case 'documents': renderAllDocuments(); break;
         case 'contracts': renderContracts(); break;
         case 'contract-wizard': break;
@@ -5501,6 +5837,343 @@
       const cost = document.getElementById('operatingCost').value;
       localStorage.setItem('focusCrmOperatingCost', cost);
       renderBreakEven();
+    }
+
+    // ===== INVESTOR PIPELINE =====
+    const INVESTOR_STAGES = [
+      { key: 'research',    label: 'Research' },
+      { key: 'intro',       label: 'Warm intro søkes' },
+      { key: 'contacted',   label: 'Kontaktet' },
+      { key: 'meeting_1',   label: 'Første møte' },
+      { key: 'meeting_2',   label: 'Andre møte' },
+      { key: 'dd',          label: 'Due diligence' },
+      { key: 'term_sheet',  label: 'Term sheet' },
+      { key: 'committed',   label: 'Committed' },
+      { key: 'passed',      label: 'Passed' }
+    ];
+
+    const INVESTOR_TYPE_LABELS = {
+      vc: 'VC', angel: 'Angel', family_office: 'Family office',
+      strategic: 'Strategisk', grant: 'Tilskudd', bank: 'Bank'
+    };
+
+    // Default probability per stage — used as a suggestion when stage changes
+    const STAGE_DEFAULT_PROBABILITY = {
+      research: 5, intro: 10, contacted: 15, meeting_1: 25,
+      meeting_2: 40, dd: 60, term_sheet: 80, committed: 100, passed: 0
+    };
+
+    function investorStageLabel(key) {
+      return (INVESTOR_STAGES.find(s => s.key === key) || {}).label || key;
+    }
+
+    // Days until a date string (negative = overdue). Compares date-only, no timezone drift.
+    function daysUntil(dateStr) {
+      if (!dateStr) return null;
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      const a = new Date(todayStr + 'T00:00:00');
+      const b = new Date(dateStr.slice(0,10) + 'T00:00:00');
+      return Math.round((b - a) / 86400000);
+    }
+
+    function formatInvestorAmount(inv) {
+      const amount = parseFloat(inv.ticket_size) || 0;
+      if (!amount) return '—';
+      return formatCurrency(amount) + ' ' + (inv.currency || 'NOK');
+    }
+
+    function renderInvestors() {
+      renderInvestorKpis();
+      renderInvestorTimeline();
+      renderInvestorBoard();
+    }
+
+    function renderInvestorKpis() {
+      const active = investors.filter(i => i.stage !== 'passed');
+      const committed = investors.filter(i => i.stage === 'committed');
+
+      const committedSum = committed.reduce((s, i) => s + (parseFloat(i.ticket_size) || 0), 0);
+      const totalPipeline = active.reduce((s, i) => s + (parseFloat(i.ticket_size) || 0), 0);
+      const weighted = active.reduce((s, i) => {
+        const prob = (i.probability ?? STAGE_DEFAULT_PROBABILITY[i.stage] ?? 20) / 100;
+        return s + (parseFloat(i.ticket_size) || 0) * prob;
+      }, 0);
+      const overdue = active.filter(i => {
+        const d = daysUntil(i.next_step_date);
+        return d !== null && d < 0;
+      });
+
+      document.getElementById('investorKpis').innerHTML = `
+        <div class="inv-kpi committed">
+          <div class="inv-kpi-label">Committed</div>
+          <div class="inv-kpi-value">${formatCurrency(committedSum)}<span>NOK</span></div>
+          <div class="inv-kpi-sub">${committed.length} investor${committed.length === 1 ? '' : 'er'}</div>
+        </div>
+        <div class="inv-kpi weighted">
+          <div class="inv-kpi-label">Vektet pipeline</div>
+          <div class="inv-kpi-value">${formatCurrency(weighted)}<span>NOK</span></div>
+          <div class="inv-kpi-sub">Justert for sannsynlighet</div>
+        </div>
+        <div class="inv-kpi total">
+          <div class="inv-kpi-label">Total pipeline</div>
+          <div class="inv-kpi-value">${formatCurrency(totalPipeline)}<span>NOK</span></div>
+          <div class="inv-kpi-sub">${active.length} aktive samtaler</div>
+        </div>
+        <div class="inv-kpi ${overdue.length > 0 ? 'overdue' : ''}">
+          <div class="inv-kpi-label">Forfalte neste steg</div>
+          <div class="inv-kpi-value" style="${overdue.length > 0 ? 'color:var(--urgent);' : ''}">${overdue.length}</div>
+          <div class="inv-kpi-sub">${overdue.length > 0 ? 'Krever handling nå' : 'Alt à jour'}</div>
+        </div>`;
+    }
+
+    function renderInvestorTimeline() {
+      const el = document.getElementById('investorTimeline');
+      const withSteps = investors
+        .filter(i => i.stage !== 'passed' && i.next_step && i.next_step_date)
+        .sort((a, b) => (a.next_step_date || '').localeCompare(b.next_step_date || ''))
+        .slice(0, 8);
+
+      if (withSteps.length === 0) {
+        el.innerHTML = `
+          <h3>Neste steg</h3>
+          <p class="inv-timeline-sub">Ingen planlagte neste steg. Legg til en dato på en investor for å se tidslinjen her.</p>`;
+        return;
+      }
+
+      el.innerHTML = `
+        <h3>Neste steg</h3>
+        <p class="inv-timeline-sub">Sortert på frist — de nærmeste først</p>
+        ${withSteps.map(i => {
+          const d = daysUntil(i.next_step_date);
+          const cls = d < 0 ? 'overdue' : d <= 7 ? 'soon' : '';
+          const rel = d < 0 ? `${Math.abs(d)} d forsinket` : d === 0 ? 'I dag' : d === 1 ? 'I morgen' : `Om ${d} d`;
+          return `<div class="inv-tl-row" onclick="openInvestorModal('${i.id}')">
+            <div class="inv-tl-date ${cls}">${rel}</div>
+            <div class="inv-tl-body">
+              <div class="inv-tl-name">${escapeHtml(i.name)}</div>
+              <div class="inv-tl-step">${escapeHtml(i.next_step)}</div>
+            </div>
+            <div class="inv-tl-stage">${investorStageLabel(i.stage)}</div>
+          </div>`;
+        }).join('')}`;
+    }
+
+    function renderInvestorBoard() {
+      const board = document.getElementById('investorBoard');
+      board.innerHTML = INVESTOR_STAGES.map(stage => {
+        const inStage = investors.filter(i => (i.stage || 'research') === stage.key);
+        const sum = inStage.reduce((s, i) => s + (parseFloat(i.ticket_size) || 0), 0);
+        return `<div class="inv-col" data-stage="${stage.key}"
+                     ondragover="investorDragOver(event)"
+                     ondragleave="investorDragLeave(event)"
+                     ondrop="investorDrop(event, '${stage.key}')">
+          <div class="inv-col-head">
+            <span class="inv-col-title">${stage.label}</span>
+            <span class="inv-col-count">${inStage.length}</span>
+          </div>
+          ${sum > 0 ? `<div class="inv-col-sum">${formatCurrency(sum)} NOK</div>` : ''}
+          ${inStage.length === 0
+            ? '<div class="inv-col-empty">Tom</div>'
+            : inStage.map(i => investorCardHtml(i)).join('')}
+        </div>`;
+      }).join('');
+    }
+
+    function investorCardHtml(inv) {
+      const d = daysUntil(inv.next_step_date);
+      const nextCls = d === null ? '' : d < 0 ? 'overdue' : d <= 7 ? 'due-soon' : '';
+      const dateLabel = d === null ? '' :
+        d < 0 ? `${Math.abs(d)} dager forsinket` :
+        d === 0 ? 'I dag' : d === 1 ? 'I morgen' : `Om ${d} dager`;
+      const prob = inv.probability ?? STAGE_DEFAULT_PROBABILITY[inv.stage] ?? 20;
+
+      return `<div class="inv-card" draggable="true"
+                   data-id="${inv.id}"
+                   ondragstart="investorDragStart(event, '${inv.id}')"
+                   ondragend="investorDragEnd(event)"
+                   onclick="openInvestorModal('${inv.id}')">
+        <div class="inv-card-top">
+          <div class="inv-card-name">${escapeHtml(inv.name)}</div>
+          <span class="inv-card-type ${inv.investor_type || 'vc'}">${INVESTOR_TYPE_LABELS[inv.investor_type] || 'VC'}</span>
+        </div>
+        ${inv.contact_name ? `<div class="inv-card-contact">${escapeHtml(inv.contact_name)}</div>` : ''}
+        ${parseFloat(inv.ticket_size) ? `<div class="inv-card-amount">${formatInvestorAmount(inv)}<span class="prob">${prob}%</span></div>` : ''}
+        ${inv.next_step ? `<div class="inv-card-next ${nextCls}">
+          ${escapeHtml(inv.next_step)}
+          ${dateLabel ? `<span class="inv-card-next-date">${dateLabel}</span>` : ''}
+        </div>` : ''}
+      </div>`;
+    }
+
+    // --- Drag & drop between stages ---
+    let draggedInvestorId = null;
+
+    function investorDragStart(event, id) {
+      draggedInvestorId = id;
+      event.currentTarget.classList.add('dragging');
+      event.dataTransfer.effectAllowed = 'move';
+    }
+    function investorDragEnd(event) {
+      event.currentTarget.classList.remove('dragging');
+      document.querySelectorAll('.inv-col.drag-over').forEach(c => c.classList.remove('drag-over'));
+    }
+    function investorDragOver(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      event.currentTarget.classList.add('drag-over');
+    }
+    function investorDragLeave(event) {
+      event.currentTarget.classList.remove('drag-over');
+    }
+    async function investorDrop(event, newStage) {
+      event.preventDefault();
+      event.currentTarget.classList.remove('drag-over');
+      if (!draggedInvestorId) return;
+
+      const inv = investors.find(i => i.id === draggedInvestorId);
+      const movedId = draggedInvestorId;
+      draggedInvestorId = null;
+      if (!inv || inv.stage === newStage) return;
+
+      const oldStage = inv.stage;
+      inv.stage = newStage;
+      renderInvestors(); // optimistic
+
+      try {
+        const { error } = await sb.from('investors')
+          .update({ stage: newStage, updated_at: new Date().toISOString() })
+          .eq('id', movedId);
+        if (error) throw error;
+
+        // Log the stage change so history is queryable later
+        await sb.from('investor_activities').insert({
+          investor_id: movedId,
+          activity_type: 'stage_change',
+          title: `${investorStageLabel(oldStage)} → ${investorStageLabel(newStage)}`,
+          stage_from: oldStage,
+          stage_to: newStage
+        });
+      } catch(e) {
+        if (e.message && e.message.includes('JWT expired') && await refreshToken()) {
+          return investorDrop(event, newStage);
+        }
+        inv.stage = oldStage; // roll back
+        renderInvestors();
+        alert('Kunne ikke flytte investor: ' + e.message);
+      }
+    }
+
+    // --- Modal ---
+    function openInvestorModal(id) {
+      const stageSelect = document.getElementById('investorStage');
+      stageSelect.innerHTML = INVESTOR_STAGES.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
+
+      const inv = id ? investors.find(i => i.id === id) : null;
+      document.getElementById('investorModalTitle').textContent = inv ? 'Rediger investor' : 'Legg til investor';
+      document.getElementById('investorDeleteBtn').style.display = inv ? 'block' : 'none';
+
+      document.getElementById('investorId').value = inv?.id || '';
+      document.getElementById('investorName').value = inv?.name || '';
+      document.getElementById('investorType').value = inv?.investor_type || 'vc';
+      document.getElementById('investorStage').value = inv?.stage || 'research';
+      document.getElementById('investorProbability').value = inv?.probability ?? 20;
+      document.getElementById('investorTicket').value = inv?.ticket_size || '';
+      document.getElementById('investorCurrency').value = inv?.currency || 'NOK';
+      document.getElementById('investorContactName').value = inv?.contact_name || '';
+      document.getElementById('investorContactEmail').value = inv?.contact_email || '';
+      document.getElementById('investorIntroVia').value = inv?.intro_via || '';
+      document.getElementById('investorLastContact').value = inv?.last_contact_date || '';
+      document.getElementById('investorNextStep').value = inv?.next_step || '';
+      document.getElementById('investorNextStepDate').value = inv?.next_step_date || '';
+      document.getElementById('investorWebsite').value = inv?.website || '';
+      document.getElementById('investorLocation').value = inv?.location || '';
+      document.getElementById('investorFocus').value = inv?.focus_areas || '';
+      document.getElementById('investorNotes').value = inv?.notes || '';
+
+      openModal('investorModal');
+    }
+
+    // When stage changes on a new investor, suggest the typical probability
+    document.addEventListener('DOMContentLoaded', () => {
+      const stageSel = document.getElementById('investorStage');
+      if (stageSel) {
+        stageSel.addEventListener('change', () => {
+          if (!document.getElementById('investorId').value) {
+            document.getElementById('investorProbability').value =
+              STAGE_DEFAULT_PROBABILITY[stageSel.value] ?? 20;
+          }
+        });
+      }
+    });
+
+    async function saveInvestor() {
+      const btn = document.getElementById('saveInvestorBtn');
+      const id = document.getElementById('investorId').value;
+      const name = document.getElementById('investorName').value.trim();
+      if (!name) return alert('Investoren må ha et navn.');
+
+      const record = {
+        name,
+        investor_type: document.getElementById('investorType').value,
+        stage: document.getElementById('investorStage').value,
+        probability: parseInt(document.getElementById('investorProbability').value) || 0,
+        ticket_size: parseFloat(document.getElementById('investorTicket').value) || 0,
+        currency: document.getElementById('investorCurrency').value,
+        contact_name: document.getElementById('investorContactName').value || null,
+        contact_email: document.getElementById('investorContactEmail').value || null,
+        intro_via: document.getElementById('investorIntroVia').value || null,
+        last_contact_date: document.getElementById('investorLastContact').value || null,
+        next_step: document.getElementById('investorNextStep').value || null,
+        next_step_date: document.getElementById('investorNextStepDate').value || null,
+        website: document.getElementById('investorWebsite').value || null,
+        location: document.getElementById('investorLocation').value || null,
+        focus_areas: document.getElementById('investorFocus').value || null,
+        notes: document.getElementById('investorNotes').value || null,
+        updated_at: new Date().toISOString()
+      };
+
+      btn.disabled = true;
+      btn.textContent = 'Lagrer...';
+      try {
+        if (id) {
+          const { error } = await sb.from('investors').update(record).eq('id', id);
+          if (error) throw error;
+          const idx = investors.findIndex(i => i.id === id);
+          if (idx !== -1) investors[idx] = { ...investors[idx], ...record };
+        } else {
+          const { data, error } = await sb.from('investors').insert(record).select().single();
+          if (error) throw error;
+          if (data) investors.push(data);
+        }
+        closeModal('investorModal');
+        renderInvestors();
+      } catch(e) {
+        if (e.message && e.message.includes('JWT expired') && await refreshToken()) {
+          btn.disabled = false; btn.textContent = 'Lagre';
+          return saveInvestor();
+        }
+        alert('Kunne ikke lagre: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Lagre';
+      }
+    }
+
+    async function deleteInvestorFromModal() {
+      const id = document.getElementById('investorId').value;
+      if (!id) return;
+      const inv = investors.find(i => i.id === id);
+      if (!confirm(`Slette ${inv?.name || 'denne investoren'}? Dette kan ikke angres.`)) return;
+      try {
+        const { error } = await sb.from('investors').delete().eq('id', id);
+        if (error) throw error;
+        investors = investors.filter(i => i.id !== id);
+        closeModal('investorModal');
+        renderInvestors();
+      } catch(e) {
+        alert('Kunne ikke slette: ' + e.message);
+      }
     }
 
     // ===== CONTRACTS =====
