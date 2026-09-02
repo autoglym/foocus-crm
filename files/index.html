@@ -5142,9 +5142,43 @@
       }
     }
 
+    // A PDF e-signed elsewhere carries a signature field covering the whole file. Any edit
+    // makes readers report it as invalid, so drop the field and keep the visible signatures,
+    // which are ordinary page content and survive untouched.
+    function stripSignatureFields(pdfDoc, PDFLib) {
+      const { PDFName, PDFArray, PDFDict } = PDFLib;
+      let removed = 0;
+      try {
+        const catalog = pdfDoc.catalog;
+        for (const key of ['AcroForm', 'Perms']) {
+          if (catalog.get(PDFName.of(key))) {
+            catalog.delete(PDFName.of(key));
+            removed++;
+          }
+        }
+        for (const page of pdfDoc.getPages()) {
+          const annots = page.node.lookupMaybe(PDFName.of('Annots'), PDFArray);
+          if (!annots) continue;
+          for (let i = annots.size() - 1; i >= 0; i--) {
+            let annot = null;
+            try { annot = annots.lookup(i, PDFDict); } catch (_) { continue; }
+            const ft = annot && annot.get(PDFName.of('FT'));
+            if (ft && String(ft) === '/Sig') {
+              annots.remove(i);
+              removed++;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Could not strip existing signature fields:', error);
+      }
+      return removed;
+    }
+
     // Append a signature page to the uploaded PDF and return it as a data URI.
     async function buildSignedPdf(contract, sig) {
-      const { PDFDocument, StandardFonts, rgb } = await loadPdfLib();
+      const PDFLib = await loadPdfLib();
+      const { PDFDocument, StandardFonts, rgb } = PDFLib;
       const d = contract.contract_data || {};
       const lang = d.lang || 'no';
       const L = (no, en) => lang === 'en' ? en : no;
@@ -5154,7 +5188,15 @@
       // Helvetica is WinAnsi-encoded: drop anything it cannot render rather than throwing.
       const safe = t => String(t == null ? '' : t).replace(/[^\x20-\x7E\xA0-\xFF–—‘’“”€]/g, '');
 
-      const pdfDoc = await PDFDocument.load(dataUriToBytes(contract.pdf_data), { ignoreEncryption: true });
+      let pdfDoc = await PDFDocument.load(dataUriToBytes(contract.pdf_data), { ignoreEncryption: true });
+      // Unreferencing the old signature is not enough — its objects stay in the file and
+      // readers still surface them. Rebuilding from the pages leaves them behind for good.
+      if (stripSignatureFields(pdfDoc, PDFLib)) {
+        const rebuilt = await PDFDocument.create();
+        const pages = await rebuilt.copyPages(pdfDoc, pdfDoc.getPageIndices());
+        pages.forEach(pg => rebuilt.addPage(pg));
+        pdfDoc = rebuilt;
+      }
       const originalPageCount = pdfDoc.getPageCount();
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
