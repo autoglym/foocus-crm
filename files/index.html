@@ -4036,6 +4036,31 @@
     </div>
   </div>
 
+  <!-- Signature placement overlay -->
+  <div id="signaturePlacer" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.93);">
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div style="padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);background:var(--bg-secondary);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:15px;">Mark where the client signs</div>
+          <div id="placerHint" style="font-size:12px;color:var(--text-muted);">Click on the signature line in the document.</div>
+        </div>
+        <button class="btn btn-secondary" onclick="placerChangePage(-1)" style="padding:6px 12px;">&lsaquo;</button>
+        <span id="placerPageLabel" style="font-size:13px;color:var(--text-secondary);min-width:64px;text-align:center;">1 / 1</span>
+        <button class="btn btn-secondary" onclick="placerChangePage(1)" style="padding:6px 12px;">&rsaquo;</button>
+        <button class="btn btn-secondary" onclick="placerClear()">Clear</button>
+        <button class="btn btn-secondary" onclick="closeSignaturePlacer()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmSignaturePlacement()">Done</button>
+      </div>
+      <div id="placerScroll" style="flex:1;overflow:auto;padding:24px;display:flex;justify-content:center;align-items:flex-start;">
+        <div id="placerStage" style="position:relative;line-height:0;">
+          <canvas id="placerCanvas" style="display:block;box-shadow:0 6px 40px rgba(0,0,0,0.6);cursor:crosshair;background:#fff;"></canvas>
+          <div id="placerMarker" style="display:none;position:absolute;pointer-events:none;border:2px dashed #10b981;border-radius:4px;background:rgba(16,185,129,0.12);"></div>
+          <div id="placerMarkerLabel" style="display:none;position:absolute;pointer-events:none;font:600 11px/1.3 'DM Sans',sans-serif;color:#10b981;white-space:nowrap;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Upload PDF Contract Modal -->
   <div class="modal-overlay" id="uploadContractModal">
     <div class="modal" style="max-width: 560px;">
@@ -4100,6 +4125,17 @@
                style="border:1px dashed var(--border-light,var(--border));border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;background:var(--bg-tertiary);">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:28px;height:28px;color:var(--text-muted);margin-bottom:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <p id="uploadContractFileLabel" style="font-size:13px;color:var(--text-secondary);">Click to choose a PDF (max 8 MB)</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Signature position</label>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button type="button" class="btn btn-secondary" onclick="openSignaturePlacer()" style="white-space:nowrap;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              Mark on document
+            </button>
+            <span id="uploadContractAnchorLabel" style="font-size:12px;color:var(--text-muted);">Not set — the signature goes on an appended page only.</span>
           </div>
         </div>
       </div>
@@ -4672,6 +4708,8 @@
       document.getElementById('uploadContractFileLabel').textContent = d.file_name
         ? `Current file: ${d.file_name} — click to replace`
         : 'Click to choose a PDF (max 8 MB)';
+      pendingSignatureAnchor = d.signature_anchor || null;
+      updateAnchorLabel();
       openModal('uploadContractModal');
     }
 
@@ -4699,6 +4737,8 @@
         uploadContractPdfData = ev.target.result;
         uploadContractFileName = file.name;
         label.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) — click to replace`;
+        pendingSignatureAnchor = null;
+        updateAnchorLabel();
       };
       reader.readAsDataURL(file);
     }
@@ -4726,7 +4766,8 @@
         client_contact_email: signerEmail,
         sender_signed_by: senderName,
         sender_signed_org: FOOCUS_INFO.name,
-        sender_signed_at: existing?.contract_data?.sender_signed_at || new Date().toISOString()
+        sender_signed_at: existing?.contract_data?.sender_signed_at || new Date().toISOString(),
+        signature_anchor: pendingSignatureAnchor || null
       };
       if (uploadContractPdfData) data.file_name = uploadContractFileName;
 
@@ -4790,6 +4831,185 @@
       const { data, error } = await sb.from('contracts').select(column).eq('id', contractId).single();
       if (error) throw error;
       return data?.[column] || null;
+    }
+
+    // ===== SIGNATURE PLACEMENT =====
+    // Stamp geometry, in PDF points. Shared by the placement preview and the stamp itself
+    // so what you mark is what gets drawn.
+    const SIG_STAMP = { boxW: 200, boxH: 46, captionH: 24 };
+
+    let pdfJsPromise = null;
+    let placerDoc = null;
+    let placerPageNum = 1;
+    let placerAnchor = null;
+    let placerScale = 1;
+    let placerRenderTask = null;
+    let placerRenderActive = null;
+    let placerRenderSeq = 0;
+    let pendingSignatureAnchor = null;
+
+    function loadPdfJs() {
+      if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+      if (!pdfJsPromise) {
+        pdfJsPromise = new Promise((resolve, reject) => {
+          const el = document.createElement('script');
+          el.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+          el.onload = () => {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+            resolve(window.pdfjsLib);
+          };
+          el.onerror = () => reject(new Error('Could not load the PDF viewer'));
+          document.head.appendChild(el);
+        });
+      }
+      return pdfJsPromise;
+    }
+
+    function updateAnchorLabel() {
+      const el = document.getElementById('uploadContractAnchorLabel');
+      if (!el) return;
+      el.textContent = pendingSignatureAnchor
+        ? `Marked on page ${pendingSignatureAnchor.page}.`
+        : 'Not set — the signature goes on an appended page only.';
+      el.style.color = pendingSignatureAnchor ? 'var(--client)' : 'var(--text-muted)';
+    }
+
+    async function openSignaturePlacer() {
+      let dataUri = uploadContractPdfData;
+      if (!dataUri && editingUploadContractId) {
+        try { dataUri = await fetchContractPdf(editingUploadContractId, 'pdf_data'); } catch (_) {}
+      }
+      if (!dataUri) return alert('Choose a PDF file first.');
+
+      try {
+        const pdfjs = await loadPdfJs();
+        placerDoc = await pdfjs.getDocument({ data: dataUriToBytes(dataUri) }).promise;
+      } catch (error) {
+        console.error('PDF preview error:', error);
+        return alert('Could not open the PDF for preview: ' + error.message);
+      }
+
+      placerAnchor = pendingSignatureAnchor ? { ...pendingSignatureAnchor } : null;
+      // Signature blocks live at the end, so start there unless a page was already marked.
+      placerPageNum = placerAnchor?.page || placerDoc.numPages;
+      document.getElementById('signaturePlacer').style.display = 'block';
+      await renderPlacerPage();
+    }
+
+    function closeSignaturePlacer() {
+      if (placerRenderTask) {
+        try { placerRenderTask.cancel(); } catch (_) {}
+        placerRenderTask = null;
+      }
+      document.getElementById('signaturePlacer').style.display = 'none';
+      placerDoc = null;
+    }
+
+    function confirmSignaturePlacement() {
+      pendingSignatureAnchor = placerAnchor ? { ...placerAnchor } : null;
+      updateAnchorLabel();
+      closeSignaturePlacer();
+    }
+
+    function placerClear() {
+      placerAnchor = null;
+      drawPlacerMarker();
+    }
+
+    async function placerChangePage(delta) {
+      if (!placerDoc) return;
+      const next = placerPageNum + delta;
+      if (next < 1 || next > placerDoc.numPages) return;
+      placerPageNum = next;
+      await renderPlacerPage();
+    }
+
+    async function renderPlacerPage() {
+      // Paging fast can interleave two renders on one canvas, which pdf.js rejects.
+      // A sequence guard after every await keeps only the newest request alive.
+      const seq = ++placerRenderSeq;
+      if (placerRenderTask) {
+        try { placerRenderTask.cancel(); } catch (_) {}
+      }
+      if (placerRenderActive) {
+        try { await placerRenderActive; } catch (_) {}
+      }
+      if (seq !== placerRenderSeq || !placerDoc) return;
+
+      const page = await placerDoc.getPage(placerPageNum);
+      if (seq !== placerRenderSeq) return;
+
+      const base = page.getViewport({ scale: 1 });
+      const available = Math.min(900, Math.max(320, window.innerWidth - 120));
+      placerScale = available / base.width;
+      const viewport = page.getViewport({ scale: placerScale });
+
+      const canvas = document.getElementById('placerCanvas');
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(viewport.width * ratio);
+      canvas.height = Math.round(viewport.height * ratio);
+      canvas.style.width = viewport.width + 'px';
+      canvas.style.height = viewport.height + 'px';
+
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const task = page.render({ canvasContext: ctx, viewport });
+      placerRenderTask = task;
+      placerRenderActive = task.promise.catch(() => {});
+      try {
+        await task.promise;
+      } catch (error) {
+        if (error?.name === 'RenderingCancelledException') return;
+        throw error;
+      } finally {
+        if (placerRenderTask === task) {
+          placerRenderTask = null;
+          placerRenderActive = null;
+        }
+      }
+      if (seq !== placerRenderSeq) return;
+
+      document.getElementById('placerPageLabel').textContent = `${placerPageNum} / ${placerDoc.numPages}`;
+      canvas.onclick = e => {
+        const r = canvas.getBoundingClientRect();
+        placerAnchor = {
+          page: placerPageNum,
+          x: (e.clientX - r.left) / r.width,
+          y: (e.clientY - r.top) / r.height
+        };
+        drawPlacerMarker();
+      };
+      drawPlacerMarker();
+    }
+
+    function drawPlacerMarker() {
+      const marker = document.getElementById('placerMarker');
+      const label = document.getElementById('placerMarkerLabel');
+      const canvas = document.getElementById('placerCanvas');
+      if (!placerAnchor || placerAnchor.page !== placerPageNum) {
+        marker.style.display = 'none';
+        label.style.display = 'none';
+        document.getElementById('placerHint').textContent = placerAnchor
+          ? `Marked on page ${placerAnchor.page}. Click to move it, or use Done to keep it.`
+          : 'Click on the signature line in the document.';
+        return;
+      }
+      const w = SIG_STAMP.boxW * placerScale;
+      const h = SIG_STAMP.boxH * placerScale;
+      const x = placerAnchor.x * parseFloat(canvas.style.width);
+      const y = placerAnchor.y * parseFloat(canvas.style.height);
+
+      marker.style.display = 'block';
+      marker.style.left = x + 'px';
+      marker.style.top = (y - h) + 'px';
+      marker.style.width = w + 'px';
+      marker.style.height = h + 'px';
+
+      label.style.display = 'block';
+      label.style.left = x + 'px';
+      label.style.top = (y + 3) + 'px';
+      label.textContent = 'Signature lands here (name and date go on the confirmation page)';
+      document.getElementById('placerHint').textContent = 'Click anywhere else to move it, then press Done.';
     }
 
     // ===== SIGNATURE PAD =====
@@ -4935,8 +5155,37 @@
       const safe = t => String(t == null ? '' : t).replace(/[^\x20-\x7E\xA0-\xFF–—‘’“”€]/g, '');
 
       const pdfDoc = await PDFDocument.load(dataUriToBytes(contract.pdf_data), { ignoreEncryption: true });
+      const originalPageCount = pdfDoc.getPageCount();
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+      const signatureImg = sig.signatureImage
+        ? await pdfDoc.embedPng(sig.signatureImage).catch(e => { console.error('Signature embed failed:', e); return null; })
+        : null;
+
+      // Visible stamp on the signature line the sender marked
+      const anchor = d.signature_anchor;
+      if (anchor && anchor.page >= 1 && anchor.page <= originalPageCount) {
+        const target = pdfDoc.getPage(anchor.page - 1);
+        const { width: pw, height: ph } = target.getSize();
+        const x = anchor.x * pw;
+        const baseline = ph - anchor.y * ph;
+        // Only the signature itself goes on the line — these documents already print the
+        // signer's name and a "Sted og dato" line underneath it. Name, title, date and the
+        // audit trail live on the appended confirmation page.
+        if (signatureImg) {
+          const scale = Math.min(SIG_STAMP.boxW / signatureImg.width, SIG_STAMP.boxH / signatureImg.height);
+          target.drawImage(signatureImg, {
+            x, y: baseline + 3,
+            width: signatureImg.width * scale,
+            height: signatureImg.height * scale
+          });
+        } else {
+          const script = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+          target.drawText(safe(sig.name), { x, y: baseline + 5, size: 14, font: script, color: ink });
+        }
+      }
+
       const page = pdfDoc.addPage([595.28, 841.89]);
 
       const mL = 56, mR = 56, pageW = 595.28;
@@ -5016,9 +5265,9 @@
       if (sig.title) put(sig.title, { size: 9, color: muted, x: rightX + 14, maxWidth: colW - 28, gap: 0 });
       put(d.client_name || '', { size: 9, color: muted, x: rightX + 14, maxWidth: colW - 28, gap: 8 });
 
-      if (sig.signatureImage) {
+      if (signatureImg) {
         try {
-          const png = await pdfDoc.embedPng(sig.signatureImage);
+          const png = signatureImg;
           const scale = Math.min((colW - 28) / png.width, 52 / png.height, 1);
           const w = png.width * scale, h = png.height * scale;
           page.drawImage(png, { x: rightX + 14, y: y - h, width: w, height: h });
@@ -5045,7 +5294,9 @@
             'This document was signed electronically via Foocus CRM. This page was appended automatically and forms part of the agreement.'),
           { size: 8, color: muted });
 
-      return bytesToPdfDataUri(await pdfDoc.save());
+      // Object streams (pdf-lib's default) produce a file some viewers reject once the
+      // source PDF carries an incremental update — save a plain cross-reference table.
+      return bytesToPdfDataUri(await pdfDoc.save({ useObjectStreams: false }));
     }
 
     // ===== E-SIGNING =====
@@ -5200,6 +5451,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">${L('Signatur (valgfritt — tegn med mus eller finger)', 'Signature (optional — draw with mouse or finger)')}</label>
+                ${d.signature_anchor ? `<p style="font-size:12px;color:var(--text-muted);margin:-4px 0 8px 0;">${L(`Signaturen settes inn på side ${d.signature_anchor.page} i avtalen.`, `Your signature will be placed on page ${d.signature_anchor.page} of the agreement.`)}</p>` : ''}
                 <canvas id="signaturePad" style="width:100%;height:140px;background:#ffffff;border:1px solid var(--border);border-radius:var(--radius);display:block;cursor:crosshair;"></canvas>
                 <button type="button" class="btn btn-secondary" onclick="clearSignaturePad()" style="margin-top:8px;padding:6px 12px;font-size:12px;">${L('Tøm', 'Clear')}</button>
               </div>
