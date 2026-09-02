@@ -3283,10 +3283,16 @@
               <h2 class="page-title">Contracts</h2>
               <p class="page-subtitle">Contracts and agreements with clients and prospects</p>
             </div>
-            <button class="btn btn-primary" onclick="openContractWizard()">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-              New Contract
-            </button>
+            <div style="display:flex;gap:10px;">
+              <button class="btn btn-secondary" onclick="openUploadContractModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload PDF
+              </button>
+              <button class="btn btn-primary" onclick="openContractWizard()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                New Contract
+              </button>
+            </div>
           </div>
           <div class="filter-tabs">
             <button class="filter-tab active" data-contract-filter="all">All</button>
@@ -4030,6 +4036,81 @@
     </div>
   </div>
 
+  <!-- Upload PDF Contract Modal -->
+  <div class="modal-overlay" id="uploadContractModal">
+    <div class="modal" style="max-width: 560px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="uploadContractModalTitle">Upload signed PDF</h3>
+        <button class="modal-close" onclick="closeModal('uploadContractModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;">
+          For contracts written outside the system (Word, PDF from the client, etc.).
+          Upload the PDF with your own signature already in it &mdash; the client signs the rest through the signing link.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Contract title</label>
+          <input type="text" class="form-input" id="uploadContractTitle" placeholder="e.g. Rammeavtale OBOS 2026">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Client in CRM (optional)</label>
+          <select class="form-input form-select" id="uploadContractClientSelect" onchange="fillUploadClientFromCRM()">
+            <option value="">— Not linked to a client —</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Company name</label>
+          <input type="text" class="form-input" id="uploadContractClientName" placeholder="OBOS BBL">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Signer (client)</label>
+            <input type="text" class="form-input" id="uploadContractSignerName" placeholder="Full name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Signer email</label>
+            <input type="text" class="form-input" id="uploadContractSignerEmail" placeholder="navn@obos.no">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Signing page language</label>
+            <select class="form-input form-select" id="uploadContractLang">
+              <option value="no">Norsk</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Signed by us</label>
+            <input type="text" class="form-input" id="uploadContractSenderName" value="Glenn Myklebust, CEO">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">PDF file</label>
+          <input type="file" id="uploadContractFile" accept="application/pdf,.pdf" style="display:none;" onchange="handleUploadContractFile(event)">
+          <div id="uploadContractDropzone" onclick="document.getElementById('uploadContractFile').click()"
+               style="border:1px dashed var(--border-light,var(--border));border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;background:var(--bg-tertiary);">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:28px;height:28px;color:var(--text-muted);margin-bottom:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <p id="uploadContractFileLabel" style="font-size:13px;color:var(--text-secondary);">Click to choose a PDF (max 8 MB)</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('uploadContractModal')">Cancel</button>
+        <button class="btn btn-secondary" onclick="saveUploadedContract(false)">Save as draft</button>
+        <button class="btn btn-primary" onclick="saveUploadedContract(true)" style="background:#10b981;border-color:#10b981;">Send for signing</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Cost Modal -->
   <div class="modal-overlay" id="costModal">
     <div class="modal" style="max-width: 520px;">
@@ -4520,6 +4601,453 @@
       document.getElementById('appWrapper').classList.remove('active');
     }
 
+    // ===== UPLOADED PDF CONTRACTS =====
+    // For contracts authored outside the system (Word/PDF) where we only need e-signing.
+    const MAX_CONTRACT_PDF_BYTES = 8 * 1024 * 1024;
+    const CONTRACT_LIST_COLS = 'id,client_id,template_type,status,contract_data,created_at,updated_at';
+    let uploadContractPdfData = null;
+    let uploadContractFileName = '';
+    let editingUploadContractId = null;
+    let pdfLibPromise = null;
+
+    function loadPdfLib() {
+      if (window.PDFLib) return Promise.resolve(window.PDFLib);
+      if (!pdfLibPromise) {
+        pdfLibPromise = new Promise((resolve, reject) => {
+          const el = document.createElement('script');
+          el.src = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+          el.onload = () => resolve(window.PDFLib);
+          el.onerror = () => reject(new Error('Could not load PDF library'));
+          document.head.appendChild(el);
+        });
+      }
+      return pdfLibPromise;
+    }
+
+    function dataUriToBytes(dataUri) {
+      const base64 = String(dataUri || '').split(',')[1] || '';
+      const bin = atob(base64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+
+    function bytesToPdfDataUri(bytes) {
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return 'data:application/pdf;base64,' + btoa(binary);
+    }
+
+    function pdfDataUriToBlobUrl(dataUri) {
+      return URL.createObjectURL(new Blob([dataUriToBytes(dataUri)], { type: 'application/pdf' }));
+    }
+
+    function isUploadedContract(contract) {
+      return contract?.template_type === 'upload' || contract?.contract_data?.source === 'upload';
+    }
+
+    function openUploadContractModal(clientId = null, contract = null) {
+      editingUploadContractId = contract?.id || null;
+      uploadContractPdfData = null;
+      uploadContractFileName = '';
+
+      const d = contract?.contract_data || {};
+      const linkedId = contract?.client_id || clientId || '';
+      const sel = document.getElementById('uploadContractClientSelect');
+      sel.innerHTML = '<option value="">&mdash; Not linked to a client &mdash;</option>' +
+        clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+      sel.value = linkedId;
+
+      document.getElementById('uploadContractModalTitle').textContent = contract ? 'Edit uploaded contract' : 'Upload signed PDF';
+      document.getElementById('uploadContractTitle').value = d.title || '';
+      document.getElementById('uploadContractClientName').value = d.client_name || clients.find(c => c.id === linkedId)?.name || '';
+      document.getElementById('uploadContractSignerName').value = d.client_contact_name || '';
+      document.getElementById('uploadContractSignerEmail').value = d.client_contact_email || '';
+      document.getElementById('uploadContractLang').value = d.lang || 'no';
+      document.getElementById('uploadContractSenderName').value = d.sender_signed_by || FOOCUS_INFO.contact;
+      document.getElementById('uploadContractFile').value = '';
+      document.getElementById('uploadContractFileLabel').textContent = d.file_name
+        ? `Current file: ${d.file_name} — click to replace`
+        : 'Click to choose a PDF (max 8 MB)';
+      openModal('uploadContractModal');
+    }
+
+    function fillUploadClientFromCRM() {
+      const client = clients.find(c => c.id === document.getElementById('uploadContractClientSelect').value);
+      if (client) document.getElementById('uploadContractClientName').value = client.name;
+    }
+
+    function handleUploadContractFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const label = document.getElementById('uploadContractFileLabel');
+      if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
+        alert('Only PDF files can be uploaded. Export your Word document to PDF first.');
+        e.target.value = '';
+        return;
+      }
+      if (file.size > MAX_CONTRACT_PDF_BYTES) {
+        alert(`The file is ${(file.size / 1024 / 1024).toFixed(1)} MB. Maximum is 8 MB.`);
+        e.target.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = ev => {
+        uploadContractPdfData = ev.target.result;
+        uploadContractFileName = file.name;
+        label.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) — click to replace`;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function saveUploadedContract(send) {
+      const title = document.getElementById('uploadContractTitle').value.trim();
+      const clientId = document.getElementById('uploadContractClientSelect').value || null;
+      const clientName = document.getElementById('uploadContractClientName').value.trim();
+      const signerName = document.getElementById('uploadContractSignerName').value.trim();
+      const signerEmail = document.getElementById('uploadContractSignerEmail').value.trim();
+      const lang = document.getElementById('uploadContractLang').value;
+      const senderName = document.getElementById('uploadContractSenderName').value.trim() || FOOCUS_INFO.contact;
+
+      const existing = editingUploadContractId ? contracts.find(c => c.id === editingUploadContractId) : null;
+      if (!title) return alert('Please enter a contract title.');
+      if (!uploadContractPdfData && !existing?.contract_data?.file_name) return alert('Please choose a PDF file.');
+
+      const data = {
+        ...(existing?.contract_data || {}),
+        source: 'upload',
+        title,
+        lang,
+        client_name: clientName,
+        client_contact_name: signerName,
+        client_contact_email: signerEmail,
+        sender_signed_by: senderName,
+        sender_signed_org: FOOCUS_INFO.name,
+        sender_signed_at: existing?.contract_data?.sender_signed_at || new Date().toISOString()
+      };
+      if (uploadContractPdfData) data.file_name = uploadContractFileName;
+
+      const record = {
+        client_id: clientId,
+        template_type: 'upload',
+        status: existing?.status === 'signed' ? 'signed' : (send ? 'sent' : 'draft'),
+        contract_data: data
+      };
+      if (uploadContractPdfData) record.pdf_data = uploadContractPdfData;
+
+      try {
+        let contractId = editingUploadContractId;
+        if (contractId) {
+          const { error } = await sb.from('contracts').update(record).eq('id', contractId);
+          if (error) throw error;
+          const idx = contracts.findIndex(c => c.id === contractId);
+          if (idx !== -1) contracts[idx] = { ...contracts[idx], client_id: record.client_id, template_type: 'upload', status: record.status, contract_data: data };
+        } else {
+          const { data: created, error } = await sb.from('contracts').insert(record).select(CONTRACT_LIST_COLS).single();
+          if (error) throw error;
+          contracts.unshift(created);
+          contractId = created.id;
+        }
+
+        editingUploadContractId = null;
+        uploadContractPdfData = null;
+        closeModal('uploadContractModal');
+        renderContracts();
+        if (currentClientId) {
+          const cl = clients.find(c => c.id === currentClientId);
+          if (cl) renderClientContracts(cl);
+        }
+
+        if (send) await showSigningLink(contractId, clientName, signerEmail);
+        else alert('Saved as draft. Open it again to send it for signing.');
+      } catch (error) {
+        if (error.message && error.message.includes('JWT expired') && await refreshToken()) return saveUploadedContract(send);
+        console.error('Save uploaded contract error:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    function signedFileName(d) {
+      const base = String(d?.file_name || d?.title || 'contract').replace(/\.pdf$/i, '');
+      return base.replace(/[^\w\-. æøåÆØÅ]/g, '_').trim() + ' - signed.pdf';
+    }
+
+    async function showSigningLink(contractId, clientName, email) {
+      const signingUrl = `${window.location.origin}?sign=${contractId}`;
+      const copied = await navigator.clipboard.writeText(signingUrl).then(() => true).catch(() => false);
+      alert(
+        `Ready for client signature!\n\nSigning link:\n${signingUrl}\n\n` +
+        `${copied ? '(Link copied to clipboard)\n\n' : ''}` +
+        `Send this link to ${clientName || 'the client'}${email ? ' at ' + email : ''}.`
+      );
+    }
+
+    // Fetch a PDF column on demand — the contract list is loaded without them to stay light.
+    async function fetchContractPdf(contractId, column) {
+      const { data, error } = await sb.from('contracts').select(column).eq('id', contractId).single();
+      if (error) throw error;
+      return data?.[column] || null;
+    }
+
+    // ===== SIGNATURE PAD =====
+    let signaturePadHasInk = false;
+    let signaturePadResizeHandler = null;
+    let signaturePadObserver = null;
+
+    // The backing store must track the CSS box, which is not final on the first frame.
+    function syncSignaturePadSize(canvas) {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width < 2 || rect.height < 2) return;
+      const w = Math.round(rect.width * ratio);
+      const h = Math.round(rect.height * ratio);
+      if (canvas.width === w && canvas.height === h) return;
+
+      let snapshot = null;
+      if (signaturePadHasInk && canvas.width > 1 && canvas.height > 1) {
+        snapshot = document.createElement('canvas');
+        snapshot.width = canvas.width;
+        snapshot.height = canvas.height;
+        snapshot.getContext('2d').drawImage(canvas, 0, 0);
+      }
+
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#111111';
+      if (snapshot) ctx.drawImage(snapshot, 0, 0, rect.width, rect.height);
+    }
+
+    function initSignaturePad() {
+      const canvas = document.getElementById('signaturePad');
+      if (!canvas) return;
+      canvas.style.touchAction = 'none';
+      signaturePadHasInk = false;
+      canvas.width = 1;
+      canvas.height = 1;
+      requestAnimationFrame(() => syncSignaturePadSize(canvas));
+
+      // The CSS box can settle late (fonts, the embedded PDF, a resized window),
+      // so track the element itself rather than relying on window resize alone.
+      if (signaturePadObserver) signaturePadObserver.disconnect();
+      if (window.ResizeObserver) {
+        signaturePadObserver = new ResizeObserver(() => syncSignaturePadSize(canvas));
+        signaturePadObserver.observe(canvas);
+      }
+      if (signaturePadResizeHandler) window.removeEventListener('resize', signaturePadResizeHandler);
+      signaturePadResizeHandler = () => syncSignaturePadSize(canvas);
+      window.addEventListener('resize', signaturePadResizeHandler);
+
+      let drawing = false;
+      const at = e => {
+        const r = canvas.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+      };
+
+      canvas.addEventListener('pointerdown', e => {
+        syncSignaturePadSize(canvas);
+        drawing = true;
+        try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+        const p = at(e);
+        const ctx = canvas.getContext('2d');
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        e.preventDefault();
+      });
+      canvas.addEventListener('pointermove', e => {
+        if (!drawing) return;
+        const p = at(e);
+        const ctx = canvas.getContext('2d');
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        signaturePadHasInk = true;
+        e.preventDefault();
+      });
+      const stop = () => { drawing = false; };
+      canvas.addEventListener('pointerup', stop);
+      canvas.addEventListener('pointercancel', stop);
+      canvas.addEventListener('pointerleave', stop);
+    }
+
+    function clearSignaturePad() {
+      const canvas = document.getElementById('signaturePad');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      signaturePadHasInk = false;
+    }
+
+    // Crop to the ink so the signature is not a mostly-empty box in the PDF.
+    function getSignatureImage() {
+      const canvas = document.getElementById('signaturePad');
+      if (!canvas || !signaturePadHasInk) return null;
+      try {
+        const { width, height } = canvas;
+        const px = canvas.getContext('2d').getImageData(0, 0, width, height).data;
+        let minX = width, minY = height, maxX = -1, maxY = -1;
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            if (px[(y * width + x) * 4 + 3] > 8) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        if (maxX < 0) return null;
+        const pad = 8;
+        minX = Math.max(0, minX - pad);
+        minY = Math.max(0, minY - pad);
+        maxX = Math.min(width - 1, maxX + pad);
+        maxY = Math.min(height - 1, maxY + pad);
+        const out = document.createElement('canvas');
+        out.width = maxX - minX + 1;
+        out.height = maxY - minY + 1;
+        out.getContext('2d').drawImage(canvas, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
+        return out.toDataURL('image/png');
+      } catch (error) {
+        console.error('Signature crop failed:', error);
+        return canvas.toDataURL('image/png');
+      }
+    }
+
+    // Append a signature page to the uploaded PDF and return it as a data URI.
+    async function buildSignedPdf(contract, sig) {
+      const { PDFDocument, StandardFonts, rgb } = await loadPdfLib();
+      const d = contract.contract_data || {};
+      const lang = d.lang || 'no';
+      const L = (no, en) => lang === 'en' ? en : no;
+      const locale = lang === 'en' ? 'en-GB' : 'nb-NO';
+      const dateOpts = { day: 'numeric', month: 'long', year: 'numeric' };
+
+      // Helvetica is WinAnsi-encoded: drop anything it cannot render rather than throwing.
+      const safe = t => String(t == null ? '' : t).replace(/[^\x20-\x7E\xA0-\xFF–—‘’“”€]/g, '');
+
+      const pdfDoc = await PDFDocument.load(dataUriToBytes(contract.pdf_data), { ignoreEncryption: true });
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const page = pdfDoc.addPage([595.28, 841.89]);
+
+      const mL = 56, mR = 56, pageW = 595.28;
+      const ink = rgb(0.09, 0.09, 0.11);
+      const muted = rgb(0.45, 0.45, 0.5);
+      const accent = rgb(0.10, 0.24, 0.43);
+      let y = 780;
+
+      const wrap = (text, maxWidth, size, useBold) => {
+        const f = useBold ? bold : font;
+        const words = safe(text).split(/\s+/).filter(Boolean);
+        const lines = [];
+        let line = '';
+        for (const w of words) {
+          const attempt = line ? line + ' ' + w : w;
+          if (f.widthOfTextAtSize(attempt, size) > maxWidth && line) {
+            lines.push(line);
+            line = w;
+          } else {
+            line = attempt;
+          }
+        }
+        if (line) lines.push(line);
+        return lines.length ? lines : [''];
+      };
+
+      const put = (text, o = {}) => {
+        const size = o.size ?? 10;
+        const x = o.x ?? mL;
+        const maxWidth = o.maxWidth ?? (pageW - mL - mR);
+        for (const ln of wrap(text, maxWidth, size, o.bold)) {
+          page.drawText(ln, { x, y, size, font: o.bold ? bold : font, color: o.color ?? ink });
+          y -= size + 4;
+        }
+        y -= (o.gap ?? 0);
+      };
+
+      put(L('SIGNERINGSBEKREFTELSE', 'SIGNATURE CONFIRMATION'), { size: 16, bold: true, color: accent, gap: 6 });
+      page.drawLine({ start: { x: mL, y: y + 6 }, end: { x: pageW - mR, y: y + 6 }, thickness: 1.2, color: accent });
+      y -= 22;
+
+      put(L('Avtale', 'Agreement'), { size: 8, bold: true, color: muted, gap: 2 });
+      put(d.title || '', { size: 13, bold: true, gap: 14 });
+
+      put(L('Parter', 'Parties'), { size: 8, bold: true, color: muted, gap: 2 });
+      put(`${d.sender_signed_org || FOOCUS_INFO.name} (${L('leverandør', 'supplier')})`, { size: 10, gap: 1 });
+      put(`${d.client_name || ''} (${L('kunde', 'client')})`, { size: 10, gap: 26 });
+
+      // Two signature columns
+      const colW = (pageW - mL - mR - 24) / 2;
+      const rightX = mL + colW + 24;
+      const boxTop = y;
+      const boxH = 190;
+
+      [[mL, colW], [rightX, colW]].forEach(([x]) => {
+        page.drawRectangle({
+          x, y: boxTop - boxH, width: colW, height: boxH,
+          borderColor: rgb(0.8, 0.8, 0.83), borderWidth: 1
+        });
+      });
+
+      // Supplier column
+      y = boxTop - 22;
+      put(L('LEVERANDØR', 'SUPPLIER'), { size: 8, bold: true, color: accent, x: mL + 14, maxWidth: colW - 28, gap: 8 });
+      put(d.sender_signed_by || FOOCUS_INFO.contact, { size: 11, bold: true, x: mL + 14, maxWidth: colW - 28, gap: 2 });
+      put(d.sender_signed_org || FOOCUS_INFO.name, { size: 9, color: muted, x: mL + 14, maxWidth: colW - 28, gap: 10 });
+      put(L('Signatur er påført i avtaledokumentet på forutgående sider.',
+            'Signature is applied within the agreement document on the preceding pages.'),
+          { size: 8, color: muted, x: mL + 14, maxWidth: colW - 28, gap: 6 });
+      put(`${L('Dato', 'Date')}: ${d.sender_signed_at ? new Date(d.sender_signed_at).toLocaleDateString(locale, dateOpts) : ''}`,
+          { size: 9, color: muted, x: mL + 14, maxWidth: colW - 28 });
+
+      // Client column
+      y = boxTop - 22;
+      put(L('KUNDE', 'CLIENT'), { size: 8, bold: true, color: accent, x: rightX + 14, maxWidth: colW - 28, gap: 8 });
+      put(sig.name, { size: 11, bold: true, x: rightX + 14, maxWidth: colW - 28, gap: 2 });
+      if (sig.title) put(sig.title, { size: 9, color: muted, x: rightX + 14, maxWidth: colW - 28, gap: 0 });
+      put(d.client_name || '', { size: 9, color: muted, x: rightX + 14, maxWidth: colW - 28, gap: 8 });
+
+      if (sig.signatureImage) {
+        try {
+          const png = await pdfDoc.embedPng(sig.signatureImage);
+          const scale = Math.min((colW - 28) / png.width, 52 / png.height, 1);
+          const w = png.width * scale, h = png.height * scale;
+          page.drawImage(png, { x: rightX + 14, y: y - h, width: w, height: h });
+          y -= h + 4;
+          page.drawLine({
+            start: { x: rightX + 14, y }, end: { x: rightX + colW - 14, y },
+            thickness: 0.8, color: rgb(0.8, 0.8, 0.83)
+          });
+          y -= 12;
+        } catch (e) { console.error('Signature image embed failed:', e); }
+      }
+
+      put(`${L('Dato', 'Date')}: ${new Date(sig.signedAt).toLocaleDateString(locale, dateOpts)}`,
+          { size: 9, color: muted, x: rightX + 14, maxWidth: colW - 28 });
+
+      // Audit trail
+      y = boxTop - boxH - 40;
+      put(L('Elektronisk signeringslogg', 'Electronic signing record'), { size: 8, bold: true, color: muted, gap: 4 });
+      put(`${L('Avtale-ID', 'Agreement ID')}: ${contract.id}`, { size: 8, color: muted, gap: 0 });
+      put(`${L('Signert', 'Signed')}: ${new Date(sig.signedAt).toLocaleString(locale)}`, { size: 8, color: muted, gap: 0 });
+      put(`${L('Signert av', 'Signed by')}: ${sig.name}${sig.email ? ' <' + sig.email + '>' : ''}`, { size: 8, color: muted, gap: 0 });
+      put(`${L('Nettleser', 'Browser')}: ${(navigator.userAgent || '').slice(0, 110)}`, { size: 8, color: muted, gap: 0 });
+      put(L('Dokumentet er signert elektronisk via Foocus CRM. Denne siden er lagt til automatisk og er en del av avtalen.',
+            'This document was signed electronically via Foocus CRM. This page was appended automatically and forms part of the agreement.'),
+          { size: 8, color: muted });
+
+      return bytesToPdfDataUri(await pdfDoc.save());
+    }
+
     // ===== E-SIGNING =====
     async function sendForSigning() {
       const data = gatherContractData();
@@ -4603,11 +5131,92 @@
                   <p style="font-size:12px;color:var(--text-muted);">${cd.signed_at ? new Date(cd.signed_at).toLocaleDateString(signLocale, {day:'numeric',month:'long',year:'numeric'}) : ''}</p>
                 </div>
               </div>
+              ${contract.signed_pdf_data ? `<div style="margin-top:28px;"><a id="signedPdfDownload" class="btn btn-primary" download="${escapeHtml(signedFileName(cd))}">${signLang === 'en' ? 'Download signed PDF' : 'Last ned signert PDF'}</a></div>` : ''}
             </div>`;
+          if (contract.signed_pdf_data) {
+            const link = document.getElementById('signedPdfDownload');
+            if (link) link.href = pdfDataUriToBlobUrl(contract.signed_pdf_data);
+          }
           return true;
         }
 
         const d = contract.contract_data || {};
+
+        // Contracts uploaded as a finished PDF: show the file itself, then the signing form.
+        if (isUploadedContract(contract)) {
+          const lang = d.lang || 'no';
+          contractLang = lang;
+          const L = (no, en) => lang === 'en' ? en : no;
+          const locale = lang === 'en' ? 'en-GB' : 'nb-NO';
+          document.getElementById('signingHeaderSubtitle').textContent = L('Kontraktsignering', 'Contract Signing');
+          const pdfUrl = contract.pdf_data ? pdfDataUriToBlobUrl(contract.pdf_data) : '';
+          const fileName = d.file_name || 'kontrakt.pdf';
+
+          document.getElementById('signingContent').innerHTML = `
+            <div style="margin-bottom:20px;">
+              <h2 style="margin:0 0 6px 0;">${escapeHtml(d.title || '')}</h2>
+              <p style="color:var(--text-secondary);font-size:14px;margin:0;">${escapeHtml(d.client_name || '')}</p>
+            </div>
+
+            ${pdfUrl ? `
+              <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:#525659;margin-bottom:10px;">
+                <iframe src="${pdfUrl}" title="${escapeHtml(fileName)}" style="width:100%;height:70vh;border:none;display:block;"></iframe>
+              </div>
+              <p style="margin:0 0 28px 0;font-size:13px;">
+                <a href="${pdfUrl}" download="${escapeHtml(fileName)}" style="color:var(--accent);">${L('Last ned avtalen som PDF', 'Download the agreement as PDF')}</a>
+              </p>` : `
+              <p style="color:var(--urgent);margin-bottom:28px;">${L('Fant ikke PDF-filen for denne avtalen.', 'The PDF file for this agreement could not be found.')}</p>`}
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+              <div style="background:var(--bg-card);border:1px solid var(--client);border-radius:var(--radius);padding:24px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="width:20px;height:20px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <h3 style="margin:0;color:var(--client);">${L('Signert av leverandør', 'Signed by Supplier')}</h3>
+                </div>
+                <p style="font-size:14px;font-weight:600;margin-bottom:4px;">${escapeHtml(d.sender_signed_by || FOOCUS_INFO.contact)}</p>
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">${escapeHtml(d.sender_signed_org || FOOCUS_INFO.name)}</p>
+                <p style="font-size:12px;color:var(--text-muted);">${d.sender_signed_at ? new Date(d.sender_signed_at).toLocaleDateString(locale, {day:'numeric',month:'long',year:'numeric'}) : ''}</p>
+              </div>
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="width:20px;height:20px;"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                  <h3 style="margin:0;">${L('Venter på din signatur', 'Awaiting Your Signature')}</h3>
+                </div>
+                <p style="font-size:13px;color:var(--text-muted);">${L('Les gjennom avtalen over og signer nedenfor.', 'Please review the agreement above and sign below.')}</p>
+              </div>
+            </div>
+
+            <div class="signing-form" id="signingForm">
+              <h3>${L('Signer denne avtalen', 'Sign this Agreement')}</h3>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                  <label class="form-label">${L('Fullt navn', 'Full name')}</label>
+                  <input type="text" class="form-input" id="signerName" value="${escapeHtml(d.client_contact_name || '')}" placeholder="${L('Skriv inn fullt navn', 'Enter your full name')}">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">${L('Tittel / rolle', 'Title / role')}</label>
+                  <input type="text" class="form-input" id="signerTitle" placeholder="${L('F.eks. Innkjøpssjef', 'e.g. Head of Procurement')}">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">${L('Signatur (valgfritt — tegn med mus eller finger)', 'Signature (optional — draw with mouse or finger)')}</label>
+                <canvas id="signaturePad" style="width:100%;height:140px;background:#ffffff;border:1px solid var(--border);border-radius:var(--radius);display:block;cursor:crosshair;"></canvas>
+                <button type="button" class="btn btn-secondary" onclick="clearSignaturePad()" style="margin-top:8px;padding:6px 12px;font-size:12px;">${L('Tøm', 'Clear')}</button>
+              </div>
+              <label class="signing-checkbox">
+                <input type="checkbox" id="signerAgree">
+                ${L(`Jeg har lest og godtar vilkårene i denne avtalen på vegne av <strong>${escapeHtml(d.client_name || 'min organisasjon')}</strong>.`,
+                     `I have read and agree to the terms of this agreement on behalf of <strong>${escapeHtml(d.client_name || 'my organization')}</strong>.`)}
+              </label>
+              <button class="btn btn-primary" onclick="submitSignature('${contractId}')" style="width:100%;padding:14px;font-size:15px;background:#10b981;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="m5 12 5 5L20 7"/></svg>
+                ${L('Signer avtalen', 'Sign Agreement')}
+              </button>
+            </div>`;
+          initSignaturePad();
+          return true;
+        }
+
         // Set contract language for signing page
         if (d.lang) contractLang = d.lang;
         document.getElementById('signingHeaderSubtitle').textContent = contractLang === 'en' ? 'Contract Signing' : 'Kontraktsignering';
@@ -4760,28 +5369,52 @@
 
     async function submitSignature(contractId) {
       const name = document.getElementById('signerName').value.trim();
-      const title = '';
+      const titleEl = document.getElementById('signerTitle');
+      const title = titleEl ? titleEl.value.trim() : '';
       const agreed = document.getElementById('signerAgree').checked;
+      const signatureImage = getSignatureImage();
 
-      if (!name) return alert('Vennligst skriv inn fullt navn.');
-      if (!agreed) return alert('Vennligst bekreft at du godtar vilkårene.');
+      if (!name) return alert('Vennligst skriv inn fullt navn. / Please enter your full name.');
+      if (!agreed) return alert('Vennligst bekreft at du godtar vilkårene. / Please confirm you accept the terms.');
 
+      const submitBtn = document.querySelector('#signingForm .btn-primary');
+      const submitBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Signing…'; }
+
+      let signedPdfDataUri = null;
       try {
         const { data: contract } = await sb.from('contracts').select('*').eq('id', contractId).single();
         if (!contract) throw new Error('Contract not found');
 
+        const signedAt = new Date().toISOString();
         const updatedData = {
           ...contract.contract_data,
           signed_by: name,
           signed_title: title,
-          signed_at: new Date().toISOString(),
+          signed_at: signedAt,
           signed_ip: 'browser'
         };
 
-        const { error: updateError } = await sb.from('contracts').update({
-          status: 'signed',
-          contract_data: updatedData
-        }).eq('id', contractId);
+        // Uploaded PDFs get a signature page appended so the file itself carries the signature.
+        if (isUploadedContract(contract) && contract.pdf_data) {
+          try {
+            signedPdfDataUri = await buildSignedPdf(contract, {
+              name,
+              title,
+              email: contract.contract_data?.client_contact_email || '',
+              signatureImage,
+              signedAt
+            });
+            updatedData.has_signed_pdf = true;
+          } catch (e) {
+            console.error('Signed PDF generation failed:', e);
+          }
+        }
+
+        const updatePayload = { status: 'signed', contract_data: updatedData };
+        if (signedPdfDataUri) updatePayload.signed_pdf_data = signedPdfDataUri;
+
+        const { error: updateError } = await sb.from('contracts').update(updatePayload).eq('id', contractId);
         if (updateError) throw new Error('Could not save signature: ' + updateError.message);
 
         // Notify Foocus that contract was signed
@@ -4806,8 +5439,14 @@
             <p style="color:var(--text-secondary);margin-bottom:8px;">${sigLang === 'en' ? 'Signed by' : 'Signert av'} <strong>${escapeHtml(name)}</strong></p>
             <p style="color:var(--text-muted);font-size:12px;">${new Date().toLocaleString(sigLang === 'en' ? 'en-GB' : 'nb-NO')}</p>
             <p style="color:var(--text-secondary);margin-top:16px;">${sigLang === 'en' ? 'A confirmation has been sent. You can close this page.' : 'En bekreftelse er sendt. Du kan lukke denne siden.'}</p>
+            ${signedPdfDataUri ? `<div style="margin-top:24px;"><a id="signedPdfDownload" class="btn btn-primary" download="${escapeHtml(signedFileName(contract.contract_data))}">${sigLang === 'en' ? 'Download signed PDF' : 'Last ned signert PDF'}</a></div>` : ''}
           </div>`;
+        if (signedPdfDataUri) {
+          const link = document.getElementById('signedPdfDownload');
+          if (link) link.href = pdfDataUriToBlobUrl(signedPdfDataUri);
+        }
       } catch (error) {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = submitBtnHtml; }
         alert('Error signing contract: ' + error.message);
       }
     }
@@ -4954,7 +5593,7 @@
           sb.from('clients').select('*').order('updated_at', { ascending: false }),
           sb.from('tasks').select('*').order('due_date', { ascending: true }),
           sb.from('documents').select('id,client_id,name,doc_type,created_at').order('created_at', { ascending: false }),
-          sb.from('contracts').select('*').order('created_at', { ascending: false })
+          sb.from('contracts').select(CONTRACT_LIST_COLS).order('created_at', { ascending: false })
         ]), 15000);
 
         if (clientsRes.error) console.error('Clients query error:', clientsRes.error);
@@ -4974,7 +5613,7 @@
         try { const r = await withTimeout(sb.from('clients').select('*'), 10000); clients = r.data || []; console.log('Clients loaded:', clients.length); } catch(e2) { console.error('Individual clients load failed:', e2); }
         try { const r = await withTimeout(sb.from('tasks').select('*'), 10000); tasks = r.data || []; console.log('Tasks loaded:', tasks.length); } catch(e2) { console.error('Individual tasks load failed:', e2); }
         try { const r = await withTimeout(sb.from('documents').select('id,client_id,name,doc_type,created_at'), 10000); documents = r.data || []; console.log('Docs loaded:', documents.length); } catch(e2) { console.error('Individual docs load failed:', e2); }
-        try { const r = await withTimeout(sb.from('contracts').select('*'), 10000); contracts = r.data || []; console.log('Contracts loaded:', contracts.length); } catch(e2) { console.error('Individual contracts load failed:', e2); }
+        try { const r = await withTimeout(sb.from('contracts').select(CONTRACT_LIST_COLS), 10000); contracts = r.data || []; console.log('Contracts loaded:', contracts.length); } catch(e2) { console.error('Individual contracts load failed:', e2); }
       }
 
       // Load financials
@@ -6488,13 +7127,13 @@
       }
 
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><h3>No contracts</h3><p>Create your first contract to get started.</p><button class="btn btn-primary" onclick="openContractWizard()">New Contract</button></div>`;
+        list.innerHTML = `<div class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><h3>No contracts</h3><p>Create your first contract to get started.</p><div style="display:flex;gap:10px;justify-content:center;"><button class="btn btn-secondary" onclick="openUploadContractModal()">Upload PDF</button><button class="btn btn-primary" onclick="openContractWizard()">New Contract</button></div></div>`;
         return;
       }
 
       list.innerHTML = filtered.map(c => {
         const data = c.contract_data || {};
-        const templateLabel = c.template_type === 'service' ? 'Service Agreement' : 'Project Agreement';
+        const templateLabel = c.template_type === 'upload' ? 'Uploaded PDF' : c.template_type === 'service' ? 'Service Agreement' : 'Project Agreement';
         const dateStr = c.created_at ? new Date(c.created_at).toLocaleDateString('nb-NO') : '';
         const totalAmount = (data.pricing || []).reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
 
@@ -6514,6 +7153,9 @@
             </div>
             <div class="contract-item-actions">
               <span class="contract-status ${c.status}">${STATUS_LABELS[c.status] || c.status}</span>
+              ${(c.template_type === 'upload' && c.status === 'draft') ? `<button class="task-action" onclick="sendUploadedForSigning('${c.id}', event)" title="Send for signing" style="color:var(--client);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button>` : ''}
+              ${c.status === 'sent' ? `<button class="task-action" onclick="copySigningLink('${c.id}', event)" title="Copy signing link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>` : ''}
+              ${c.contract_data?.has_signed_pdf ? `<button class="task-action" onclick="downloadSignedContract('${c.id}', event)" title="Download signed PDF" style="color:var(--client);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>` : ''}
               ${c.status === 'sent' ? `<button class="task-action" onclick="recallContract('${c.id}', event)" title="Tilbakekall" style="color:var(--urgent);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>` : ''}
               <button class="task-action" onclick="editContract('${c.id}', event)" title="Rediger"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
               <button class="task-action delete" onclick="confirmDeleteContract('${c.id}', event)" title="Slett"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg></button>
@@ -6537,16 +7179,22 @@
       document.getElementById('tab-contracts').innerHTML = `
         <div class="section-header">
           <span class="section-title">Contracts (${clientContracts.length})</span>
-          <button class="btn btn-secondary" onclick="openContractWizard('${client.id}')">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-            New Contract
-          </button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary" onclick="openUploadContractModal('${client.id}')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload PDF
+            </button>
+            <button class="btn btn-secondary" onclick="openContractWizard('${client.id}')">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              New Contract
+            </button>
+          </div>
         </div>
         <div class="contracts-list">
           ${clientContracts.length === 0 ? '<p style="color:var(--text-muted);padding:20px;">No contracts yet.</p>' :
             clientContracts.map(c => {
               const data = c.contract_data || {};
-              const templateLabel = c.template_type === 'service' ? 'Service Agreement' : 'Project Agreement';
+              const templateLabel = c.template_type === 'upload' ? 'Uploaded PDF' : c.template_type === 'service' ? 'Service Agreement' : 'Project Agreement';
               const totalAmount = (data.pricing || []).reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
               return `
                 <div class="contract-item" onclick="viewContract('${c.id}')">
@@ -6561,14 +7209,22 @@
         </div>`;
     }
 
-    function viewContract(contractId) {
+    async function viewContract(contractId) {
       const contract = contracts.find(c => c.id === contractId);
       if (!contract) return;
-      if (contract.pdf_data) {
-        const win = window.open();
-        win.document.write(`<iframe src="${contract.pdf_data}" style="width:100%;height:100%;border:none;"></iframe>`);
-      } else {
-        editContract(contractId);
+      const preferSigned = !!contract.contract_data?.has_signed_pdf;
+      try {
+        let dataUri = contract.pdf_data || null;
+        if (preferSigned) dataUri = await fetchContractPdf(contractId, 'signed_pdf_data');
+        if (!dataUri) dataUri = await fetchContractPdf(contractId, 'pdf_data');
+        if (!dataUri) {
+          if (isUploadedContract(contract)) return alert('No PDF is stored for this contract.');
+          return editContract(contractId);
+        }
+        window.open(pdfDataUriToBlobUrl(dataUri), '_blank');
+      } catch (error) {
+        if (error.message && error.message.includes('JWT expired') && await refreshToken()) return viewContract(contractId);
+        alert('Could not open the PDF: ' + error.message);
       }
     }
 
@@ -6576,8 +7232,49 @@
       if (event) event.stopPropagation();
       const contract = contracts.find(c => c.id === contractId);
       if (!contract) return;
+      if (isUploadedContract(contract)) return openUploadContractModal(contract.client_id, contract);
       editingContractId = contractId;
       openContractWizard(contract.client_id, contract);
+    }
+
+    async function sendUploadedForSigning(contractId, event) {
+      if (event) event.stopPropagation();
+      const contract = contracts.find(c => c.id === contractId);
+      if (!contract) return;
+      try {
+        const { error } = await sb.from('contracts').update({ status: 'sent' }).eq('id', contractId);
+        if (error) throw error;
+        contract.status = 'sent';
+        renderContracts();
+        await showSigningLink(contractId, contract.contract_data?.client_name, contract.contract_data?.client_contact_email);
+      } catch (error) {
+        if (error.message && error.message.includes('JWT expired') && await refreshToken()) return sendUploadedForSigning(contractId, event);
+        alert('Could not send for signing: ' + error.message);
+      }
+    }
+
+    async function copySigningLink(contractId, event) {
+      if (event) event.stopPropagation();
+      const contract = contracts.find(c => c.id === contractId);
+      await showSigningLink(contractId, contract?.contract_data?.client_name, contract?.contract_data?.client_contact_email);
+    }
+
+    async function downloadSignedContract(contractId, event) {
+      if (event) event.stopPropagation();
+      const contract = contracts.find(c => c.id === contractId);
+      try {
+        const dataUri = await fetchContractPdf(contractId, 'signed_pdf_data');
+        if (!dataUri) return alert('No countersigned PDF is stored for this contract.');
+        const a = document.createElement('a');
+        a.href = pdfDataUriToBlobUrl(dataUri);
+        a.download = signedFileName(contract?.contract_data);
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (error) {
+        if (error.message && error.message.includes('JWT expired') && await refreshToken()) return downloadSignedContract(contractId, event);
+        alert('Could not download: ' + error.message);
+      }
     }
 
     function confirmDeleteContract(contractId, event) {
