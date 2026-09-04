@@ -8398,6 +8398,11 @@
         }
       }
 
+      // Custom clauses — free text from the Deliverables step
+      if ((d.custom_clauses || '').trim()) {
+        d.custom_clauses.split('\n').filter(l => l.trim()).forEach(pp => para(pp));
+      }
+
       // Pricing
       heading(sn + '. ' + t('pricing'));
       sn++;
@@ -8461,6 +8466,30 @@
       bullet(t('price_adjust').replace('{method}', adjustText));
       if (d.billing_notes) { bullet(d.billing_notes); }
       if (d.billing_email) { note(t('billing_address') + ': ' + d.billing_email); }
+
+      // Optional add-ons — same two-column layout as the pricing rows above
+      if (d.addons && d.addons.length > 0) {
+        subheading(contractLang === 'en' ? 'Optional add-ons' : 'Valgfrie tillegg');
+        note(contractLang === 'en'
+          ? 'Can be added at signing or at any point during the contract period.'
+          : 'Kan legges til ved signering eller underveis i avtaleperioden.');
+        const a1 = mL + 3, a2 = pageW - mR - 3;
+        doc.setFontSize(8.5);
+        d.addons.forEach((a, i) => {
+          // Wrap the description short of the price column so the two never collide
+          doc.setFont('helvetica', 'normal');
+          const descLines = doc.splitTextToSize(a.description || '', cW - 50);
+          const rowH = Math.max(7, descLines.length * 4.5 + 2.5);
+          checkBreak(rowH + 1);
+          if (i % 2 === 1) { doc.setFillColor(250, 250, 252); doc.rect(mL, y - 1, cW, rowH, 'F'); }
+          doc.setTextColor(...txt);
+          doc.text(descLines, a1, y + 4);
+          doc.setFont('helvetica', 'bold');
+          doc.text(a.price || '', a2, y + 4, { align: 'right' });
+          y += rowH;
+        });
+        doc.setFont('helvetica', 'normal');
+      }
       y += 4;
 
       // Period
