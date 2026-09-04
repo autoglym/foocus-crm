@@ -3606,9 +3606,14 @@
                     </select>
                   </div>
                   <div class="form-group">
-                    <label class="form-label">Oppsigelsesfrist (dager)</label>
+                    <label class="form-label">Varslingsfrist før fornyelse (dager)</label>
                     <input type="number" class="form-input" id="contractNoticeDays" value="90" min="0">
                   </div>
+                </div>
+                <div class="form-group" style="margin-top:12px;">
+                  <label class="form-label">Egen tekst om bindingstid og oppsigelse</label>
+                  <textarea class="form-input" id="contractPeriodTerms" rows="6" spellcheck="false" placeholder="F.eks. Avtalen løper i en bindende periode på 24 måneder fra avtalt startdato og kan ikke sies opp til ordinært opphør i denne perioden."></textarea>
+                  <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Fylles dette ut, <strong>erstatter</strong> teksten de to automatiske linjene om avtaleperiode og fornyelse — ellers ville kontrakten motsi seg selv. Linjen om hvor oppsigelse sendes beholdes. Tom linje gir nytt avsnitt.</p>
                 </div>
               </div>
 
@@ -5594,11 +5599,7 @@
           </table>` : ''}
 
           <h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">${sectionNum + 2}. ${t('period')}</h3>
-          <ul>
-            <li>${t('period_text').replace('{months}', d.period_months || 12).replace('{date}', d.start_date ? new Date(d.start_date).toLocaleDateString(previewDateLocale) : t('signing_date'))}</li>
-            ${d.auto_renewal ? '<li>' + t('auto_renewal').replace('{months}', d.period_months || 12).replace('{days}', d.notice_days || 90) + '</li>' : '<li>' + t('no_renewal') + '</li>'}
-            <li>${t('termination')}</li>
-          </ul>
+          ${periodClausesHtml(d, previewDateLocale)}
 
           <h3 style="margin-top:28px;margin-bottom:12px;color:var(--accent);">${sectionNum + 3}. ${t('confidentiality')}</h3>
           <p>${t('confidentiality_text')}</p>
@@ -7220,6 +7221,29 @@
 
     function t(key) { return CONTRACT_TEXTS[contractLang]?.[key] || CONTRACT_TEXTS['en'][key] || key; }
 
+    // The period section, as HTML. A custom binding-period text replaces the
+    // generated period and renewal lines because it restates both — keeping
+    // them would leave the contract contradicting itself. The procedural line
+    // saying where notice is sent is not covered by that text, so it stays.
+    function periodClausesHtml(d, dateLocale) {
+      const terms = (d.period_terms || '').trim();
+      const tail = `<ul><li>${t('termination')}</li></ul>`;
+      if (terms) {
+        return terms.split('\n').filter(l => l.trim())
+          .map(pp => `<p style="margin:0 0 10px 0;line-height:1.7;">${escapeHtml(pp)}</p>`)
+          .join('') + tail;
+      }
+      const months = d.period_months || 12;
+      const dateStr = d.start_date ? new Date(d.start_date).toLocaleDateString(dateLocale) : t('signing_date');
+      return `<ul>
+          <li>${t('period_text').replace('{months}', months).replace('{date}', dateStr)}</li>
+          ${d.auto_renewal
+            ? `<li>${t('auto_renewal').replace('{months}', months).replace('{days}', d.notice_days || 90)}</li>`
+            : `<li>${t('no_renewal')}</li>`}
+          <li>${t('termination')}</li>
+        </ul>`;
+    }
+
     const CONTRACT_TEXTS = {
       no: {
         agreement: 'SAMARBEIDSAVTALE',
@@ -7684,6 +7708,7 @@
       document.getElementById('contractDuration').value = '12';
       document.getElementById('contractAutoRenewal').value = 'yes';
       document.getElementById('contractNoticeDays').value = '90';
+      document.getElementById('contractPeriodTerms').value = '';
       document.getElementById('contractFoocusContact').value = FOOCUS_INFO.contact;
       document.getElementById('contractFoocusEmail').value = FOOCUS_INFO.email;
       document.getElementById('contractProjectScope').value = '';
@@ -7729,6 +7754,7 @@
       document.getElementById('contractDuration').value = d.period_months ?? 12;
       document.getElementById('contractAutoRenewal').value = d.auto_renewal ? 'yes' : 'no';
       document.getElementById('contractNoticeDays').value = d.notice_days ?? 90;
+      document.getElementById('contractPeriodTerms').value = d.period_terms || '';
       document.getElementById('contractStartDate').value = d.start_date || '';
       document.getElementById('contractFoocusContact').value = d.foocus_contact || FOOCUS_INFO.contact;
       document.getElementById('contractFoocusEmail').value = d.foocus_email || FOOCUS_INFO.email;
@@ -7938,6 +7964,7 @@
         addons,
         payment_days: parseInt(document.getElementById('contractPaymentDays').value) || 10,
         price_adjustment: document.getElementById('contractPriceAdjustment').value,
+        period_terms: document.getElementById('contractPeriodTerms').value.trim(),
         billing_notes: document.getElementById('contractBillingNotes').value.trim(),
         start_date: document.getElementById('contractStartDate').value,
         period_months: parseInt(document.getElementById('contractDuration').value) || 12,
@@ -8062,11 +8089,7 @@
         </table>` : ''}
 
         <h2>4. ${t('period')}</h2>
-        <ul>
-          <li>${t('period_text').replace('{months}', d.period_months).replace('{date}', d.start_date ? new Date(d.start_date).toLocaleDateString(previewDateLocale) : t('signing_date'))}</li>
-          ${d.auto_renewal ? `<li>${t('auto_renewal').replace('{months}', d.period_months).replace('{days}', d.notice_days)}</li>` : `<li>${t('no_renewal')}</li>`}
-          <li>${t('termination')}</li>
-        </ul>
+        ${periodClausesHtml(d, previewDateLocale)}
 
         <h2>5. ${t('confidentiality')}</h2>
         <p>${t('confidentiality_text')}</p>
@@ -8443,11 +8466,16 @@
       // Period
       heading(sn + '. ' + t('period'));
       sn++;
-      bullet(t('period_text').replace('{months}', d.period_months).replace('{date}', d.start_date ? new Date(d.start_date).toLocaleDateString(contractLang === 'no' ? 'nb-NO' : 'en-GB', {day:'numeric',month:'long',year:'numeric'}) : t('signing_date')));
-      if (d.auto_renewal) {
-        bullet(t('auto_renewal').replace('{months}', d.period_months).replace('{days}', d.notice_days));
+      if ((d.period_terms || '').trim()) {
+        // Custom binding-period text replaces the generated period/renewal lines
+        d.period_terms.split('\n').filter(l => l.trim()).forEach(pp => para(pp));
       } else {
-        bullet(t('no_renewal'));
+        bullet(t('period_text').replace('{months}', d.period_months).replace('{date}', d.start_date ? new Date(d.start_date).toLocaleDateString(contractLang === 'no' ? 'nb-NO' : 'en-GB', {day:'numeric',month:'long',year:'numeric'}) : t('signing_date')));
+        if (d.auto_renewal) {
+          bullet(t('auto_renewal').replace('{months}', d.period_months).replace('{days}', d.notice_days));
+        } else {
+          bullet(t('no_renewal'));
+        }
       }
       bullet(t('termination'));
       y += 4;
