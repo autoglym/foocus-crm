@@ -3423,7 +3423,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                   Legg til partner
                 </button>
-                <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Opptil 10 partnere er inkludert i lisensavgiften.</p>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">Opptil 6 partnere er inkludert i lisensavgiften.</p>
               </div>
 
               <div class="wizard-section" id="wizardChannelsSection">
@@ -5557,7 +5557,7 @@
 
         if (isService) {
           contractHtml += `<h4>${t('platform_title')}</h4><p>${t('platform_desc').replace('{client}', escapeHtml(d.client_name || ''))}</p>`;
-          if ((d.partners || []).length > 0) contractHtml += `<p><strong>${t('partners_included')}</strong></p><ul>${d.partners.map(p => '<li>' + escapeHtml(p) + '</li>').join('')}</ul>`;
+          if ((d.partners || []).length > 0) contractHtml += `<p><strong>${t('partners_included')}</strong></p><ul>${d.partners.map(p => '<li>' + escapeHtml(p) + '</li>').join('')}</ul><p style="font-size:12px;color:var(--text-muted);">${t('partners_note')}</p>`;
           if ((d.channels || []).length > 0) contractHtml += `<p><strong>${t('channels')}</strong></p><ul>${d.channels.map(c => '<li>' + getCL(c) + '</li>').join('')}</ul>`;
           if ((d.measurements || []).length > 0) contractHtml += `<p><strong>${t('measurements')}</strong></p><ul>${d.measurements.map(m => '<li>' + getML(m) + '</li>').join('')}</ul>`;
           if ((d.deliverables || []).length > 0) contractHtml += `<p><strong>${t('deliverables')}</strong></p><ul>${d.deliverables.map(dl => '<li>' + getDL(dl) + '</li>').join('')}</ul>`;
@@ -7256,7 +7256,7 @@
         platform_title: 'Del 1: Foocus-plattformen',
         platform_desc: 'Foocus leverer lopende maling, dokumentasjon og rapportering av partnerverdi som skapes gjennom {client}s kommersielle aktiviteter i lopet av avtaleperioden.',
         partners_included: 'Partnere inkludert i avtalen:',
-        partners_note: 'Ytterligere partnere kan legges til etter avtale. Inntil 10 partnere er inkludert i lisensavgiften.',
+        partners_note: 'Ytterligere partnere kan legges til etter avtale. Inntil 6 partnere er inkludert i lisensavgiften.',
         channels: 'Kanaler som males:',
         measurements: 'Hva som males:',
         deliverables: 'Leveranser inkludert i lisensen:',
@@ -7326,7 +7326,7 @@
         platform_title: 'The Foocus Platform',
         platform_desc: 'Foocus provides ongoing measurement, documentation and reporting of partner value generated through {client}\'s commercial activities during the contract period.',
         partners_included: 'Partners included:',
-        partners_note: 'Additional partners may be added by agreement. Up to 10 partners are included in the license fee.',
+        partners_note: 'Additional partners may be added by agreement. Up to 6 partners are included in the license fee.',
         channels: 'Channels monitored:',
         measurements: 'Measurements:',
         deliverables: 'Deliverables included:',
