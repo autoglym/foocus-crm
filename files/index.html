@@ -4821,13 +4821,28 @@
       return base.replace(/[^\w\-. æøåÆØÅ]/g, '_').trim() + ' - signed.pdf';
     }
 
+    // A signing link carries a one-contract token. Issuing a new one revokes earlier links
+    // for the same contract; tokens expire after 30 days (see issue_signing_token in Supabase).
+    async function issueSigningUrl(contractId) {
+      const { data: token, error } = await sb.rpc('issue_signing_token', { p_contract_id: contractId });
+      if (error) throw error;
+      return `${window.location.origin}?sign=${contractId}&t=${encodeURIComponent(token)}`;
+    }
+
     async function showSigningLink(contractId, clientName, email) {
-      const signingUrl = `${window.location.origin}?sign=${contractId}`;
+      let signingUrl;
+      try {
+        signingUrl = await issueSigningUrl(contractId);
+      } catch (error) {
+        alert('Could not create signing link: ' + error.message);
+        return;
+      }
       const copied = await navigator.clipboard.writeText(signingUrl).then(() => true).catch(() => false);
       alert(
         `Ready for client signature!\n\nSigning link:\n${signingUrl}\n\n` +
         `${copied ? '(Link copied to clipboard)\n\n' : ''}` +
-        `Send this link to ${clientName || 'the client'}${email ? ' at ' + email : ''}.`
+        `Send this link to ${clientName || 'the client'}${email ? ' at ' + email : ''}.\n\n` +
+        `The link is valid for 30 days. Earlier links for this contract no longer work.`
       );
     }
 
@@ -5378,7 +5393,7 @@
           editingContractId = contractId;
         }
 
-        const signingUrl = `${window.location.origin}?sign=${contractId}`;
+        const signingUrl = await issueSigningUrl(contractId);
         const clientEmail = data.client_contact_email || data.billing_email || '';
 
         const copyResult = await navigator.clipboard.writeText(signingUrl).then(() => true).catch(() => false);
@@ -5395,18 +5410,30 @@
       }
     }
 
+    // The public signing page never reads tables directly: it goes through
+    // get_contract_for_signing / sign_contract, which check the link's token.
+    let signingToken = '';
+
+    async function fetchContractForSigning(contractId) {
+      if (!signingToken) return null;
+      const { data, error } = await sb.rpc('get_contract_for_signing', { p_contract_id: contractId, p_token: signingToken });
+      if (error) throw error;
+      return data;
+    }
+
     async function checkSigningMode() {
       const params = new URLSearchParams(window.location.search);
       const contractId = params.get('sign');
       if (!contractId) return false;
+      signingToken = params.get('t') || '';
 
       // Show signing page, hide auth
       document.getElementById('signingPage').style.display = 'block';
       document.getElementById('authContainer').style.display = 'none';
 
       try {
-        const { data: contract, error } = await sb.from('contracts').select('*').eq('id', contractId).single();
-        if (error || !contract) throw new Error('Contract not found');
+        const contract = await fetchContractForSigning(contractId);
+        if (!contract) throw new Error('Contract not found');
 
         if (contract.status === 'signed') {
           const cd = contract.contract_data || {};
@@ -5678,17 +5705,10 @@
 
       let signedPdfDataUri = null;
       try {
-        const { data: contract } = await sb.from('contracts').select('*').eq('id', contractId).single();
+        const contract = await fetchContractForSigning(contractId);
         if (!contract) throw new Error('Contract not found');
 
         const signedAt = new Date().toISOString();
-        const updatedData = {
-          ...contract.contract_data,
-          signed_by: name,
-          signed_title: title,
-          signed_at: signedAt,
-          signed_ip: 'browser'
-        };
 
         // Uploaded PDFs get a signature page appended so the file itself carries the signature.
         if (isUploadedContract(contract) && contract.pdf_data) {
@@ -5700,16 +5720,19 @@
               signatureImage,
               signedAt
             });
-            updatedData.has_signed_pdf = true;
           } catch (e) {
             console.error('Signed PDF generation failed:', e);
           }
         }
 
-        const updatePayload = { status: 'signed', contract_data: updatedData };
-        if (signedPdfDataUri) updatePayload.signed_pdf_data = signedPdfDataUri;
-
-        const { error: updateError } = await sb.from('contracts').update(updatePayload).eq('id', contractId);
+        // The server stamps signed_at and only writes the signature fields.
+        const { error: updateError } = await sb.rpc('sign_contract', {
+          p_contract_id: contractId,
+          p_token: signingToken,
+          p_signed_by: name,
+          p_signed_title: title,
+          p_signed_pdf_data: signedPdfDataUri
+        });
         if (updateError) throw new Error('Could not save signature: ' + updateError.message);
 
         // Notify Foocus that contract was signed
