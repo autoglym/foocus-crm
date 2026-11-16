@@ -5726,14 +5726,34 @@
         }
 
         // The server stamps signed_at and only writes the signature fields.
-        const { error: updateError } = await sb.rpc('sign_contract', {
+        const { data: signResult, error: updateError } = await sb.rpc('sign_contract', {
           p_contract_id: contractId,
           p_token: signingToken,
           p_signed_by: name,
           p_signed_title: title,
-          p_signed_pdf_data: signedPdfDataUri
+          p_signed_pdf_data: signedPdfDataUri,
+          p_signature_image: signatureImage
         });
         if (updateError) throw new Error('Could not save signature: ' + updateError.message);
+
+        // Generated contracts are rendered here, after signing, so the file carries the
+        // signature and the server's own timestamp rather than this browser's clock.
+        if (!signedPdfDataUri && signResult?.contract_data) {
+          try {
+            const signedData = signResult.contract_data;
+            const doc = buildContractPdfDoc(signedData, (contract.template_type || 'service') === 'service');
+            signedPdfDataUri = doc.output('datauristring');
+            const { error: attachError } = await sb.rpc('attach_signed_pdf', {
+              p_contract_id: contractId,
+              p_token: signingToken,
+              p_signed_pdf_data: signedPdfDataUri
+            });
+            if (attachError) throw attachError;
+          } catch (e) {
+            console.error('Signed PDF generation failed:', e);
+            signedPdfDataUri = null;
+          }
+        }
 
         // Notify Foocus that contract was signed
         try {
@@ -5744,7 +5764,13 @@
               contract_id: contractId,
               client_name: contract.contract_data?.client_name || '',
               signed_by: name,
-              title: contract.contract_data?.title || ''
+              title: contract.contract_data?.title || '',
+              lang: contract.contract_data?.lang || 'no',
+              signed_at: signResult?.contract_data?.signed_at || null,
+              // The signed file goes back to whoever signed it, with their copy attached.
+              client_email: contract.contract_data?.client_contact_email || '',
+              signed_pdf: signedPdfDataUri,
+              file_name: signedFileName(contract.contract_data)
             })
           });
         } catch(e) { console.error('Notification error:', e); }
@@ -7496,7 +7522,7 @@
               <span class="contract-status ${c.status}">${STATUS_LABELS[c.status] || c.status}</span>
               ${(c.template_type === 'upload' && c.status === 'draft') ? `<button class="task-action" onclick="sendUploadedForSigning('${c.id}', event)" title="Send for signing" style="color:var(--client);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button>` : ''}
               ${c.status === 'sent' ? `<button class="task-action" onclick="copySigningLink('${c.id}', event)" title="Copy signing link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>` : ''}
-              ${c.contract_data?.has_signed_pdf ? `<button class="task-action" onclick="downloadSignedContract('${c.id}', event)" title="Download signed PDF" style="color:var(--client);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>` : ''}
+              ${(c.contract_data?.has_signed_pdf || c.status === 'signed') ? `<button class="task-action" onclick="downloadSignedContract('${c.id}', event)" title="Download signed PDF" style="color:var(--client);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>` : ''}
               ${c.status === 'sent' ? `<button class="task-action" onclick="recallContract('${c.id}', event)" title="Tilbakekall" style="color:var(--urgent);"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>` : ''}
               <button class="task-action" onclick="editContract('${c.id}', event)" title="Rediger"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
               <button class="task-action delete" onclick="confirmDeleteContract('${c.id}', event)" title="Slett"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg></button>
@@ -7600,11 +7626,38 @@
       await showSigningLink(contractId, contract?.contract_data?.client_name, contract?.contract_data?.client_contact_email);
     }
 
+    // Renders a signed copy from what Supabase holds, then stores it so the file is stable.
+    async function rebuildSignedPdf(contract) {
+      const d = contract.contract_data || {};
+      const previousLang = contractLang;
+      try {
+        contractLang = d.lang || 'no';
+        const doc = buildContractPdfDoc(d, (contract.template_type || 'service') === 'service');
+        const dataUri = doc.output('datauristring');
+        const { error } = await sb.from('contracts')
+          .update({ signed_pdf_data: dataUri, contract_data: { ...d, has_signed_pdf: true } })
+          .eq('id', contract.id);
+        if (error) console.error('Could not store rebuilt signed PDF:', error);
+        else {
+          contract.signed_pdf_data = dataUri;
+          contract.contract_data = { ...d, has_signed_pdf: true };
+        }
+        return dataUri;
+      } finally {
+        contractLang = previousLang;
+      }
+    }
+
     async function downloadSignedContract(contractId, event) {
       if (event) event.stopPropagation();
       const contract = contracts.find(c => c.id === contractId);
       try {
-        const dataUri = await fetchContractPdf(contractId, 'signed_pdf_data');
+        let dataUri = await fetchContractPdf(contractId, 'signed_pdf_data');
+        // Contracts signed before the signature was stored in the file still carry the
+        // signatory and the server's timestamp in contract_data — rebuild from those.
+        if (!dataUri && contract?.status === 'signed' && contract.contract_data?.signed_at) {
+          dataUri = await rebuildSignedPdf(contract);
+        }
         if (!dataUri) return alert('No countersigned PDF is stored for this contract.');
         const a = document.createElement('a');
         a.href = pdfDataUriToBlobUrl(dataUri);
@@ -8172,9 +8225,9 @@
     }
 
     // PDF Generation — Clean, modern Foocus template
-    async function generateContractPDF() {
-      const d = gatherContractData();
-      const isService = getSelectedTemplate() === 'service';
+    // Takes its data as arguments rather than reading the editor, so the signing page can
+    // rebuild the very same document with the signature in it.
+    function buildContractPdfDoc(d, isService) {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
@@ -8556,47 +8609,80 @@
 
       y += 4;
       const colW = (cW - 12) / 2;
+      const sigDateLocale = contractLang === 'en' ? 'en-GB' : 'nb-NO';
+      const sigDateOpts = { day: 'numeric', month: 'long', year: 'numeric' };
+      const signedLabel = contractLang === 'en' ? 'Signed electronically' : 'Signert elektronisk';
+      // Grows when there is something to show above the line, so the ink never collides with it.
+      const boxH = (d.signed_at || d.sender_signed_at) ? 42 : 32;
+      const lineY = y + boxH - 12;
+      checkBreak(boxH + 6);
+
+      // Draws the ink above the line, scaled to fit, bottom-aligned on the line itself.
+      function drawInk(dataUri, boxX) {
+        if (!dataUri) return false;
+        try {
+          const props = doc.getImageProperties(dataUri);
+          const maxW = colW - 14, maxH = lineY - y - 10;
+          const scale = Math.min(maxW / props.width, maxH / props.height);
+          const w = props.width * scale, h = props.height * scale;
+          doc.addImage(dataUri, 'PNG', boxX + 5, lineY - 1.5 - h, w, h);
+          return true;
+        } catch (error) {
+          console.error('Could not place signature in PDF:', error);
+          return false;
+        }
+      }
+
+      // Writes the name, organisation and — when signed — the date under the line.
+      function signatory(boxX, name, org, signedAt) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...txt);
+        doc.text(name || '', boxX + 4, lineY + 5);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...muted);
+        doc.text(org || '', boxX + 4, lineY + 9);
+        if (signedAt) {
+          const stamp = new Date(signedAt).toLocaleDateString(sigDateLocale, sigDateOpts);
+          doc.text(`${signedLabel} · ${stamp}`, boxX + colW - 4, lineY + 9, { align: 'right' });
+        }
+      }
 
       // Supplier signature box
       doc.setDrawColor(...accent);
       doc.setLineWidth(0.4);
-      doc.rect(mL, y, colW, 32, 'S');
+      doc.rect(mL, y, colW, boxH, 'S');
       doc.setFontSize(7);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...accent);
       doc.text(t('supplier'), mL + 4, y + 5);
+      drawInk(d.sender_signature, mL);
       doc.setDrawColor(...line);
       doc.setLineWidth(0.2);
-      doc.line(mL + 4, y + 20, mL + colW - 4, y + 20);
-      doc.setFontSize(8.5);
-      doc.setTextColor(...txt);
-      doc.text(d.foocus_contact, mL + 4, y + 25);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
-      doc.setTextColor(...muted);
-      doc.text(FOOCUS_INFO.name, mL + 4, y + 29);
+      doc.line(mL + 4, lineY, mL + colW - 4, lineY);
+      signatory(mL, d.sender_signed_by || d.foocus_contact, FOOCUS_INFO.name, d.sender_signed_at);
 
       // Client signature box
       const cx = mL + colW + 12;
       doc.setDrawColor(...line);
       doc.setLineWidth(0.4);
-      doc.rect(cx, y, colW, 32, 'S');
+      doc.rect(cx, y, colW, boxH, 'S');
       doc.setFontSize(7);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...muted);
       doc.text(t('client'), cx + 4, y + 5);
+      drawInk(d.client_signature, cx);
       doc.setDrawColor(...line);
       doc.setLineWidth(0.2);
-      doc.line(cx + 4, y + 20, cx + colW - 4, y + 20);
-      doc.setFontSize(8.5);
-      doc.setTextColor(...txt);
-      doc.text(d.client_contact_name || '', cx + 4, y + 25);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
-      doc.setTextColor(...muted);
-      doc.text(d.client_name || '', cx + 4, y + 29);
+      doc.line(cx + 4, lineY, cx + colW - 4, lineY);
+      // Once signed, the person who actually signed replaces the contact we addressed it to.
+      const clientSigner = d.signed_by
+        ? d.signed_by + (d.signed_title ? ', ' + d.signed_title : '')
+        : (d.client_contact_name || '');
+      signatory(cx, clientSigner, d.client_name, d.signed_at);
 
-      y += 38;
+      y += boxH + 6;
 
       // ========== ALL PAGES: HEADER & FOOTER ==========
       const totalPages = doc.internal.getNumberOfPages();
@@ -8634,6 +8720,13 @@
         doc.text(t('page_of').replace('{page}', i).replace('{total}', totalPages), pageW - mR, pageH - 13, { align: 'right' });
 
       }
+
+      return doc;
+    }
+
+    async function generateContractPDF() {
+      const d = gatherContractData();
+      const doc = buildContractPdfDoc(d, getSelectedTemplate() === 'service');
 
       // Save PDF as base64 and store
       const pdfBase64 = doc.output('datauristring');
